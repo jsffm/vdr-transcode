@@ -48,6 +48,7 @@ aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
 log=vdr-transcode.log
 t=/tmp/vt
 old=/tmp/vt-old
+vtlog=/tmp/vt-log
 conf1=$(realpath $0)".conf"
 conf=/etc/vdr-transcode.conf
 
@@ -94,9 +95,40 @@ help() {
     echo "-h264enc libx264|h264_nvenc|h264_vaapi"
     echo "-hevcenc hevc_nvenc|hevc_vaapi"
     echo "-aaclib libfdk_aac|libfaac"
-    echo "-hwaccel cuvid"
+    echo "-hwaccel cuvid|vaapi"
     echo "--nohw   # kein Hardwaredecoding"
     echo "-vdr <path_to_vdr>"
+    exit
+}
+
+status() {
+    # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
+    # /disk2/video/Blindspot/%In_der_Falle/2019-12-19.01.40.108-0.rec
+    # Duration: 00:40:27.48,
+    # fps=430 time=00:20:31.36 50% Comp=273%  8.6x
+    # Size: 2575433 -> 940032
+    # Est: 00:02:19
+
+    #set -x
+    log=$(cat $vtlog)
+    [ ! -e $log ] && exit 8
+    olddir=$(grep "PWD:" $log)
+    olddir=${olddir:5}
+    # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
+    dur=$(grep "Duration:" $log|head -n 1)
+    echo $dur
+    dur=$(echo $dur|cut -d \  -f 2)
+    dur=${dur:0:8}
+    durs=$(date -u "+%s" -d "1970-01-01 $dur")
+    # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
+    #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
+    l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
+    echo $l
+    dur2=${l#*time=}
+    dur2=${dur2:0:8}
+    dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
+    prz=$(($dur2s*100/$durs))
+    echo $prz"%"
     exit
 }
 
@@ -114,6 +146,10 @@ parameter() {
 	    ;;
 	"--inf")
 	    TODO=$1
+	    ;;
+	"--stat")
+	    TODO=$1
+	    status
 	    ;;
 	"-o")
 	    OUTPUT=$2
@@ -157,6 +193,9 @@ parameter() {
 	    ;;
 	"-mpeg4")
 	    mpeg4=$2
+	    ;;
+	"-vp8")
+	    vp8=$2
 	    ;;
 	"-dts")
 	    dts=$2
@@ -277,6 +316,7 @@ do
     del=,
 done
 unset IFS
+#IFS=
 #exit
 
 if [ "$hwaccel" == "cuvid" ]
@@ -291,9 +331,22 @@ then
     deinterlace="-vf deinterlace_vaapi"
 fi
 
+ls_iso() {
+    #set -x
+    e=$(readlink $(which ls))
+    if [ "$e" == "" ]
+    then
+	ls -l --time-style long-iso $1
+    else
+	ls -l $1
+    fi
+    #exit
+}
+
 input_file() {
     #set -x
-    ls -l --time-style long-iso $INPUT > $old
+    #ls -l --time-style long-iso $INPUT > $old
+    ls_iso $INPUT > $old
     # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
     oldsize=$(ls -l $INPUT|cut -d \  -f 5)
     oldsize=$(($oldsize/1024))
@@ -329,7 +382,8 @@ input_vdr() {
 	echo "No vdr recording"
 	exit 8
     fi
-    ls -l --time-style long-iso * > $old
+    #ls -l --time-style long-iso * > $old
+    ls_iso * > $old
     s=$(du)
     oldsize=$(echo $s|cut -d \  -f 1)
     input=00001.ts
@@ -373,7 +427,8 @@ input_dvd() {
     #set -x
     tr=1
     [ "$1" != "" ] && tr=$1
-    ls -l --time-style long-iso * > $old
+    #ls -l --time-style long-iso * > $old
+    ls_iso * > $old
     s=$(du)
     oldsize=$(echo $s|cut -d \  -f 1)
     ffmpeg_i="-i concat:"
@@ -471,6 +526,27 @@ set_hevc() {
     video="-c:v $hevcenc $preset $gop $deinterlace $scale $crop $aspect"
     [ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
 }
+
+set_vp8() {
+    if [ "$hwaccel" == "vaapi" ]
+    then
+	video="-c:v vp8_vaapi -rc_mode CQP $gop $deinterlace $scale $aspect"
+    else
+	echo "Only vaapi"
+	exit 8
+    fi
+}
+
+set_vp9() {
+    if [ "$hwaccel" == "vaapi" ]
+    then
+	video="-c:v vp9_vaapi -rc_mode CQP $gop $deinterlace $scale $aspect"
+    else
+	echo "Only vaapi"
+	exit 8
+    fi
+}
+
 
 analyze() {
     #set -x
@@ -597,6 +673,8 @@ analyze() {
 		    decode_cuvid="-c:v h264_cuvid"
 		    set_h264
 		fi
+		[ "$h264" == "vp8" ] && set_vp8
+		[ "$h264" == "vp9" ] && set_vp9
 		#exit
 		;;
 	    "hevc")
@@ -640,11 +718,19 @@ analyze() {
 		    set_h264
 		    #video="-c:v:0 h264_nvenc $preset"
 		fi
+		[ "$mpeg4" == "vp8" ] && set_vp8
 		;;
 	    "vp6f")
 		parameter --nohw
 		video="-c:v copy"
 		[ "$OUTPUT" == "vdr" ] && set_h264
+		;;
+	    "vp8")
+		parameter --nohw
+		video="-c:v copy"
+		[ "$OUTPUT" == "vdr" ] && set_h264
+		[ "$vp8" == "h264" ]  && set_h264
+		[ "$vp8" == "hevc" ]  && set_hevc
 		;;
 	    "ac3")
 		map="$map -map 0:$str"
@@ -834,7 +920,7 @@ copy_vdr() {
     #set -x
     log_c=$dest/logfile
     mkdir -p $dest
-    [ "$ifmt" == "vdr" ] && echo $(dirname $PWD)"/"${log_c:3} > /tmp/vt-log
+    [ "$ifmt" == "vdr" ] && echo $(dirname $PWD)"/"${log_c:3} > $vtlog
     header
     analyze $ffmpeg_i
     transcode $dest/00001.ts
@@ -853,6 +939,7 @@ copy_vdr() {
     fi
     [ -e messages ] && cp -p messages $dest
     [ -e logfile ] && cp -p logfile $dest/logfile1
+    [ -e info.txt ] && cp -p info.txt $dest
     if [ -e $vdr ]
     then
 	echo genindex
@@ -902,6 +989,7 @@ copy() {
 
 start=$(date +"%s")
 
+#set -x
 case $TODO in
     "-h")
 	help
@@ -911,6 +999,9 @@ case $TODO in
 	;;
     "--inf")
 	inf
+	;;
+    "--stat")
+	status
 	;;
     *)
 	copy
