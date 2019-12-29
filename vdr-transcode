@@ -15,7 +15,7 @@ mpeg2=h264
 mpeg4=copy
 #mpeg4=h264
 ac3=copy
-ac3_stereo=aac
+#ac3_stereo=aac
 eac3=copy
 aac=copy
 #mp2=copy
@@ -24,18 +24,21 @@ mp3=copy
 #mp3=aac
 dts=copy
 crf=21
-hevc_cq=21
+hevc_cq=28
+gq=30		# VP8
 gop="-g 50"
 
 #h264_level=3.0  # 720x576i
-h264_level=4.2
+h264_level=4.1
+#h264_level=4.2
 #hevc_level=4.0
 hevc_level=4.1
 h264enc=libx264
 #h264enc="h264_nvenc"
 #hevcenc=libx265
 hevcenc="hevc_nvenc"
-deinterlace="-filter:v yadif"
+#deinterlace="-filter:v yadif"
+deinterlace="yadif"
 #deinterlace="-vf yadif_cuda"
 #hwaccel=cuvid
 #OPT_G="-hwaccel cuvid"
@@ -72,11 +75,13 @@ help() {
     echo $(basename $0) parameter
     echo "-h"
     echo "-i <file>|vdr|dvd[:<track>]"
+    echo "-dvd <path>"
+    echo "-tr <track>  # DVD Track"
     echo "-o vdr|mp4|mkv"
     echo "-t n     # Länge in Sekunden"
     echo "-vc1 copy|h264|hevc"
-    echo "-h264 copy|hevc"
-    echo "-mpeg2 copy|h264|hevc"
+    echo "-h264 copy|hevc|vp8|vp9"
+    echo "-mpeg2 copy|h264|hevc|vp8|vp9"
     echo "-mpeg4 copy|h264|hevc"
     echo "-ac3 copy|eac3|aac"
     echo "-ac3_stereo aac"
@@ -85,11 +90,16 @@ help() {
     echo "-mp2 copy|aac"
     echo "-mp3 copy|aac"
     echo "-g <n>   # Goplänge default 50"
-    echo "-crf <n> # Qualität default 21, < = besser"
+    echo "-crf <n> # Qualität h264 default 21, < = besser"
+    echo "-cq <n>  # Qualität hevc default 28, < = besser"
+    echo "-gq <n>  # Qualität vp8 default 30, < = besser"
     echo "-r <n>   # fps"
     echo "-crop <w:h>"
+    echo "--LB     # -vf crop=iw:ih/4*3 -aspect 16:9"
+    echo "-zoom <factor>   # crop=iw/<factor>:ih/<factor>"
     echo "-aspect <aspect> # 16:9|4:3"
     echo "-sel <n-n,n>     # Audio, Subtitle Stream selektieren"
+    echo "-lang <str>=<lang>[,<str>=<lang>]"
     echo "--streams"
     echo "--inf"
     echo "-h264enc libx264|h264_nvenc|h264_vaapi"
@@ -127,9 +137,27 @@ status() {
     dur2=${l#*time=}
     dur2=${dur2:0:8}
     dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
+    fps=${l#*fps=}
+    fps=$(echo $fps|cut -d \  -f 1)
+    size=${l#*Lsize=}
+    size=$(echo $size|cut -d \  -f 1)
+    size=${size:0:-2}
+    speed=${l#*speed=}
+    echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
     prz=$(($dur2s*100/$durs))
     echo $prz"%"
     exit
+}
+
+add_vf() {
+    #set -x
+    if [ "$vf" == "" ]
+    then
+	vf=$1
+    else
+	vf=$vf","$1
+    fi
+    #set +x
 }
 
 parameter() {
@@ -140,6 +168,13 @@ parameter() {
 	    ;;
 	"-i")
 	    INPUT=$2
+	    ;;
+	"-dvd")
+	    INPUT=dvd
+	    dvd_path=$2
+	    ;;
+	"-tr")
+	    track=$2
 	    ;;
 	"--streams")
 	    TODO=$1
@@ -197,17 +232,23 @@ parameter() {
 	"-vp8")
 	    vp8=$2
 	    ;;
+	"-vp9")
+	    vp9=$2
+	    ;;
 	"-dts")
 	    dts=$2
 	    ;;
 	"-ac3")
 	    ac3=$2
 	    ;;
-	"ac3_stereo")
+	"-ac3_stereo")
 	    ac3_stereo=$2
 	    ;;
 	"-eac3")
 	    eac3=$2
+	    ;;
+	"-aac")
+	    aac=$2
 	    ;;
 	"-mp2")
 	    mp2=$2
@@ -218,11 +259,29 @@ parameter() {
 	"-crf")
 	    crf=$2
 	    ;;
+	"-cq")
+	    hevc_cq=$2
+	    ;;
+	"-gq")
+	    gq=$2	# VP8
+	    ;;
 	"-g")
 	    gop="-g $2"
 	    ;;
+	"-vf")
+	    add_vf $2
+	    ;;
 	"-crop")
-	    crop="-vf crop=$2"
+	    #crop="-vf crop=$2"
+	    add_vf "crop=$2"
+	    ;;
+	"--LB")
+	    add_vf "crop=iw:ih/4*3"
+	    aspect="-aspect 16:9"
+	    parameter "--nohw"
+	    ;;
+	"-zoom")
+	    add_vf "crop=iw/$2:ih/$2"
 	    ;;
 	"-aspect")
 	    aspect="-aspect $2"
@@ -236,6 +295,9 @@ parameter() {
 	"-hevcenc")
 	    hevcenc=$2
 	    ;;
+	"-vp9enc")
+	    vp9enc=$2
+	    ;;
 	"-aaclib")
 	    aaclib=$2
 	    ;;
@@ -243,15 +305,28 @@ parameter() {
 	    hwaccel=$2
 	    ;;
 	"--nohw")
-	    deinterlace="-filter:v yadif"
+	    #deinterlace="-filter:v yadif"
+	    deinterlace="yadif"
 	    hwaccel=
-	    OPT_G=
+	    #OPT_G=
 	    ;;
 	"-vdr")
 	    vdr=$2
 	    ;;
 	"-sel")
 	    select_str=$2
+	    ;;
+	"--info")
+	    info=1
+	    ;;
+	"-lang")
+	    set_lang $2
+	    ;;
+	"-probe")
+	    OPT_G="$OPT_G -probesize $2"
+	    ;;
+	"-anal")
+	    OPT_G="$OPT_G -analyzeduration $2"
 	    ;;
 	*)
 	    echo $1 wrong
@@ -276,9 +351,24 @@ read_configuration() {
     #exit
 }
 
+declare -a lang
+
+set_lang() {
+    #set -x
+    IFS=,
+    for la in $1
+    do
+	str=${la%=*}
+	l=${la#*=}
+	lang[$str]=$l
+    done
+    unset IFS
+    #exit
+}
+
 #set -x
-read_configuration $conf1
-read_configuration $conf
+[ "$conf" != "" ] && read_configuration $conf
+[ "$conf1" != "" ] && read_configuration $conf1
 #declare -a $parametera_log
 while [ $1 ]
 do
@@ -319,18 +409,6 @@ unset IFS
 #IFS=
 #exit
 
-if [ "$hwaccel" == "cuvid" ]
-then
-    OPT_G="$OPT_G -hwaccel cuvid"
-    deinterlace="-vf yadif_cuda"
-fi
-if [ "$hwaccel" == "vaapi" ]
-then
-    OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
-    deinterlace="-vf deinterlace_vaapi"
-fi
-
 ls_iso() {
     #set -x
     e=$(readlink $(which ls))
@@ -369,8 +447,11 @@ input_file() {
     ifmt2="file"
     if [ "$ifmt" == "avi" ]
     then
+	#nix=
 	OPT_G="$OPT_G -fflags +genpts"
     fi
+    #OPT_G="$OPT_G -fflags +igndts+genpts"
+    #OPT_G="$OPT_G -fflags +genpts"
     info_name=$(basename $PWD)
     #exit
 }
@@ -383,7 +464,7 @@ input_vdr() {
 	exit 8
     fi
     #ls -l --time-style long-iso * > $old
-    ls_iso * > $old
+    ls_iso > $old
     s=$(du)
     oldsize=$(echo $s|cut -d \  -f 1)
     input=00001.ts
@@ -425,14 +506,25 @@ input_vdr() {
 input_dvd() {
     #echo
     #set -x
+    parameter --nohw
     tr=1
     [ "$1" != "" ] && tr=$1
+    tr2=$(printf "%02d" $tr)
     #ls -l --time-style long-iso * > $old
-    ls_iso * > $old
-    s=$(du)
+    if [ "$dvd_path" != "" ]
+    then
+	n=${#dvd_path}
+	[ ${dvd_path:$n-1:1} != "/" ] && dvd_path=$dvd_path"/"
+	b=$(basename $dvd_path)
+	[ "$b" != "VIDEO_TS" ] && dvd_path=$dvd_path"VIDEO_TS/"
+    else
+	dvd_path="VIDEO_TS/"
+    fi
+    ls_iso $dvd_path > $old
+    s=$(du $dvd_path)
     oldsize=$(echo $s|cut -d \  -f 1)
     ffmpeg_i="-i concat:"
-    input="VTS_0"$tr"_1.VOB"
+    input=$dvd_path"VTS_"$tr2"_1.VOB"
     #w="VTS_0"$tr"_*.VOB"
     d=
     #for r in $w
@@ -442,26 +534,38 @@ input_dvd() {
     #done
     i=1
     del=
-    while [ -e "VTS_0"$tr"_$i.VOB" ]
+    while [ -e $dvd_path"VTS_"$tr2"_$i.VOB" ]
     do
-	r="VTS_0"$tr"_$i.VOB"
+	r=$dvd_path"VTS_"$tr2"_$i.VOB"
         #echo $r
         ffmpeg_i=$ffmpeg_i$del$r
         del="|"
         i=$(($i+1))
     done
-    d=$(dirname $PWD)
-    name=../$(basename $d)-$tr
+    #d=$(dirname $PWD)
+    d=$PWD
+    #name=../$(basename $d)-$tr
+    name=$(basename $d)-$tr
     ifmt="dvd"
     if [ "$OUTPUT" == "vdr" ]
     then
-	s=$(date "+%s" -r "VTS_0"$tr"_0.IFO")
-	dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
+	#set -x
+	s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
+	if [ -e ../info.vdr ]
+	then
+	    e=$(grep "^E" ../info.vdr)
+	    s=$(echo $e|cut -d \  -f 3)
+	fi
+	rec_time=$s
+	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
+	dest=$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
+	#exit
 	d32=0
 	while [ -e $dest ]
 	do
 	    d32=$(($d32+1))
-	    dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
+	    #dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
+	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	done
     fi
     #exit
@@ -474,12 +578,13 @@ input_dvd() {
 #    input_vdr
 #fi
 
+#set -x
 case "$INPUT" in
     "vdr"|"")
 	input_vdr
 	;;
     "dvd")
-	input_dvd
+	input_dvd $track
 	;;
     *)
 	if [ "${INPUT:0:4}" == "dvd:" ]
@@ -492,13 +597,31 @@ case "$INPUT" in
 	;;
 esac
 
+if [ "$hwaccel" == "cuvid" ]
+then
+    #OPT_G="$OPT_G -hwaccel cuvid"
+    HWACC="-hwaccel cuvid"
+    #deinterlace="-vf yadif_cuda"
+    deinterlace="yadif_cuda"
+fi
+if [ "$hwaccel" == "vaapi" ]
+then
+    #OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+    #OPT_G="$OPT_G -hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+    HWACC="-hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
+    #deinterlace="-vf deinterlace_vaapi"
+    deinterlace="deinterlace_vaapi"
+fi
+
 streams() {
-    ffmpeg -hide_banner $ffmpeg_i 2>&1 | grep "Stream"
+    #set -x
+    ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream"
     #ffprobe -hide_banner $ffmpeg_i
     exit
 }
 inf() {
-    ffmpeg $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     exit
 }
 
@@ -513,37 +636,64 @@ set_h264() {
     fi
     [ $h264enc == "h264_nvenc" ] && preset="-preset hq -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
     [ $h264enc == "h264_vaapi" ] && preset="-profile:v $h264_profile $level -rc_mode CQP -qp $crf $maxr"
-    video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
-    [ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
+    #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
+    video="-c:v:0 $h264enc $preset $gop $vf $aspect"
+    #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
+    [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
 }
 
 set_hevc() {
-    crf=28
-    preset="-preset veryfast $level_hevc -crf $crf $maxr"
-    [ "$hevcenc" == "hevc_nvenc" ] && preset="-preset hq $level_hevc -rc vbr -qp $hevc_cq $opt_r"
+    # crf=25
+    # h265_level="-x265-params crf=$crf:level-idc=4.1"
+    # preset="$h265_level"
+    # preset="$preset $gop"
+    # video="-c:v $hevcenc $fps $preset $deinterlace $scale $aspect"
+
+    #crf=28
+    h265_level="-x265-params crf=$hevc_cq:level-idc=4.1"
+    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
+    preset="-preset veryfast $h265_level -crf $crf $maxr"
+    [ "$hevcenc" == "hevc_nvenc" ] && preset="-preset hq $level_hevc -rc vbr -cq $hevc_cq $opt_r"
     #[ "$hevcenc" == "hevc_vaapi" ] && preset="$level_hevc -rc_mode CQP -qp $hevc_cq $opt_r"
-    [ "$hevcenc" == "hevc_vaapi" ] && preset="-profile:v main -tier high $level_hevc -rc_mode CQP -qp $crf $opt_r"
-    video="-c:v $hevcenc $preset $gop $deinterlace $scale $crop $aspect"
-    [ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
+    [ "$hevcenc" == "hevc_vaapi" ] && preset="-profile:v main -tier high $level_hevc -rc_mode CQP -qp $hevc_cq $opt_r"
+    #video="-c:v $hevcenc $preset $gop $deinterlace $scale $crop $aspect"
+    video="-c:v $hevcenc $preset $gop $vf $aspect"
+    #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
+    [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
 }
 
 set_vp8() {
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	echo "vdr don´t like vp8"
+	exit 8
+    fi
     if [ "$hwaccel" == "vaapi" ]
     then
-	video="-c:v vp8_vaapi -rc_mode CQP $gop $deinterlace $scale $aspect"
-    else
-	echo "Only vaapi"
-	exit 8
+	#[ "$codec" == "mpeg4" ] && parameter --nohw
+	video="-c:v vp8_vaapi -rc_mode CQP -global_quality $gq $gop $vf $aspect"
+    #else
+	#echo "Only vaapi"
+	#exit 8
     fi
 }
 
 set_vp9() {
+    # crf 0..63
+    # crf=33
+    # video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1"
     if [ "$hwaccel" == "vaapi" ]
     then
-	video="-c:v vp9_vaapi -rc_mode CQP $gop $deinterlace $scale $aspect"
-    else
-	echo "Only vaapi"
-	exit 8
+	video="-c:v vp9_vaapi -rc_mode CQP $gop $vf $aspect"
+    #else
+	#echo "Only vaapi"
+	#exit 8
+    fi
+    if [ "$vp9enc" == "libvpx-vp9" ]
+    then
+	#crf=33
+	crf=40
+	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1 $vf"
     fi
 }
 
@@ -568,6 +718,8 @@ analyze() {
 	opt_r="-r 50"
     fi
     echo "deinterlace=$deinterlace" >> $log_c
+    [ "$deinterlace" != "" ] && add_vf $deinterlace
+    [ "$vf" != "" ] && vf="-vf $vf"
     #exit
     # vdr
     # Stream #0:0[0x100]: Video: h264 (High) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], 50 fps, 50 tbr, 90k tbn, 100 tbc
@@ -605,7 +757,7 @@ analyze() {
 	codec=${codec//,/}
 	typ=$(echo $line|cut -d \  -f 3)
 	str1=${line#*:}
-	if [ "$ifmt" == "vdr" -o "$ifmt" == "dvd" -o "$ifmt" == "mpg" -o "$ifmt" == "ts" ]
+	if [ "$ifmt" == "vdr" -o "$ifmt" == "dvd" -o "$ifmt" == "mpg" -o "$ifmt" == "ts" -o "$ifmt" == "m2ts" ]
 	then
 	    str=${str1%%[*}
 	else
@@ -645,53 +797,106 @@ analyze() {
 	    ar1=${line%Hz*}
 	    nw=$(echo $ar1|wc -w)
 	    ar1=$(echo $ar1|cut -d \  -f $nw)
+	    #set -x
+	    [ "${lang[$str]}" != "" ] && OPT="$OPT -metadata:s:$str language=${lang[$str]}"
+	    #exit
 	fi
 	case $codec in
 	    "mpeg2video"|"mpeg1video")
 		video="-c:v:0 copy"
 		#[ "$mpeg2" == "h264" ] && video="-c:v:0 libx264"
 		#[ "$mpeg2" == "h264" ] && video="-c:v:0 h264_nvenc"
+		#decode_cuvid="-c:v mpeg2_cuvid"
+		decode_cuvid="-c:v ${codec:0:5}_cuvid"
+		#parameter "--nohw"
 		if [ "$mpeg2" == "h264" ]
 		then
-		    decode_cuvid="-c:v mpeg2_cuvid"
 		    set_h264
 		    #video="-c:v:0 h264_nvenc $preset"
 		fi
+		[ "$mpeg2" == "vp8" ] && set_vp8
+		[ "$mpeg2" == "vp9" ] && set_vp9
 		;;
 	    "h264")
 		#set -x
 		video="-c:v copy"
-		if [ "$h264" == "hevc" ]
-		then
-		    decode_cuvid="-c:v h264_cuvid"
-		    set_hevc
-		    #video="-c:v:0 $hevcenc $preset"
-		fi
+		#if [ "$h264" == "hevc" ]
+		#then
+		#    decode_cuvid="-c:v h264_cuvid"
+		#    set_hevc
+		#    #video="-c:v:0 $hevcenc $preset"
+		#fi
 		#echo $h264
-		if [ "$h264" == "h264" -o "$h264" == "copy" -a "$fpso" != "" ]
-		then
-		    decode_cuvid="-c:v h264_cuvid"
-		    set_h264
-		fi
-		[ "$h264" == "vp8" ] && set_vp8
-		[ "$h264" == "vp9" ] && set_vp9
+		#if [ "$h264" == "h264" -o "$h264" == "copy" -a "$fpso" != "" ]
+		#then
+		#    decode_cuvid="-c:v h264_cuvid"
+		#    set_h264
+		#fi
+		#[ "$h264" == "vp8" ] && set_vp8
+		#[ "$h264" == "vp9" ] && set_vp9
+		case $h264 in
+		    "hevc")
+			decode_cuvid="-c:v h264_cuvid"
+			set_hevc
+			#video="-c:v:0 $hevcenc $preset"
+			;;
+		    "h264")
+			decode_cuvid="-c:v h264_cuvid"
+			set_h264
+			;;
+		    "copy")
+			if [ "$fpso" != "" ]
+			then
+			    decode_cuvid="-c:v h264_cuvid"
+			    set_h264
+			fi
+			;;
+		    "vp8")
+			set_vp8
+			;;
+		    "vp9")
+			set_vp9
+			;;
+		    *)
+			echo "-h264 $h264 wrong"
+			exit 8
+			;;
+		esac
 		#exit
 		;;
 	    "hevc")
 		video="-c:v copy"
-		if [ "$hevc" == "h264" ]
-		then
-		    decode_cuvid="-c:v hevc_cuvid"
-		    deinterlace=
-		    set_h264
-		    #video="-c:v:0 h264_nvenc $preset"
-		fi
-		if [ "$hevc" == "hevc" ]
-		then
-		    decode_cuvid="-c:v hevc_cuvid"
-		    deinterlace=
-		    set_hevc
-		fi
+		#if [ "$hevc" == "h264" ]
+		#then
+		#    decode_cuvid="-c:v hevc_cuvid"
+		#    deinterlace=
+		#    set_h264
+		#    #video="-c:v:0 h264_nvenc $preset"
+		#fi
+		#if [ "$hevc" == "hevc" ]
+		#then
+		#    decode_cuvid="-c:v hevc_cuvid"
+		#    deinterlace=
+		#    set_hevc
+		#fi
+		deinterlace=
+		case $hevc in
+		    "h264")
+			decode_cuvid="-c:v hevc_cuvid"
+			set_h264
+			;;
+		    "hevc")
+			decode_cuvid="-c:v hevc_cuvid"
+			set_hevc
+			;;
+		    "copy")
+			nix=
+			;;
+		    *)
+			echo "-hevc $hevc wrong"
+			exit 8
+			;;
+		esac
 		;;
 	    "vc1")
 		video="-c:v copy"
@@ -719,6 +924,7 @@ analyze() {
 		    #video="-c:v:0 h264_nvenc $preset"
 		fi
 		[ "$mpeg4" == "vp8" ] && set_vp8
+		[ "$mpeg4" == "vp9" ] && set_vp9
 		;;
 	    "vp6f")
 		parameter --nohw
@@ -726,19 +932,32 @@ analyze() {
 		[ "$OUTPUT" == "vdr" ] && set_h264
 		;;
 	    "vp8")
-		parameter --nohw
+		decode_cuvid="-c:v vp8_cuvid"
 		video="-c:v copy"
 		[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$vp8" == "h264" ]  && set_h264
 		[ "$vp8" == "hevc" ]  && set_hevc
 		;;
+	    "vp9")
+		decode_cuvid="-c:v vp9_cuvid"
+		video="-c:v copy"
+		[ "$OUTPUT" == "vdr" ] && set_h264
+		[ "$vp9" == "h264" ]  && set_h264
+		[ "$vp9" == "hevc" ]  && set_hevc
+		;;
 	    "ac3")
+		#set -x
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
 		[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
-		if [ "$ac3" == "aac" -a "$atyp" != "stereo" ]
+		if [ "$ac3" == "aac" ]
 		then
-		    audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		    if [ "$atyp" != "stereo" ]
+		    then
+			audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		    else
+			audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		    fi
 		    ac3_aac=1
 		fi
 		if [ "$atyp" == "stereo" ]
@@ -746,21 +965,22 @@ analyze() {
 		    if [ $bra -gt 192 -a "$ac3_stereo" == "aac" ]
 		    then
 			audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		    else
-			if [ "$ac3_stereo" == "aac" -a "$ac3_aac" == "1" ]
-			then
-			    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-			else
-			    audio_t="-c:$stro copy"
-			fi
+		    #else
+			#if [ "$ac3_stereo" == "aac" -a "$ac3_aac" == "1" ]
+			#then
+			#    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+			#else
+			#    audio_t="-c:$stro copy"
+			#fi
 		    fi
 		fi
-		if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
-		then
-		    audio_t="-c:$stro $aaclib -b:$stro 48k"
-		fi
+		#if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
+		#then
+		#    audio_t="-c:$stro $aaclib -b:$stro 48k"
+		#fi
 		audio="$audio $audio_t"
 		stro=$(($stro+1))
+		#exit
 		;;
 	    "eac3")
 		map="$map -map 0:$str"
@@ -787,6 +1007,7 @@ analyze() {
 		    ar="-ar:$stro 48000"
 		    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
 		fi
+		[ "$aac" == "opus" ] && audio_t="-c:$stro opus -strict -2"
 		audio="$audio $audio_t"
 		stro=$(($stro+1))
 		;;
@@ -831,6 +1052,11 @@ analyze() {
 		audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
 		stro=$(($stro+1))
 		;;
+	    "opus")
+		map="$map -map 0:$str"
+		audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
+		stro=$(($stro+1))
+		;;
 	    "dvb_subtitle")
 		map="$map -map 0:$str"
 		if [ "$fmt" == "mp4" ]
@@ -862,8 +1088,9 @@ transcode() {
     name=$1
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
-    opt="-hide_banner $OPT_G $ffmpeg_i $map $video $audio $subt $OPT $name"
+    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $name"
     echo ffmpeg $opt >> $log_c
+    #exit
     ffmpeg $opt 2>&1 | tee -a $log_c
     echo "===========================================================" >> $log_c
     #ffprobe -hide_banner -i $name 2>> $log_c
@@ -916,19 +1143,46 @@ info_create() {
     echo "L 99" >> $info
 }
 
+to_utf8() {
+    f=$(file $1)
+    c=$(echo $f|cut -d \  -f 2)
+    if [ "$c" == "ISO-8859" ]
+    then
+        #echo $r
+        recode ISO_8859-1...UTF8 $1
+    fi
+}
+
 copy_vdr() {
     #set -x
     log_c=$dest/logfile
     mkdir -p $dest
-    [ "$ifmt" == "vdr" ] && echo $(dirname $PWD)"/"${log_c:3} > $vtlog
+    if [ "$ifmt" == "vdr" ]
+    then
+	echo $(dirname $PWD)"/"${log_c:3} > $vtlog
+    else
+	echo $PWD/$log_c > $vtlog
+    fi
     header
     analyze $ffmpeg_i
+    #OPT="$OPT -mpegts_flags system_b"
+    #OPT="$OPT -mpegts_flags latm"
     transcode $dest/00001.ts
     if [ -e info ]
     then
 	cp -p info $dest
     else
-	info_create
+	if [ "$ifmt" == "dvd" -a -e ../info.vdr ]
+	then
+	    #set -x
+	    cp ../info.vdr $dest/info
+	    echo "F 25" >> $dest/info
+	    echo "L 99" >> $dest/info
+	    echo "P 50" >> $dest/info
+	    to_utf8 $dest/info
+	else
+	    info_create
+	fi
     fi
     #[ -e marks ] && cp -p marks $dest
     if [ -e marks ]
@@ -946,6 +1200,14 @@ copy_vdr() {
         $vdr --genindex="./$dest"
     else
 	echo $vdr "not found" >> $log_c
+    fi
+    if [ "$ifmt" == "vdr" ]
+    then
+	is1=$(ls -l index|cut -d \  -f 5)
+	is2=$(ls -l $dest/index|cut -d \  -f 5)
+	echo "===========================================================" >> $log_c
+	echo "index=$is1" >> $log_c
+	echo "index=$is2" >> $log_c
     fi
     if [ -e $VIDEODIR ]
     then
