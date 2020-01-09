@@ -73,41 +73,55 @@ v=$(echo $v | cut -d \  -f 3)
 
 help() {
     echo $(basename $0) parameter
-    echo "-h"
-    echo "-i <file>|vdr|dvd[:<track>]"
-    echo "-dvd <path>"
-    echo "-tr <track>  # DVD Track"
-    echo "-o vdr|mp4|mkv"
-    echo "-t n     # Länge in Sekunden"
-    echo "-vc1 copy|h264|hevc"
-    echo "-h264 copy|hevc|vp8|vp9"
-    echo "-mpeg2 copy|h264|hevc|vp8|vp9"
-    echo "-mpeg4 copy|h264|hevc"
-    echo "-ac3 copy|eac3|aac"
-    echo "-ac3_stereo aac"
-    echo "-eac3 copy|aac"
-    echo "-dts copy|ac3|eac3|aac"
-    echo "-mp2 copy|aac"
-    echo "-mp3 copy|aac"
-    echo "-g <n>   # Goplänge default 50"
-    echo "-crf <n> # Qualität h264 default 21, < = besser"
-    echo "-cq <n>  # Qualität hevc default 28, < = besser"
-    echo "-gq <n>  # Qualität vp8 default 30, < = besser"
-    echo "-r <n>   # fps"
-    echo "-crop <w:h>"
-    echo "--LB     # -vf crop=iw:ih/4*3 -aspect 16:9"
-    echo "-zoom <factor>   # crop=iw/<factor>:ih/<factor>"
-    echo "-aspect <aspect> # 16:9|4:3"
-    echo "-sel <n-n,n>     # Audio, Subtitle Stream selektieren"
-    echo "-lang <str>=<lang>[,<str>=<lang>]"
-    echo "--streams"
-    echo "--inf"
-    echo "-h264enc libx264|h264_nvenc|h264_vaapi"
-    echo "-hevcenc hevc_nvenc|hevc_vaapi"
-    echo "-aaclib libfdk_aac|libfaac"
-    echo "-hwaccel cuvid|vaapi"
-    echo "--nohw   # kein Hardwaredecoding"
-    echo "-vdr <path_to_vdr>"
+    echo " -h  # this"
+    echo "Input"
+    echo " -i <file>|vdr|dvd[:<track>]"
+    echo " -dvd <path>"
+    echo " -BD <path>   # AVCHD"
+    echo " -tr <track>  # DVD or AVCHD track"
+    echo "Output"
+    echo " -o vdr|mp4|mkv"
+    echo " --streams"
+    echo " --inf"
+    echo " --stat       # status"
+    echo " -t <n>       # length in seconds"
+    echo " -to <position>"
+    echo " -ss <position>"
+    echo "Video"
+    echo " -h264 copy|hevc|vp8|vp9"
+    echo " -mpeg2 copy|h264|hevc|vp8|vp9"
+    echo " -mpeg4 copy|h264|hevc"
+    echo " -vc1 copy|h264|hevc"
+    echo " -vp8 copy|h264|hevc"
+    echo " -vp9 copy|h264|hevc"
+    echo " -r <n>           # fps"
+    echo " -crop <w:h>"
+    echo " --LB             # -vf crop=iw:ih/4*3 -aspect 16:9"
+    echo " -zoom <factor>   # crop=iw/<factor>:ih/<factor>"
+    echo " -aspect <aspect> # 16:9|4:3"
+    echo " --nohw           # no hardwaredecoding"
+    echo "Audio"
+    echo " -ac3 copy|eac3|aac"
+    echo " -ac3_stereo aac"
+    echo " -eac3 copy|aac"
+    echo " -dts copy|ac3|eac3|aac"
+    echo " -mp2 copy|aac"
+    echo " -mp3 copy|aac"
+    echo " -sel <n-n,n>     # Audio, Subtitle Stream selektieren"
+    echo " -lang <str>=<lang>[,<str>=<lang>]"
+    echo "Configuration /etc/vdr-transcode.conf"
+    echo " -o vdr|mp4|mkv   # default vdr"
+    echo " -aac_stereo_br   # default 96k"
+    echo " -aac_6ch_br      # default 256k"
+    echo " -g <n>           # Goplänge default 50"
+    echo " -crf <n>         # quality h264 default 21, < = besser"
+    echo " -cq <n>          # quality hevc default 28, < = besser"
+    echo " -gq <n>          # quality vp8 default 30, < = besser"
+    echo " -h264enc libx264|h264_nvenc|h264_vaapi"
+    echo " -hevcenc hevc_nvenc|hevc_vaapi"
+    echo " -aaclib libfdk_aac|libfaac"
+    echo " -hwaccel cuvid|vaapi"
+    echo " -vdr <path_to_vdr>"
     exit
 }
 
@@ -122,30 +136,61 @@ status() {
     #set -x
     log=$(cat $vtlog)
     [ ! -e $log ] && exit 8
+    echo $log
     olddir=$(grep "PWD:" $log)
     olddir=${olddir:5}
+    oldsize=$(grep "oldsize=" $log)
+    oldsize=${oldsize#*=}
     # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
-    dur=$(grep "Duration:" $log|head -n 1)
-    echo $dur
+    dur=$(grep "Duration:" $log|head -n 2)
+    #echo $dur
     dur=$(echo $dur|cut -d \  -f 2)
     dur=${dur:0:8}
     durs=$(date -u "+%s" -d "1970-01-01 $dur")
+    fps1=$(grep "Video:" $log|head -n 1)
+    # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
+    fps1=${fps1%fps,*}
+    nw=$(echo $fps1|wc -w)
+    fps1=$(echo $fps1|cut -d \  -f $nw)
+    #echo fps1=$fps1
+    echo "Duration: $dur, fps=$fps1"
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
     #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
-    l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
-    echo $l
+    # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
+    #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
+    l=$(tr '\r' '\n' < $log | grep -a "^frame=" | tail -n 1)
+    #echo $l
     dur2=${l#*time=}
     dur2=${dur2:0:8}
     dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
     fps=${l#*fps=}
     fps=$(echo $fps|cut -d \  -f 1)
-    size=${l#*Lsize=}
+    size=${l#*size=}
     size=$(echo $size|cut -d \  -f 1)
     size=${size:0:-2}
     speed=${l#*speed=}
-    echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
+    time=${l##*time=}
+    time=$(echo $time | cut -d \  -f 1)
+    t2=$(date +"%s" -u -d "1970-01-01 ${time:0:8}")
+    restz=$(($durs-$t2))
     prz=$(($dur2s*100/$durs))
-    echo $prz"%"
+    prm=$(($dur2s*1000/$durs))
+    #echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
+    #printf "fps=%3d, size=%d, time=%s, speed=%s\n" $fps $size $dur2 $speed
+    if [ $prz -gt 0 ]
+    then
+	#set -x
+	size2=$(($size*1000/$prm))
+	exptime=$(($restz*$fps1/$fps))
+	#echo $prz"% exp. size="$size2" exp. time="$(date "+%T"  -u -d @$exptime)
+	exp=$(date "+%T" -u -d @$exptime)
+	przs=$(($size2*100/$oldsize))
+	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
+	echo "fps=$fps time=$dur2 $prz% $speed"
+	echo "Size: $oldsize -> $size2 $przs%"
+	echo "Est: $exp"
+	#date -u -d @$exptime
+    fi
     exit
 }
 
@@ -173,6 +218,10 @@ parameter() {
 	    INPUT=dvd
 	    dvd_path=$2
 	    ;;
+	"-BD")
+	    INPUT=BD
+	    dvd_path=$2
+	    ;;
 	"-tr")
 	    track=$2
 	    ;;
@@ -194,7 +243,13 @@ parameter() {
 	    fpso=$2
 	    ;;
 	"-t")
-	    OPT="$OPT -t $2"
+	    OPT_G="$OPT_G -t $2"
+	    ;;
+	"-to")
+	    OPT_G="$OPT_G -to $2"
+	    ;;
+	"-ss")
+	    OPT_G="$OPT_G -ss $2"
 	    ;;
 	"-copytb")
 	    OPT="$OPT -copytb $2"
@@ -241,6 +296,9 @@ parameter() {
 	"-ac3")
 	    ac3=$2
 	    ;;
+	"-ac3v")
+	    ac3v=$2
+	    ;;
 	"-ac3_stereo")
 	    ac3_stereo=$2
 	    ;;
@@ -249,6 +307,12 @@ parameter() {
 	    ;;
 	"-aac")
 	    aac=$2
+	    ;;
+	"-aac_stereo_br")
+	    aac_stereo_br=$2
+	    ;;
+	"aac_6ch_br")
+	    aac_6ch_br=$2
 	    ;;
 	"-mp2")
 	    mp2=$2
@@ -285,6 +349,21 @@ parameter() {
 	    ;;
 	"-aspect")
 	    aspect="-aspect $2"
+	    ;;
+	"-af")
+	    OPT="$OPT -af $2"
+	    ;;
+	"-vol")
+	    #set -x
+	    str=${2%=*}
+	    v=${2#*=}
+	    if [ "$str" == "$v" ]
+	    then
+		OPT="$OPT -filter:a volume=$v"
+	    else
+		OPT="$OPT -filter:$str volume=$v"
+	    fi
+	    #exit
 	    ;;
 	"-h264enc")
 	    h264enc=$2
@@ -328,6 +407,18 @@ parameter() {
 	"-anal")
 	    OPT_G="$OPT_G -analyzeduration $2"
 	    ;;
+	"--q")
+	    quiet=1
+	    ;;
+	"--nochapt")
+	    nochapt=1
+	    ;;
+	"-DP")
+	    OPT="$OPT -dsur_mode $2"	# 2 on
+	    ;;
+	"-stro")
+	    set_streamo $2
+	    ;;
 	*)
 	    echo $1 wrong
 	    exit 8
@@ -365,6 +456,22 @@ set_lang() {
     unset IFS
     #exit
 }
+
+declare -a streamo
+
+set_streamo() {
+    #set -x
+    IFS=,
+    for s in $1
+    do
+	str=${s%=*}
+	to=${s#*=}
+	streamo[$str]=$to
+    done
+    unset IFS
+    #exit
+}
+
 
 #set -x
 [ "$conf" != "" ] && read_configuration $conf
@@ -424,17 +531,38 @@ ls_iso() {
 input_file() {
     #set -x
     #ls -l --time-style long-iso $INPUT > $old
+    ifmt=${INPUT##*.}
+    if [ "$ifmt" == "rec" ]
+    then
+	cd $INPUT
+	INPUT=vdr
+	input_vdr
+	return
+    fi
+    if [ "$(basename $INPUT)" == "VIDEO_TS" ]
+    then
+	dvd_path=$INPUT
+	INPUT=dvd
+	input_dvd $track
+	return
+    fi
     ls_iso $INPUT > $old
     # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
     oldsize=$(ls -l $INPUT|cut -d \  -f 5)
     oldsize=$(($oldsize/1024))
+    echo "oldsize="$oldsize >> $old
     ffmpeg_i="-i $INPUT"
     input=$INPUT
     name=${INPUT%.*}
+    name=$(basename $name)
     rec_time=$(date "+%s" -r $INPUT)
     ffmpeg $ffmpeg_i 2> $t
-    c_t=$(grep creation_time $t|head -n 1|cut -d ':' -f 2-)
-    [ "$c_t" != "" ] && rec_time=$(date "+%s" -d "$c_t")
+    c_t=$(grep -i creation_time $t|head -n 1|cut -d ':' -f 2-)
+    if [ "$c_t" != "" ]
+    then
+	c_t=${c_t//\"/}
+	rec_time=$(date "+%s" -d "$c_t")
+    fi
     dest=$(date "+%F.%H.%M" -d @$rec_time)".3-0.rec"
     d32=0
     while [ -e $dest ]
@@ -443,7 +571,6 @@ input_file() {
 	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	dest=$(date "+%F.%H.%M" -d @$rec_time)".3-$d32.rec"
     done
-    ifmt=${INPUT##*.}
     ifmt2="file"
     if [ "$ifmt" == "avi" ]
     then
@@ -452,6 +579,7 @@ input_file() {
     fi
     #OPT_G="$OPT_G -fflags +igndts+genpts"
     #OPT_G="$OPT_G -fflags +genpts"
+    #OPT_G="$OPT_G -use_wallclock_as_timestamps 1"
     info_name=$(basename $PWD)
     #exit
 }
@@ -467,6 +595,7 @@ input_vdr() {
     ls_iso > $old
     s=$(du)
     oldsize=$(echo $s|cut -d \  -f 1)
+    echo "oldsize="$oldsize >> $old
     input=00001.ts
     # 2018-06-09.14.01.50-0.rec
     ffmpeg_i="-i concat:"
@@ -498,9 +627,87 @@ input_vdr() {
     d2=$(dirname $PWD)
     name=$(basename $d2)
     [ ${name:0:1} == "%" ] && name=${name:1}
+    [ "$name" == "_" ] && name=video
     name=../$name
     ifmt="vdr"
     #exit
+}
+
+chapt_mediainfo() {
+#set -x
+meta=ffmetadata
+rm $meta
+echo ";FFMETADATA1" > $meta
+echo ";mediainfo" >> $meta
+mi=mediainfo.txt
+mediainfo $1 > $mi
+found=0
+while read line
+do
+    if  [ "$line" == "" ]
+    then
+        found=0
+    fi
+    if [ $found == 1 ]
+    then
+        # 00:08:28.333 : Chapter 2
+        echo $line
+        if [ "${line:0:8}" == "Duration" ]
+        then
+	    continue
+	fi
+        if [ "${line:0:4}" == "List" ]
+        then
+	    break
+	fi
+	#set -x
+        ch=$line
+        cht=$(echo $line|cut -d ' ' -f 1)
+        chn=$(echo $line|cut -d ' ' -f 3-)
+        hh=${cht:0:2}
+        mm=${cht:3:2}
+        ss=${cht:6:2}
+        ms=${cht:9:3}
+        s=$(date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
+        #s=$(($s*1000+$ms))
+        s="$s$ms"
+        if [ "$cha" != "" ]
+        then
+            echo "[CHAPTER]" >> $meta
+            echo "TIMEBASE=1/1000" >> $meta
+            echo "START="$sa >> $meta
+            echo "#chapter ends at" $cht >> $meta
+            #se=$(($s-1))
+            echo "END="$s >> $meta
+            echo "title="$chna >> $meta
+            #exit
+        fi
+        cha=$ch
+        chta=$cht
+        chna=$chn
+        sa=$s
+        #exit
+    fi
+    if  [ "$line" == "Menu" ]
+    then
+        found=1
+    fi
+done < $mi
+#set -x
+dur=$(grep ^Duration $mi|head -n 1)
+# Duration                                 : 1 h 27 min
+dur2=$(echo $dur|cut -d ':' -f 2)
+h=$(echo $dur2|cut -d \  -f 1)
+m=$(echo $dur2|cut -d \  -f 3)
+s=$(($h*3600+$m*60))
+s=$(($s*1000))
+echo "[CHAPTER]" >> $meta
+echo "TIMEBASE=1/1000" >> $meta
+echo "START="$sa >> $meta
+echo "#chapter ends at" $dur2 >> $meta
+echo "END="$s >> $meta
+echo "title="$chna >> $meta
+#exit
 }
 
 input_dvd() {
@@ -523,6 +730,7 @@ input_dvd() {
     ls_iso $dvd_path > $old
     s=$(du $dvd_path)
     oldsize=$(echo $s|cut -d \  -f 1)
+    echo "oldsize="$oldsize >> $old
     ffmpeg_i="-i concat:"
     input=$dvd_path"VTS_"$tr2"_1.VOB"
     #w="VTS_0"$tr"_*.VOB"
@@ -568,6 +776,231 @@ input_dvd() {
 	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	done
     fi
+    OPT_G="$OPT_G -fflags +genpts"
+    which mediainfo 2> /dev/null
+    if [ $? -eq 0 ]
+    then
+	[ "$nochapt" != "1" ] && chapt_mediainfo $dvd_path"VTS_"$tr2"_0.IFO"
+    fi
+    #exit
+}
+
+chapt_tsmuxer() {
+    #set -x
+    meta=ffmetadata
+    rm $meta
+    echo ";FFMETADATA1" > $meta
+    echo ";tsmuxer" >> $meta
+    temp=tsmuxer.txt
+    tsMuxeR $1 > $temp
+    dur=0
+    while read line
+    do
+	if [ "${line:0:6}" == "Marks:" ]
+	then
+	    marks="$marks ${line:7}"
+	fi
+	if [ "${line:0:9}" == "Duration:" ]
+	then
+	    #set -x
+	    # Duration: 00:26:47.055
+	    dur1=${line:10:8}
+	    durs=$(date -u "+%s" -d "1970-01-01 $dur1")
+	    dur=$(($dur+$durs))
+	    #exit
+	fi
+    done < $temp
+    #exit
+    ch=0
+    for ma in $marks
+    do
+	#echo $ma
+	hh=${ma:0:2}
+	mm=${ma:3:2}
+	ss=${ma:6:2}
+	ms=${ma:9:3}
+	#s=$(($h*3600+$m*60))
+	s=$(date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
+	s="$s$ms"
+	if [ $s -gt 0 ]
+	then
+	    echo "[CHAPTER]" >> $meta
+	    echo "TIMEBASE=1/1000" >> $meta
+	    echo "START="$sa >> $meta
+	    echo "#chapter ends at" $ma >> $meta
+	    echo "END="$s >> $meta
+	    echo "title=Chapter "$ch >> $meta
+	fi
+	ch=$(($ch+1))
+	sa=$s
+	#exit
+    done
+    if [ $dur -gt $sa ]
+    then
+	echo "[CHAPTER]" >> $meta
+	echo "TIMEBASE=1/1000" >> $meta
+	echo "START="$sa >> $meta
+	echo "#chapter ends at" $ma >> $meta
+	echo "END="$dur"000" >> $meta
+	echo "title=Chapter "$ch >> $meta
+    fi
+    #exit
+}
+
+
+BD_size() {
+    # can be wrong
+    #set -x
+    p=0
+    declare -a size
+    fn=0
+    sum=0
+    f=$(printf "$1/BDMV/STREAM/%05d.m2ts" $fn)
+    while [ -e $f ]
+    do
+	s=$(ls -l $f|cut -d \  -f 5)
+	sum=$(($sum+$s))
+	# 4000398
+	if [ $s -lt 4000000000 -o $s -gt 4195000000 ]
+	then
+	    size[$p]=$sum
+	    p=$(($p+1))
+	    sum=0
+	fi
+	fn=$(($fn+1))
+	f=$(printf "$1/BDMV/STREAM/%05d.m2ts" $fn)
+    done
+    echo ${size[$2]}
+    #exit
+}
+
+chapt_BD() {
+    chap_list="$bdir/BDMV/META/ES/esmt_deu_0000"$playlist".xml"
+    meta=ffmetadata
+    rm -f $meta
+    echo ";FFMETADATA1" > $meta
+    echo ";$chap_list" >> $meta
+    echo "title=$fn" >> $meta
+    if [ -e $chap_list ]
+    then
+	#set -x
+	while read line
+	do
+	    #echo $line
+	    l=$(echo $line)
+	    if [ ${l:0:6} == "<scene" ]
+	    then
+		#echo $l
+		e=${l##*entry_point=}
+		e=$(echo $e|cut -d '>' -f 1)
+		ctitle=${l##*<name>}
+		ctitle=$(echo $ctitle|cut -d '<' -f 1)
+		hh=${e:3:2}
+		mm=${e:6:2}
+		ss=${e:9:2}
+		s=$(date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
+		s=$(($s*1000))
+		if [ "$sa" != "" ]
+		then
+		    echo "[CHAPTER]" >> $meta
+		    echo "TIMEBASE=1/1000" >> $meta
+		    echo "START="$sa >> $meta
+		    echo "#chapter ends at" $e >> $meta
+		    echo "END="$s >> $meta
+		    echo "title="$ctitle_a >> $meta
+		fi
+		sa=$s
+		ctitle_a=$ctitle
+	    fi
+	done < $chap_list
+	#exit
+    else
+	which tsMuxeR 2> /dev/null
+	if [ $? -eq 0 ]
+	then
+	    chapt_tsmuxer $mpls
+	else
+	    which mediainfo 2> /dev/null
+	    [ $? -eq 0 ] && chapt_mediainfo $mpls
+	fi
+    fi
+}
+
+input_BD() {
+    #set -x
+    #parameter "--nohw"
+    playlist=$1
+    #fn=$(basename $PWD)
+    #bdir=$dvd_path"/AVCHD"
+    bdir=$dvd_path
+    #oldsize=1
+    details=$bdir/details.txt
+    if [ "$playlist" = "" ]
+    then
+	if [ -e $details ]
+	then
+	    cat $details
+	    iconv -f ISO-8859-1 -t UTF-8 < $details > details.txt
+	    i=0
+	    while read line
+	    do
+		echo -n $i" "
+		echo $line | cut -d ';' -f 1
+		i=$(($i+1))
+	    done < details.txt
+	fi
+	ffmpeg -hide_banner -i bluray:$bdir 2> $t
+	grep -a playlist $t
+	exit
+    fi
+    echo "playlist=$playlist" > $old
+    oldsize=$(BD_size $bdir $playlist)
+    oldsize=$(($oldsize/1024))
+    echo "oldsize="$oldsize >> $old
+    ffmpeg_i="-playlist $playlist -i bluray:$bdir"
+    d=$PWD
+    name=$(basename $d)-$playlist
+    if [ -e $details ]
+    then
+	n=$(($playlist+1))
+	z=$(sed -n $n"p" $details)
+	echo $z
+	name=$(echo $z | cut -d ';' -f 1 | iconv -f ISO-8859-15 -t UTF-8)
+	info_name=$name
+	name=$(echo $name|tr ' ' '_')
+    fi
+    ifmt="BD"
+    mpls=$(printf "$bdir/BDMV/PLAYLIST/%05d.mpls" $playlist)
+    [ ! -e $mpls ] && mpls=$(printf "$bdir/BDMV/PLAYLIST/%05d.mpl" $playlist)
+    ls_iso $mpls >> $old
+    #td=$(ls -l --time-style="+%Y%m%d%H%M" $mpls|cut -d \  -f 6)
+    rec_time=$(date -r $mpls "+%s")
+    #set -x
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	#set -x
+	info=$bdir/vdr/$(($playlist+1))"-info"
+	if [ -e $info ]
+	then
+	    #cat $info
+	    e=$(grep "^E" $info)
+	    # E 887 1286808000 5400 4E 4
+	    rec_time=$(echo $e|cut -d \  -f 3)
+	    BD_info=$info
+	fi
+	#exit
+	dest=$name/$(date "+%F.%H.%M" -d @$rec_time)".$playlist-0.rec"
+	d32=0
+	while [ -e $dest ]
+	do
+	    d32=$(($d32+1))
+	    dest=$name/$(date "+%F.%H.%M" -d @$rec_time)".$playlist-$d32.rec"
+	done
+    else
+	[ "$nochapt" != "1" ] && chapt_BD
+	#chapt_tsmuxer $mpls
+    fi
+    OPT="$OPT -copytb 1"
     #exit
 }
 
@@ -585,6 +1018,11 @@ case "$INPUT" in
 	;;
     "dvd")
 	input_dvd $track
+	;;
+    "BD")
+	#set -x
+	input_BD $track
+	#exit
 	;;
     *)
 	if [ "${INPUT:0:4}" == "dvd:" ]
@@ -711,7 +1149,7 @@ analyze() {
 	s1=$(grep "Video:" $t)
 	[[ "$s1" == *progressive* ]] && scantype="Progressive"
     fi
-    if [ "$scantype" == "Progressive" ]
+    if [ "$scantype" == "Progressive" -o "$scantype" == "" ]
     then
 	deinterlace=
     else
@@ -748,22 +1186,25 @@ analyze() {
 
     #set -x
     map="-map 0:v:0"
-    stro=1
+    stro1=1
     while read line
     do
 	echo $line
+	stro=$stro1
 	line2=${line//,/}
 	codec=$(echo $line|cut -d \  -f 4)
 	codec=${codec//,/}
 	typ=$(echo $line|cut -d \  -f 3)
 	str1=${line#*:}
-	if [ "$ifmt" == "vdr" -o "$ifmt" == "dvd" -o "$ifmt" == "mpg" -o "$ifmt" == "ts" -o "$ifmt" == "m2ts" ]
+	#if [ "$ifmt" == "vdr" -o "$ifmt" == "dvd" -o "$ifmt" == "mpg" -o "$ifmt" == "ts" -o "$ifmt" == "m2ts" -o $ifmt == "BD" -o $ifmt == "MTS" ]
+	if [[ "$str1" == *[* ]]
 	then
 	    str=${str1%%[*}
 	else
 	    str=${str1%%(*}
 	    str=${str%%:*}
 	fi
+	#exit
 	[ "$ifmt" == "avi" ] && str=${str1%%:*}
 	
 	if [ "$select_str2" != "" -a "$typ" != "Video:" ]
@@ -799,6 +1240,7 @@ analyze() {
 	    ar1=$(echo $ar1|cut -d \  -f $nw)
 	    #set -x
 	    [ "${lang[$str]}" != "" ] && OPT="$OPT -metadata:s:$str language=${lang[$str]}"
+	    [ "${streamo[$str]}" != "" ] && str=${streamo[$str]}
 	    #exit
 	fi
 	case $codec in
@@ -814,6 +1256,7 @@ analyze() {
 		    set_h264
 		    #video="-c:v:0 h264_nvenc $preset"
 		fi
+		[ "$mpeg2" == "hevc" ] && set_hevc
 		[ "$mpeg2" == "vp8" ] && set_vp8
 		[ "$mpeg2" == "vp9" ] && set_vp9
 		;;
@@ -973,21 +1416,29 @@ analyze() {
 			#    audio_t="-c:$stro copy"
 			#fi
 		    fi
+		    #[ "$ac3v" != "" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -af:$stro volume=$ac3v"
+		    #[ "$ac3v" != "" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:a:$stro volume=$ac3v"
+		    [ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:$stro volume=$ac3v"
 		fi
 		#if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
 		#then
 		#    audio_t="-c:$stro $aaclib -b:$stro 48k"
 		#fi
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		#exit
 		;;
 	    "eac3")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
-		[ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		if [ "$atyp" != "stereo" ]
+		then
+		    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		else
+		    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		fi
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "dts")
 		map="$map -map 0:$str"
@@ -996,8 +1447,12 @@ analyze() {
 		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
 		[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
 		[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		if [ "$atyp" == "stereo" ]
+		then
+		    audio_t="-c:$stro $aaclib -b:$stro 128k"
+		fi
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "aac")
 		map="$map -map 0:$str"
@@ -1007,9 +1462,11 @@ analyze() {
 		    ar="-ar:$stro 48000"
 		    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
 		fi
-		[ "$aac" == "opus" ] && audio_t="-c:$stro opus -strict -2"
+		#[ "$aac" == "opus" ] && audio_t="-c:$stro opus -strict -2"
+		[ "$aac" == "opus" ] && audio_t="-c:$stro libopus"
+		[ "$aac" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "aac_latm")
 		map="$map -map 0:$str"
@@ -1021,14 +1478,14 @@ analyze() {
 		    audio_t="-c:$stro $aaclib $br"
 		fi
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "mp2")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
 		[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "mp3")
 		#set -x
@@ -1044,18 +1501,19 @@ analyze() {
 		    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
 		fi
 		audio="$audio $audio_t"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		#exit
 		;;
-	    "pcm_dvd"|"pcm_s16le")
+	    "pcm_dvd"|"pcm_s16le"|"pcm_bluray")
 		map="$map -map 0:$str"
-		audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
-		stro=$(($stro+1))
+		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
+		audio="$audio -c:$stro $aaclib -b:$stro 128k"
+		stro1=$(($stro1+1))
 		;;
 	    "opus")
 		map="$map -map 0:$str"
 		audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "dvb_subtitle")
 		map="$map -map 0:$str"
@@ -1065,12 +1523,18 @@ analyze() {
 		else
 		    subt="$subt -c:$stro copy"
 		fi
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
 		;;
 	    "dvd_subtitle"|"subrip"|"ass")
 		map="$map -map 0:$str"
 		subt="$subt -c:$stro copy"
-		stro=$(($stro+1))
+		stro1=$(($stro1+1))
+		;;
+	    "hdmv_pgs_subtitle")
+		[ "$fmt" == "mp4" ] && continue
+		map="$map -map 0:$str"
+		subt="$subt -c:$stro copy"
+		stro1=$(($stro1+1))
 		;;
 	    "dvd_nav_packet"|"bin_data"|"png")
 		continue
@@ -1088,10 +1552,17 @@ transcode() {
     name=$1
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
+    [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
     opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $name"
     echo ffmpeg $opt >> $log_c
     #exit
-    ffmpeg $opt 2>&1 | tee -a $log_c
+    if [ "$quiet" == 1 ]
+    then
+	nice ffmpeg $opt 2>> $log_c
+    else
+	nice ffmpeg $opt 2>&1 | tee -a $log_c
+    fi
+    rm -f ffmetadata
     echo "===========================================================" >> $log_c
     #ffprobe -hide_banner -i $name 2>> $log_c
     ffprobe -hide_banner -i $name 2>$t
@@ -1172,17 +1643,31 @@ copy_vdr() {
     then
 	cp -p info $dest
     else
-	if [ "$ifmt" == "dvd" -a -e ../info.vdr ]
-	then
-	    #set -x
-	    cp ../info.vdr $dest/info
-	    echo "F 25" >> $dest/info
-	    echo "L 99" >> $dest/info
-	    echo "P 50" >> $dest/info
-	    to_utf8 $dest/info
-	else
-	    info_create
-	fi
+	#if [ "$ifmt" == "dvd" -a -e ../info.vdr ]
+	#then
+	case $ifmt in
+	    "dvd")
+		#set -x
+		cp ../info.vdr $dest/info
+		echo "F 25" >> $dest/info
+		echo "L 99" >> $dest/info
+		echo "P 50" >> $dest/info
+		to_utf8 $dest/info
+		;;
+	#else
+	    "BD")
+		if [ "$BD_info" != "" ]
+		then
+		    iconv -f ISO-8859-1 -t UTF-8 < $BD_info > $dest/info
+		else
+		    info_create
+		fi
+		;;
+	    *)
+		info_create
+		;;
+	esac
+	#fi
     fi
     #[ -e marks ] && cp -p marks $dest
     if [ -e marks ]
@@ -1193,6 +1678,11 @@ copy_vdr() {
     fi
     [ -e messages ] && cp -p messages $dest
     [ -e logfile ] && cp -p logfile $dest/logfile1
+    if [ -e logfile1 ]
+    then
+	fd=$(date -r logfile1 "+%Y%m%d%H%M")
+        cp -p logfile1 $dest/logfile".$fd"
+    fi
     [ -e info.txt ] && cp -p info.txt $dest
     if [ -e $vdr ]
     then
@@ -1230,6 +1720,9 @@ copy_file() {
     echo $PWD/$log_c > /tmp/vt-log
     header
     analyze $ffmpeg_i
+    #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
+    #OPT="$OPT -metadata \"creation_time=$(date "+%FT%T" -d @$rec_time)\""
+    OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
     transcode $out
     newsize=$(ls -l $out|cut -d \  -f 5)
     newsize=$(($newsize/1024))
@@ -1245,6 +1738,13 @@ copy() {
 	    ;;
 	"mp4")
 	    copy_file $OUTPUT
+	    ;;
+	#"jpg")
+	#    copy_file $OUTPUT
+	#    ;;
+	*)
+	    echo "-o" $OUTPUT "invalid"
+	    exit 8
 	    ;;
     esac
 }
