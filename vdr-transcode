@@ -2,8 +2,6 @@
 
 # vdr-transcode				jsffm@web.de
 
-# tail -f $(cat /tmp/vt-log) | grep "^frame="
-
 #set -x
 
 OUTPUT=vdr
@@ -49,26 +47,19 @@ aac_6ch_br=256k
 aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
 
 log=vdr-transcode.log
+logs=/var/log/vdr-transcode.log
 t=/tmp/vt
 old=/tmp/vt-old
 vtlog=/tmp/vt-log
 conf1=$(realpath $0)".conf"
 conf=/etc/vdr-transcode.conf
+confs=/etc/vdr-transcode-s.conf
+runs=/var/run/vt_server.pid
+vtc=vt.conf
+lck=vt.lck
 
-#vdr=$VDRDIR/vdr
-which vdr 2> /dev/null
-if [ $? -eq 0 ]
-then
-    vdr=$(which vdr)
-fi
-if [ -e $VDRDIR/vdr ]
-then
-    vdr=$VDRDIR/vdr
-fi
 #exit
 
-v=$(ffmpeg -version)
-v=$(echo $v | cut -d \  -f 3)
 #exit
 
 help() {
@@ -85,8 +76,8 @@ help() {
     echo " --inf"
     echo " --stat       # status"
     echo " -t <n>       # length in seconds"
-    echo " -to <position>"
     echo " -ss <position>"
+    echo " -to <position>"
     echo "Video"
     echo " -h264 copy|hevc|vp8|vp9"
     echo " -mpeg2 copy|h264|hevc|vp8|vp9"
@@ -98,6 +89,7 @@ help() {
     echo " -crop <w:h>"
     echo " --LB             # -vf crop=iw:ih/4*3 -aspect 16:9"
     echo " -zoom <factor>   # crop=iw/<factor>:ih/<factor>"
+    echo " -scale <w:h>|hd720|hd1080|qhd"
     echo " -aspect <aspect> # 16:9|4:3"
     echo " --nohw           # no hardwaredecoding"
     echo "Audio"
@@ -107,90 +99,28 @@ help() {
     echo " -dts copy|ac3|eac3|aac"
     echo " -mp2 copy|aac"
     echo " -mp3 copy|aac"
-    echo " -sel <n-n,n>     # Audio, Subtitle Stream selektieren"
+    echo " -sel <n-n,n>     # audio, subtitle stream select"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
+    echo "Automation"
+    echo " --as               # server start"
+    echo " --ak               # server stop"
+    echo " --conf <parameter> # mark for processing"
+    echo " --alog             # process log"
+    echo " --aq               # process queue"
+    echo " --ac               # check processed"
     echo "Configuration /etc/vdr-transcode.conf"
     echo " -o vdr|mp4|mkv   # default vdr"
     echo " -aac_stereo_br   # default 96k"
     echo " -aac_6ch_br      # default 256k"
     echo " -g <n>           # Goplänge default 50"
-    echo " -crf <n>         # quality h264 default 21, < = besser"
-    echo " -cq <n>          # quality hevc default 28, < = besser"
-    echo " -gq <n>          # quality vp8 default 30, < = besser"
+    echo " -crf <n>         # quality h264 default 21, < = better"
+    echo " -cq <n>          # quality hevc default 28, < = better"
+    echo " -gq <n>          # quality vp8 default 30, < = better"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi"
     echo " -hevcenc hevc_nvenc|hevc_vaapi"
     echo " -aaclib libfdk_aac|libfaac"
     echo " -hwaccel cuvid|vaapi"
     echo " -vdr <path_to_vdr>"
-    exit
-}
-
-status() {
-    # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
-    # /disk2/video/Blindspot/%In_der_Falle/2019-12-19.01.40.108-0.rec
-    # Duration: 00:40:27.48,
-    # fps=430 time=00:20:31.36 50% Comp=273%  8.6x
-    # Size: 2575433 -> 940032
-    # Est: 00:02:19
-
-    #set -x
-    log=$(cat $vtlog)
-    [ ! -e $log ] && exit 8
-    echo $log
-    olddir=$(grep "PWD:" $log)
-    olddir=${olddir:5}
-    oldsize=$(grep "oldsize=" $log)
-    oldsize=${oldsize#*=}
-    # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
-    dur=$(grep "Duration:" $log|head -n 2)
-    #echo $dur
-    dur=$(echo $dur|cut -d \  -f 2)
-    dur=${dur:0:8}
-    durs=$(date -u "+%s" -d "1970-01-01 $dur")
-    fps1=$(grep "Video:" $log|head -n 1)
-    # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
-    fps1=${fps1%fps,*}
-    nw=$(echo $fps1|wc -w)
-    fps1=$(echo $fps1|cut -d \  -f $nw)
-    #echo fps1=$fps1
-    echo "Duration: $dur, fps=$fps1"
-    # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
-    #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
-    # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
-    #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
-    l=$(tr '\r' '\n' < $log | grep -a "^frame=" | tail -n 1)
-    #echo $l
-    dur2=${l#*time=}
-    dur2=${dur2:0:8}
-    dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
-    fps=${l#*fps=}
-    fps=$(echo $fps|cut -d \  -f 1)
-    size=${l#*size=}
-    size=$(echo $size|cut -d \  -f 1)
-    size=${size:0:-2}
-    speed=${l#*speed=}
-    time=${l##*time=}
-    time=$(echo $time | cut -d \  -f 1)
-    t2=$(date +"%s" -u -d "1970-01-01 ${time:0:8}")
-    restz=$(($durs-$t2))
-    prz=$(($dur2s*100/$durs))
-    prm=$(($dur2s*1000/$durs))
-    #echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
-    #printf "fps=%3d, size=%d, time=%s, speed=%s\n" $fps $size $dur2 $speed
-    if [ $prz -gt 0 ]
-    then
-	#set -x
-	size2=$(($size*1000/$prm))
-	exptime=$(($restz*$fps1/$fps))
-	#echo $prz"% exp. size="$size2" exp. time="$(date "+%T"  -u -d @$exptime)
-	exp=$(date "+%T" -u -d @$exptime)
-	przs=$(($size2*100/$oldsize))
-	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
-	echo "fps=$fps time=$dur2 $prz% $speed"
-	echo "Size: $oldsize -> $size2 $przs%"
-	echo "Est: $exp"
-	#date -u -d @$exptime
-    fi
     exit
 }
 
@@ -209,7 +139,8 @@ parameter() {
     case $1 in
 	"-h")
 	    TODO=$1
-	    help
+	    INPUT=none
+	    #help
 	    ;;
 	"-i")
 	    INPUT=$2
@@ -233,7 +164,8 @@ parameter() {
 	    ;;
 	"--stat")
 	    TODO=$1
-	    status
+	    INPUT=none
+	    #status
 	    ;;
 	"-o")
 	    OUTPUT=$2
@@ -347,6 +279,20 @@ parameter() {
 	"-zoom")
 	    add_vf "crop=iw/$2:ih/$2"
 	    ;;
+	"-scale")
+	    scale=$2
+	    case "$scale" in
+		"hd720")
+		    scale="1280:720"
+		    ;;
+		"hd1080")
+		    scale="1920:1080"
+		    ;;
+		"qhd")
+		    scale="960:540"
+		    ;;
+	    esac
+	    ;;
 	"-aspect")
 	    aspect="-aspect $2"
 	    ;;
@@ -356,12 +302,12 @@ parameter() {
 	"-vol")
 	    #set -x
 	    str=${2%=*}
-	    v=${2#*=}
-	    if [ "$str" == "$v" ]
+	    vol=${2#*=}
+	    if [ "$str" == "$vol" ]
 	    then
-		OPT="$OPT -filter:a volume=$v"
+		OPT="$OPT -filter:a volume=$vol"
 	    else
-		OPT="$OPT -filter:$str volume=$v"
+		OPT="$OPT -filter:$str volume=$vol"
 	    fi
 	    #exit
 	    ;;
@@ -418,6 +364,38 @@ parameter() {
 	    ;;
 	"-stro")
 	    set_streamo $2
+	    ;;
+	"--as")
+	    TODO=$1
+	    INPUT=none
+	    #server
+	    ;;
+	"--ak")
+	    TODO=$1
+	    INPUT=none
+	    #server_kill
+	    ;;
+	"--conf")
+	    TODO=$1
+	    INPUT=none
+	    #pa=$@
+	    #auto_conf
+	    ;;
+	"--alog")
+	    cat $logs
+	    exit
+	    ;;
+	"--aq")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"--ac")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"--auto")
+	    auto=1
+	    #quiet=1
 	    ;;
 	*)
 	    echo $1 wrong
@@ -483,12 +461,16 @@ do
     if [ "${1:0:1}" == "-" -a "${1:1:1}" != "-" ]
     then
 	parameter_log="$parameter_log $1 $2\n"
+	parameter_auto="$parameter_auto $1 $2|"
 	shift
     else
 	parameter_log="$parameter_log $1\n"
+	parameter_auto="$parameter_auto $1|"
     fi
     shift
 done
+#[ "$auto" == "1" ] && read_configuration $vtc
+[ -e $vtc ] && read_configuration $vtc
 #exit
 
 #set -x
@@ -515,6 +497,81 @@ done
 unset IFS
 #IFS=
 #exit
+
+status() {
+    # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
+    # /disk2/video/Blindspot/%In_der_Falle/2019-12-19.01.40.108-0.rec
+    # Duration: 00:40:27.48,
+    # fps=430 time=00:20:31.36 50% Comp=273%  8.6x
+    # Size: 2575433 -> 940032
+    # Est: 00:02:19
+
+    #set -x
+    #log=$(cat $vtlog)
+    log=$1
+    [ ! -e $log ] && exit 8
+    echo $log
+    olddir=$(grep "PWD:" $log)
+    olddir=${olddir:5}
+    oldsize=$(grep "oldsize=" $log)
+    oldsize=${oldsize#*=}
+    # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
+    dur=$(grep "Duration:" $log|head -n 2)
+    #echo $dur
+    dur=$(echo $dur|cut -d \  -f 2)
+    dur=${dur:0:8}
+    durs=$(date -u "+%s" -d "1970-01-01 $dur")
+    fps1=$(grep "Video:" $log|head -n 1)
+    # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
+    fps1=${fps1%fps,*}
+    nw=$(echo $fps1|wc -w)
+    fps1=$(echo $fps1|cut -d \  -f $nw)
+    #echo fps1=$fps1
+    echo "Duration: $dur, fps=$fps1"
+    # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
+    #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
+    # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
+    #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
+    l=$(tr '\r' '\n' < $log | grep -a "^frame=" | tail -n 1)
+    #echo $l
+    dur2=${l#*time=}
+    dur2=${dur2:0:8}
+    dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
+    fps=${l#*fps=}
+    fps=$(echo $fps|cut -d \  -f 1)
+    size=${l#*size=}
+    size=$(echo $size|cut -d \  -f 1)
+    size=${size:0:-2}
+    speed=${l#*speed=}
+    time=${l##*time=}
+    time=$(echo $time | cut -d \  -f 1)
+    t2=$(date +"%s" -u -d "1970-01-01 ${time:0:8}")
+    restz=$(($durs-$t2))
+    prz=$(($dur2s*100/$durs))
+    prm=$(($dur2s*1000/$durs))
+    if [[ "$l" == *"drop="* ]]
+    then
+	drop=${l##*drop=}
+	drop="drop="$(echo $drop | cut -d \  -f 1)
+    fi
+    #echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
+    #printf "fps=%3d, size=%d, time=%s, speed=%s\n" $fps $size $dur2 $speed
+    if [ $prz -gt 0 ]
+    then
+	#set -x
+	size2=$(($size*1000/$prm))
+	exptime=$(($restz*$fps1/$fps))
+	#echo $prz"% exp. size="$size2" exp. time="$(date "+%T"  -u -d @$exptime)
+	exp=$(date "+%T" -u -d @$exptime)
+	przs=$(($size2*100/$oldsize))
+	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
+	echo "fps=$fps time=$dur2 $prz% $speed $drop"
+	echo "Size: $oldsize -> $size2 $przs%"
+	[ $restz -gt 0 ] && echo "Est: $exp"
+	#date -u -d @$exptime
+    fi
+    #exit
+}
 
 ls_iso() {
     #set -x
@@ -584,12 +641,63 @@ input_file() {
     #exit
 }
 
+input_vdra() {
+    #set -x
+    if [ ! -e 001.vdr ]
+    then
+	echo "No vdr recording"
+	exit 8
+    fi
+    ls_iso > $old
+    s=$(du)
+    oldsize=$(echo $s|cut -d \  -f 1)
+    echo "oldsize="$oldsize >> $old
+    input=001.vdr
+    ffmpeg_i="-i concat:"
+    w="0*.vdr"
+    d=
+    for r in $w
+    do
+	ffmpeg_i=$ffmpeg_i$d$r
+	d="|"
+    done
+    # 2011-09-26.19.28.40.01.rec
+    d1=$(basename $PWD)
+    dd1=${d1:0:10}
+    dd=${d1:0:16}
+    dh=${d1:11:2}
+    dm=${d1:14:2}
+    rec_time=$(date "+%s" -d "$dd1 $dh:$dm")
+    #d3=$(echo $d1 | cut -d '.' -f 4-)
+    d3="1-0.rec"
+    dest=../$dd.$d3
+    d30=$(echo $d3|cut -d '.' -f 1)
+    d31=$(echo $d30|cut -d '-' -f 1)
+    d32=$(echo $d30|cut -d '-' -f 2)
+    while [ -e $dest ]
+    do
+        d32=$(($d32+1))
+        #dd2=$(date -u "+%F.%H.%M" -d @$s)
+        #dest=$dd2.$d31-$d32.rec
+        dest=../$dd.$d31-$d32.rec
+    done
+    d2=$(dirname $PWD)
+    name=$(basename $d2)
+    [ ${name:0:1} == "%" ] && name=${name:1}
+    [ "$name" == "_" ] && name=video
+    name=../$name
+    ifmt="vdr"
+    #exit
+}
+
 input_vdr() {
     #set -x
     if [ ! -e 00001.ts ]
     then
-	echo "No vdr recording"
-	exit 8
+	input_vdra
+	return
+	#echo "No vdr recording"
+	#exit 8
     fi
     #ls -l --time-style long-iso * > $old
     ls_iso > $old
@@ -1024,6 +1132,9 @@ case "$INPUT" in
 	input_BD $track
 	#exit
 	;;
+    "none")
+	none=
+	;;
     *)
 	if [ "${INPUT:0:4}" == "dvd:" ]
 	then
@@ -1035,22 +1146,28 @@ case "$INPUT" in
 	;;
 esac
 
-if [ "$hwaccel" == "cuvid" ]
-then
-    #OPT_G="$OPT_G -hwaccel cuvid"
-    HWACC="-hwaccel cuvid"
-    #deinterlace="-vf yadif_cuda"
-    deinterlace="yadif_cuda"
-fi
-if [ "$hwaccel" == "vaapi" ]
-then
-    #OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-    #OPT_G="$OPT_G -hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-    HWACC="-hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
-    #deinterlace="-vf deinterlace_vaapi"
-    deinterlace="deinterlace_vaapi"
-fi
+
+case "$hwaccel" in
+    "cuvid")
+	#OPT_G="$OPT_G -hwaccel cuvid"
+	HWACC="-hwaccel cuvid"
+	#deinterlace="-vf yadif_cuda"
+	deinterlace="yadif_cuda"
+	[ "$scale" != "" ] && add_vf scale_cuda=$scale
+	;;
+    "vaapi")
+	#OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	#OPT_G="$OPT_G -hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	HWACC="-hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	#deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
+	#deinterlace="-vf deinterlace_vaapi"
+	deinterlace="deinterlace_vaapi"
+	[ "$scale" != "" ] && add_vf scale_vaapi=$scale
+	;;
+    *)
+	[ "$scale" != "" ] && add_vf scale=$scale
+	;;
+esac
 
 streams() {
     #set -x
@@ -1225,6 +1342,7 @@ analyze() {
 	    fps1=${line%fps*}
 	    nw=$(echo $fps1|wc -w)
 	    fps=$(echo $fps1|cut -d \  -f $nw)
+	    vcodec=$codec
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
@@ -1550,6 +1668,7 @@ analyze() {
 
 transcode() {
     name=$1
+    [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
@@ -1585,6 +1704,8 @@ log_conf() {
 
 header() {
     d=`date +"%F %T"`
+    v=$(ffmpeg -version)
+    v=$(echo $v | cut -d \  -f 3)
     echo "Start $d vdr-transcode ffmpeg Version $v" > $log_c
     uname -p >> $log_c
     if [ -e /proc/asound/NVidia ]
@@ -1595,6 +1716,7 @@ header() {
     log_conf $conf
     log_conf $conf1
     echo -e -n "Parameter:\n" $parameter_log >> $log_c
+    log_conf $vtc
     echo "PWD:" $PWD >> $log_c
     cat $old >> $log_c
 }
@@ -1639,36 +1761,44 @@ copy_vdr() {
     #OPT="$OPT -mpegts_flags system_b"
     #OPT="$OPT -mpegts_flags latm"
     transcode $dest/00001.ts
-    if [ -e info ]
-    then
-	cp -p info $dest
-    else
+    #if [ -e info ]
+    #then
+	#cp -p info $dest
+    #else
 	#if [ "$ifmt" == "dvd" -a -e ../info.vdr ]
 	#then
-	case $ifmt in
-	    "dvd")
-		#set -x
-		cp ../info.vdr $dest/info
+    case $ifmt in
+	"vdr")
+	    [ -e info ] && cp -p info $dest
+	    if [ -e info.vdr ]
+	    then
+		cp -p info.vdr $dest/info
 		echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
-		to_utf8 $dest/info
-		;;
-	#else
-	    "BD")
-		if [ "$BD_info" != "" ]
-		then
-		    iconv -f ISO-8859-1 -t UTF-8 < $BD_info > $dest/info
-		else
-		    info_create
-		fi
-		;;
-	    *)
+	    fi
+	    ;;
+	"dvd")
+	    #set -x
+	    cp ../info.vdr $dest/info
+	    echo "F 25" >> $dest/info
+	    echo "L 99" >> $dest/info
+	    echo "P 50" >> $dest/info
+	    to_utf8 $dest/info
+	    ;;
+	"BD")
+	    if [ "$BD_info" != "" ]
+	    then
+		iconv -f ISO-8859-1 -t UTF-8 < $BD_info > $dest/info
+	    else
 		info_create
-		;;
-	esac
-	#fi
-    fi
+	    fi
+	    ;;
+	*)
+	    info_create
+	    ;;
+    esac
+    #fi
     #[ -e marks ] && cp -p marks $dest
     if [ -e marks ]
     then
@@ -1684,6 +1814,16 @@ copy_vdr() {
         cp -p logfile1 $dest/logfile".$fd"
     fi
     [ -e info.txt ] && cp -p info.txt $dest
+    #vdr=$VDRDIR/vdr
+    which vdr 2> /dev/null
+    if [ $? -eq 0 ]
+    then
+	vdr=$(which vdr)
+    fi
+    if [ -e $VDRDIR/vdr ]
+    then
+	vdr=$VDRDIR/vdr
+    fi
     if [ -e $vdr ]
     then
 	echo genindex
@@ -1693,7 +1833,8 @@ copy_vdr() {
     fi
     if [ "$ifmt" == "vdr" ]
     then
-	is1=$(ls -l index|cut -d \  -f 5)
+	[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
+	[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
 	is2=$(ls -l $dest/index|cut -d \  -f 5)
 	echo "===========================================================" >> $log_c
 	echo "index=$is1" >> $log_c
@@ -1749,6 +1890,121 @@ copy() {
     esac
 }
 
+server() {
+    #set -x
+    if [ -e $runs ]
+    then
+        oldpid=$(cat $runs)
+        if [ -e /proc/$oldpid ]
+        then
+            echo "already running"
+            exit 99
+        fi
+    fi
+    #PID=$(pidof $0)
+    echo $$ > $runs
+    while (true) do
+	while read line
+	do
+	    if [ -e $line ]
+	    then
+		for rh in $(find $line -name $vtc)
+		do
+		    dh=$(dirname $rh)
+		    if [ ! -e $dh/$vtc ]
+		    then
+		        continue
+		    fi
+		    cd $dh
+		    if [ ! -e $lck ]
+		    then
+			touch $lck
+			d=`date +"%F %T"`
+			echo $d $dh >> $logs
+			vdr-transcode --auto > vt.log 2> vt.err
+		    fi
+		done
+	    fi
+	done < $confs
+	sleep 1m
+    done
+    rm $runs
+    exit
+}
+
+server_kill() {
+    if [ -e $runs ]
+    then
+        pid=$(cat $runs)
+        if [ -e /proc/$pid ]
+        then
+            kill -15 $pid
+        fi
+    fi
+    exit
+}
+
+auto_queue() {
+    #set -x
+    while read line
+    do
+	if [ -e $line ]
+	then
+	    for rh in $(find $line -name $vtc)
+	    do
+		echo $rh
+	    done
+	fi
+    done < $confs
+    exit
+}
+
+auto_check() {
+    #set -x
+    t=/tmp/vtc
+    tac $logs > $t
+    #cat $t
+    while read line
+    do
+	c=$(echo $line | cut -d \  -f 3-)
+	[ ! -e $c ] && continue
+	ext=${c##*.}
+	if [ "$ext" == "rec" ]
+	then
+	    c2=$(cat $c/dest)
+	    [ ! -e $c2 ] && continue
+	    status $c2
+	    c2=$(dirname $c2)
+	    #s=$(ls -l $c/index|cut -d \  -f 5)
+	    #echo "index" $s
+	    #s=$(ls -l $c2/index|cut -d \  -f 5)
+	    #echo "index" $s
+	    grep "index=" $c2/logfile
+	    grep "Duration:" $c2/logfile | tail -n 2
+	fi
+    done < $t
+    exit
+}
+
+auto_conf() {
+    #set -x
+    #echo $parameter_log
+    #echo $parameter_auto
+    #IFS=$'\n'
+    #IFS='\n'
+    IFS='|'
+    for p in $parameter_auto
+    do
+	#p=$(echo $p)
+	[ "${p:0:1}" == " " ] && p=${p:1}
+	#echo $p
+	[ "$p" == "--conf" ] && continue
+	echo $p >> $vtc
+    done
+    cat $vtc
+    exit
+}
+
 start=$(date +"%s")
 
 #set -x
@@ -1763,7 +2019,23 @@ case $TODO in
 	inf
 	;;
     "--stat")
-	status
+	status $(cat $vtlog)
+	exit
+	;;
+    "--as")
+	server
+	;;
+    "--ak")
+	server_kill
+	;;
+    "--aq")
+	auto_queue
+	;;
+    "--ac")
+	auto_check
+	;;
+    "--conf")
+	auto_conf
 	;;
     *)
 	copy
@@ -1774,6 +2046,7 @@ ende=$(date +"%s")
 sek=$(($ende-$start))
 
 echo "===========================================================" >> $log_c
+[ -e $vtc ] && mv $vtc $vtc.rdy
 cp -p $log_c $t
 grep "Duration:" $t >> $log_c
 echo "Alt" $oldsize >> $log_c
@@ -1783,3 +2056,4 @@ echo -n "Dauer: " >> $log_c
 date -u -d @$sek "+%T" >> $log_c
 d=`date +"%F %T"`
 echo "Ende" $d >> $log_c
+rm -f $lck
