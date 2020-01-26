@@ -102,7 +102,7 @@ help() {
     echo " -sel <n-n,n>     # audio, subtitle stream select"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
     echo "Automation"
-    echo " --as               # server start"
+    echo " --as &             # server start, search pathes in /etc/vdr-transcode-s.conf"
     echo " --ak               # server stop"
     echo " --conf <parameter> # mark for processing"
     echo " --alog             # process log"
@@ -112,13 +112,13 @@ help() {
     echo " -o vdr|mp4|mkv   # default vdr"
     echo " -aac_stereo_br   # default 96k"
     echo " -aac_6ch_br      # default 256k"
-    echo " -g <n>           # Goplänge default 50"
+    echo " -g <n>           # goplength default 50"
     echo " -crf <n>         # quality h264 default 21, < = better"
     echo " -cq <n>          # quality hevc default 28, < = better"
     echo " -gq <n>          # quality vp8 default 30, < = better"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi"
     echo " -hevcenc hevc_nvenc|hevc_vaapi"
-    echo " -aaclib libfdk_aac|libfaac"
+    echo " -aaclib libfdk_aac|libfaac|aac"
     echo " -hwaccel cuvid|vaapi"
     echo " -vdr <path_to_vdr>"
     exit
@@ -397,6 +397,9 @@ parameter() {
 	    auto=1
 	    #quiet=1
 	    ;;
+	"--apc")
+	    apply_codec=1
+	    ;;
 	*)
 	    echo $1 wrong
 	    exit 8
@@ -560,7 +563,12 @@ status() {
     then
 	#set -x
 	size2=$(($size*1000/$prm))
-	exptime=$(($restz*$fps1/$fps))
+	if [[ "$fps1" == *.* ]]
+	then
+	    exptime=$(echo "$restz*$fps1/$fps"|bc)
+	else
+	    exptime=$(($restz*$fps1/$fps))
+	fi
 	#echo $prz"% exp. size="$size2" exp. time="$(date "+%T"  -u -d @$exptime)
 	exp=$(date "+%T" -u -d @$exptime)
 	przs=$(($size2*100/$oldsize))
@@ -835,33 +843,41 @@ input_dvd() {
     else
 	dvd_path="VIDEO_TS/"
     fi
-    ls_iso $dvd_path > $old
-    s=$(du $dvd_path)
-    oldsize=$(echo $s|cut -d \  -f 1)
-    echo "oldsize="$oldsize >> $old
+    #set -x
+    rm -f $old
+    if [ "${dvd_path:0:5}" == "/mnt/" ]
+    then
+	p=$(mount | grep $(dirname $dvd_path) | cut -d \  -f 1)
+	echo $p > $old
+    fi
+    ls_iso $dvd_path >> $old
+    #exit
+    #s=$(du $dvd_path)
+    #oldsize=$(echo $s|cut -d \  -f 1)
     ffmpeg_i="-i concat:"
     input=$dvd_path"VTS_"$tr2"_1.VOB"
     #w="VTS_0"$tr"_*.VOB"
-    d=
-    #for r in $w
-    #do
-	#ffmpeg_i=$ffmpeg_i$d$r
-	#d="|"
-    #done
     i=1
     del=
+    sum=0
     while [ -e $dvd_path"VTS_"$tr2"_$i.VOB" ]
     do
 	r=$dvd_path"VTS_"$tr2"_$i.VOB"
         #echo $r
+	s=$(ls -l $r|cut -d \  -f 5)
+	sum=$(($sum+$s))
         ffmpeg_i=$ffmpeg_i$del$r
         del="|"
         i=$(($i+1))
     done
+    oldsize=$(($sum/1024))
+    echo "oldsize="$oldsize >> $old
+    #exit
     #d=$(dirname $PWD)
     d=$PWD
     #name=../$(basename $d)-$tr
     name=$(basename $d)-$tr
+    info_name=$(echo $(basename $d)|tr '_' ' ')
     ifmt="dvd"
     if [ "$OUTPUT" == "vdr" ]
     then
@@ -1195,6 +1211,7 @@ set_h264() {
     video="-c:v:0 $h264enc $preset $gop $vf $aspect"
     #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
+    vcodec="h264"
 }
 
 set_hevc() {
@@ -1215,6 +1232,7 @@ set_hevc() {
     video="-c:v $hevcenc $preset $gop $vf $aspect"
     #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
+    vcodec="hevc"
 }
 
 set_vp8() {
@@ -1321,6 +1339,11 @@ analyze() {
 	    str=${str1%%(*}
 	    str=${str%%:*}
 	fi
+	if [ "$ifmt" == "wmv" ]
+	then
+	    str=${str1%%(*}
+	    str=${str%%:*}
+	fi
 	#exit
 	[ "$ifmt" == "avi" ] && str=${str1%%:*}
 	
@@ -1342,7 +1365,7 @@ analyze() {
 	    fps1=${line%fps*}
 	    nw=$(echo $fps1|wc -w)
 	    fps=$(echo $fps1|cut -d \  -f $nw)
-	    vcodec=$codec
+	    ivcodec=$codec
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
@@ -1381,20 +1404,6 @@ analyze() {
 	    "h264")
 		#set -x
 		video="-c:v copy"
-		#if [ "$h264" == "hevc" ]
-		#then
-		#    decode_cuvid="-c:v h264_cuvid"
-		#    set_hevc
-		#    #video="-c:v:0 $hevcenc $preset"
-		#fi
-		#echo $h264
-		#if [ "$h264" == "h264" -o "$h264" == "copy" -a "$fpso" != "" ]
-		#then
-		#    decode_cuvid="-c:v h264_cuvid"
-		#    set_h264
-		#fi
-		#[ "$h264" == "vp8" ] && set_vp8
-		#[ "$h264" == "vp9" ] && set_vp9
 		case $h264 in
 		    "hevc")
 			decode_cuvid="-c:v h264_cuvid"
@@ -1427,19 +1436,6 @@ analyze() {
 		;;
 	    "hevc")
 		video="-c:v copy"
-		#if [ "$hevc" == "h264" ]
-		#then
-		#    decode_cuvid="-c:v hevc_cuvid"
-		#    deinterlace=
-		#    set_h264
-		#    #video="-c:v:0 h264_nvenc $preset"
-		#fi
-		#if [ "$hevc" == "hevc" ]
-		#then
-		#    decode_cuvid="-c:v hevc_cuvid"
-		#    deinterlace=
-		#    set_hevc
-		#fi
 		deinterlace=
 		case $hevc in
 		    "h264")
@@ -1486,8 +1482,9 @@ analyze() {
 		fi
 		[ "$mpeg4" == "vp8" ] && set_vp8
 		[ "$mpeg4" == "vp9" ] && set_vp9
+		#OPT_G="$OPT_G -bsf mpeg4_unpack_bframes"
 		;;
-	    "vp6f")
+	    "vp6f"|"flv1")
 		parameter --nohw
 		video="-c:v copy"
 		[ "$OUTPUT" == "vdr" ] && set_h264
@@ -1505,6 +1502,14 @@ analyze() {
 		[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$vp9" == "h264" ]  && set_h264
 		[ "$vp9" == "hevc" ]  && set_hevc
+		;;
+	    "wmv3")
+		set_h264
+		;;
+	    "wmapro")
+		map="$map -map 0:$str"
+		audio="$audio -c:$stro $aaclib -b:$stro $aac_6ch_br"
+		stro1=$(($stro1+1))
 		;;
 	    "ac3")
 		#set -x
@@ -1565,6 +1570,7 @@ analyze() {
 		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
 		[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
 		[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 2"
 		if [ "$atyp" == "stereo" ]
 		then
 		    audio_t="-c:$stro $aaclib -b:$stro 128k"
@@ -1602,6 +1608,7 @@ analyze() {
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
 		[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 3"
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
@@ -1626,6 +1633,7 @@ analyze() {
 		map="$map -map 0:$str"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
 		audio="$audio -c:$stro $aaclib -b:$stro 128k"
+		#audio="$audio -c:$stro $aaclib -vdr 2"
 		stro1=$(($stro1+1))
 		;;
 	    "opus")
@@ -1757,6 +1765,7 @@ copy_vdr() {
 	echo $PWD/$log_c > $vtlog
     fi
     header
+    [ "$auto" != "1" ] && echo $d $PWD >> $logs
     analyze $ffmpeg_i
     #OPT="$OPT -mpegts_flags system_b"
     #OPT="$OPT -mpegts_flags latm"
@@ -1772,7 +1781,8 @@ copy_vdr() {
 	    [ -e info ] && cp -p info $dest
 	    if [ -e info.vdr ]
 	    then
-		cp -p info.vdr $dest/info
+		#cp -p info.vdr $dest/info
+		iconv -f ISO-8859-1 -t UTF-8 < info.vdr > $dest/info
 		echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
@@ -1780,10 +1790,15 @@ copy_vdr() {
 	    ;;
 	"dvd")
 	    #set -x
-	    cp ../info.vdr $dest/info
-	    echo "F 25" >> $dest/info
-	    echo "L 99" >> $dest/info
-	    echo "P 50" >> $dest/info
+	    if [ -e ../info.vdr ]
+	    then
+		cp ../info.vdr $dest/info
+		echo "F 25" >> $dest/info
+		echo "L 99" >> $dest/info
+		echo "P 50" >> $dest/info
+	    else
+		info_create
+	    fi
 	    to_utf8 $dest/info
 	    ;;
 	"BD")
@@ -1814,6 +1829,17 @@ copy_vdr() {
         cp -p logfile1 $dest/logfile".$fd"
     fi
     [ -e info.txt ] && cp -p info.txt $dest
+    if [ "$apply_codec" == "1" ]
+    then
+	#set -x
+	if [ -e info.txt ]
+	then
+	    i=$(cat info.txt)
+	    echo "$i $vcodec" > $dest/info.txt
+	else
+	    echo $vcodec > $dest/info.txt
+	fi
+    fi
     #vdr=$VDRDIR/vdr
     which vdr 2> /dev/null
     if [ $? -eq 0 ]
@@ -1827,7 +1853,7 @@ copy_vdr() {
     if [ -e $vdr ]
     then
 	echo genindex
-        $vdr --genindex="./$dest"
+        nice $vdr --genindex="./$dest"
     else
 	echo $vdr "not found" >> $log_c
     fi
@@ -1964,6 +1990,7 @@ auto_check() {
     t=/tmp/vtc
     tac $logs > $t
     #cat $t
+    sum=0
     while read line
     do
 	c=$(echo $line | cut -d \  -f 3-)
@@ -1971,6 +1998,7 @@ auto_check() {
 	ext=${c##*.}
 	if [ "$ext" == "rec" ]
 	then
+	    [ ! -e $c/dest ] && continue
 	    c2=$(cat $c/dest)
 	    [ ! -e $c2 ] && continue
 	    status $c2
@@ -1981,8 +2009,10 @@ auto_check() {
 	    #echo "index" $s
 	    grep "index=" $c2/logfile
 	    grep "Duration:" $c2/logfile | tail -n 2
+	    sum=$(($sum+$oldsize))
 	fi
     done < $t
+    echo "Summe="$sum $(($sum/1025))"GB"
     exit
 }
 
