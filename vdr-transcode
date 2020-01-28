@@ -119,7 +119,7 @@ help() {
     echo " -h264enc libx264|h264_nvenc|h264_vaapi"
     echo " -hevcenc hevc_nvenc|hevc_vaapi"
     echo " -aaclib libfdk_aac|libfaac|aac"
-    echo " -hwaccel cuvid|vaapi"
+    echo " -hwaccel cuvid|vaapi|vdpau"
     echo " -vdr <path_to_vdr>"
     exit
 }
@@ -1180,6 +1180,11 @@ case "$hwaccel" in
 	deinterlace="deinterlace_vaapi"
 	[ "$scale" != "" ] && add_vf scale_vaapi=$scale
 	;;
+    "vdpau")
+	export DISPLAY=:0.0
+	HWACC="-hwaccel vdpau"
+	[ "$scale" != "" ] && add_vf scale=$scale
+	;;
     *)
 	[ "$scale" != "" ] && add_vf scale=$scale
 	;;
@@ -1197,6 +1202,7 @@ inf() {
 }
 
 set_h264() {
+    #set -x
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     level="-level $h264_level"
@@ -1212,6 +1218,7 @@ set_h264() {
     #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
     vcodec="h264"
+    #exit
 }
 
 set_hevc() {
@@ -1275,6 +1282,7 @@ analyze() {
     #set -x
     ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     cat $t
+    #exit
     which mediainfo 2> /dev/null
     if [ $? -eq 0 ]
     then
@@ -1965,7 +1973,11 @@ server_kill() {
         if [ -e /proc/$pid ]
         then
             kill -15 $pid
+        else
+	    echo "not running"
         fi
+    else
+	echo "not running"
     fi
     exit
 }
