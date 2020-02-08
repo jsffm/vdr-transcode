@@ -100,6 +100,7 @@ help() {
     echo " -mp2 copy|aac"
     echo " -mp3 copy|aac"
     echo " -sel <n-n,n>     # audio, subtitle stream select"
+    echo " -vol <factor>|<stream>=<factor> # Volume"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
     echo "Automation"
     echo " --as &             # server start, search pathes in /etc/vdr-transcode-s.conf"
@@ -201,6 +202,20 @@ parameter() {
 	"-test")
 	    OPT="$OPT $2"
 	    ;;
+	"-test2")
+	    OPT="$OPT $2 $3"
+	    #shift
+	    ;;
+	"-test3")
+	    OPT="$OPT $2 $3 $4"
+	    #shift
+	    #shift
+	    ;;
+	"-test3g")
+	    OPT_G="$OPT_G $2 $3 $4"
+	    #shift
+	    #shift
+	    ;;
 	"-vc1")
 	    vc1=$2
 	    ;;
@@ -240,7 +255,7 @@ parameter() {
 	"-aac")
 	    aac=$2
 	    ;;
-	"-aac_stereo_br")
+	"-aac_stereo_br"|"-aac_br")
 	    aac_stereo_br=$2
 	    ;;
 	"aac_6ch_br")
@@ -460,7 +475,7 @@ set_streamo() {
 #declare -a $parametera_log
 while [ $1 ]
 do
-    parameter $1 $2
+    parameter $1 $2 $3 $4
     if [ "${1:0:1}" == "-" -a "${1:1:1}" != "-" ]
     then
 	parameter_log="$parameter_log $1 $2\n"
@@ -516,6 +531,12 @@ status() {
     echo $log
     olddir=$(grep "PWD:" $log)
     olddir=${olddir:5}
+    info=$olddir/info
+    if [ -e $info ]
+    then
+	sender=$(grep ^C $info|cut -d \  -f 3-)
+	#echo $sender
+    fi
     oldsize=$(grep "oldsize=" $log)
     oldsize=${oldsize#*=}
     # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
@@ -530,7 +551,7 @@ status() {
     nw=$(echo $fps1|wc -w)
     fps1=$(echo $fps1|cut -d \  -f $nw)
     #echo fps1=$fps1
-    echo "Duration: $dur, fps=$fps1"
+    echo "Duration: $dur, fps=$fps1 $sender"
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
     #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
     # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
@@ -552,6 +573,7 @@ status() {
     restz=$(($durs-$t2))
     prz=$(($dur2s*100/$durs))
     prm=$(($dur2s*1000/$durs))
+    unset drop
     if [[ "$l" == *"drop="* ]]
     then
 	drop=${l##*drop=}
@@ -586,7 +608,7 @@ ls_iso() {
     e=$(readlink $(which ls))
     if [ "$e" == "" ]
     then
-	ls -l --time-style long-iso $1
+	ls -lL --time-style long-iso $1
     else
 	ls -l $1
     fi
@@ -709,7 +731,7 @@ input_vdr() {
     fi
     #ls -l --time-style long-iso * > $old
     ls_iso > $old
-    s=$(du)
+    s=$(du -L)
     oldsize=$(echo $s|cut -d \  -f 1)
     echo "oldsize="$oldsize >> $old
     input=00001.ts
@@ -1197,6 +1219,12 @@ streams() {
     exit
 }
 inf() {
+    info=info
+    if [ -e $info ]
+    then
+	sender=$(grep ^C $info|cut -d \  -f 3-)
+	echo $sender
+    fi
     ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     exit
 }
@@ -1277,6 +1305,15 @@ set_vp9() {
     fi
 }
 
+
+set_aac() {
+    if [ "$atyp" != "stereo" ]
+    then
+	audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+    else
+	audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+    fi
+}
 
 analyze() {
     #set -x
@@ -1526,12 +1563,13 @@ analyze() {
 		[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
 		if [ "$ac3" == "aac" ]
 		then
-		    if [ "$atyp" != "stereo" ]
-		    then
-			audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
-		    else
-			audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		    fi
+		    set_aac
+		    #if [ "$atyp" != "stereo" ]
+		    #then
+			#audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		    #else
+			#audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		    #fi
 		    ac3_aac=1
 		fi
 		if [ "$atyp" == "stereo" ]
@@ -1562,12 +1600,13 @@ analyze() {
 	    "eac3")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
-		if [ "$atyp" != "stereo" ]
-		then
-		    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
-		else
-		    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		fi
+		[ "$eac3" == "aac" ] && set_aac
+		#if [ "$atyp" != "stereo" ]
+		#then
+		#    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		#else
+		#    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		#fi
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
@@ -1577,7 +1616,8 @@ analyze() {
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=eac3
 		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
 		[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
-		[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+		[ "$dts" == "aac" ] && set_aac
 		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 2"
 		if [ "$atyp" == "stereo" ]
 		then
@@ -1727,7 +1767,8 @@ header() {
     if [ -e /proc/asound/NVidia ]
     then
 	lspci | grep VGA >> $log_c
-	grep "NVIDIA GPU " /var/log/Xorg.0.log >> $log_c
+	xlog=/var/log/Xorg.0.log
+	[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> $log_c
     fi
     log_conf $conf
     log_conf $conf1
@@ -1937,6 +1978,7 @@ server() {
     fi
     #PID=$(pidof $0)
     echo $$ > $runs
+    wd=$PWD
     while (true) do
 	while read line
 	do
@@ -1957,6 +1999,7 @@ server() {
 			echo $d $dh >> $logs
 			vdr-transcode --auto > vt.log 2> vt.err
 		    fi
+		    cd $wd
 		done
 	    fi
 	done < $confs
@@ -2003,10 +2046,16 @@ auto_check() {
     tac $logs > $t
     #cat $t
     sum=0
+    i=0
     while read line
     do
 	c=$(echo $line | cut -d \  -f 3-)
-	[ ! -e $c ] && continue
+	if [ ! -e $c ]
+	then
+	    i=$(($i+1))
+	    [ $i -gt 10 ] && break
+	    continue
+	fi
 	ext=${c##*.}
 	if [ "$ext" == "rec" ]
 	then
