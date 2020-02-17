@@ -57,6 +57,8 @@ confs=/etc/vdr-transcode-s.conf
 runs=/var/run/vt_server.pid
 vtc=vt.conf
 lck=vt.lck
+declare -a lang
+declare -a langa
 
 #exit
 
@@ -438,7 +440,6 @@ read_configuration() {
     #exit
 }
 
-declare -a lang
 
 set_lang() {
     #set -x
@@ -545,7 +546,8 @@ status() {
     dur=$(echo $dur|cut -d \  -f 2)
     dur=${dur:0:8}
     durs=$(date -u "+%s" -d "1970-01-01 $dur")
-    fps1=$(grep "Video:" $log|head -n 1)
+    #fps1=$(grep "Video:" $log|head -n 1)
+    fps1=$(grep "Video:" $log|tail -n 1)
     # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
     fps1=${fps1%fps,*}
     nw=$(echo $fps1|wc -w)
@@ -635,7 +637,7 @@ input_file() {
     fi
     ls_iso $INPUT > $old
     # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
-    oldsize=$(ls -l $INPUT|cut -d \  -f 5)
+    oldsize=$(ls -lL $INPUT|cut -d \  -f 5)
     oldsize=$(($oldsize/1024))
     echo "oldsize="$oldsize >> $old
     ffmpeg_i="-i $INPUT"
@@ -921,13 +923,15 @@ input_dvd() {
 	    #dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	done
+    else
+	which mediainfo 2> /dev/null
+	if [ $? -eq 0 ]
+	then
+	    [ "$nochapt" != "1" ] && chapt_mediainfo $dvd_path"VTS_"$tr2"_0.IFO"
+	fi
     fi
-    OPT_G="$OPT_G -fflags +genpts"
-    which mediainfo 2> /dev/null
-    if [ $? -eq 0 ]
-    then
-	[ "$nochapt" != "1" ] && chapt_mediainfo $dvd_path"VTS_"$tr2"_0.IFO"
-    fi
+    #OPT_G="$OPT_G -fflags +genpts"
+    OPT_G="$OPT_G -fix_sub_duration"
     #exit
 }
 
@@ -954,6 +958,16 @@ chapt_tsmuxer() {
 	    durs=$(date -u "+%s" -d "1970-01-01 $dur1")
 	    dur=$(($dur+$durs))
 	    #exit
+	fi
+	if [ "${line:0:9}" == "Track ID:" ]
+	then
+	    tid=$(echo $line|cut -d ':' -f 2)
+	    tid=$(echo $tid)
+	fi
+	if [ "${line:0:12}" == "Stream lang:" ]
+	then
+	    l1=$(echo $line|cut -d ':' -f 2)
+	    langa[$tid]=$(echo $l1)
 	fi
     done < $temp
     #exit
@@ -1002,6 +1016,11 @@ BD_size() {
     fn=0
     sum=0
     f=$(printf "$1/BDMV/STREAM/%05d.m2ts" $fn)
+    if [ ! -e $f ]
+    then
+	fn=1
+	f=$(printf "$1/BDMV/STREAM/%05d.m2ts" $fn)
+    fi
     while [ -e $f ]
     do
 	s=$(ls -l $f|cut -d \  -f 5)
@@ -1305,9 +1324,17 @@ set_vp9() {
     fi
 }
 
+set_av1() {
+    aopt="-row-mt 1"
+    #aopt="$aopt -tiles 4x1"
+    aopt="$aopt -tiles 2x2"
+    aopt="$aopt -threads 8"
+    video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
+}
 
 set_aac() {
-    if [ "$atyp" != "stereo" ]
+    # '[' 2 '!=' stereo ']'
+    if [ "$atyp" != "stereo" -a "$atyp" != "2" ]
     then
 	audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
     else
@@ -1337,7 +1364,7 @@ analyze() {
     fi
     echo "deinterlace=$deinterlace" >> $log_c
     [ "$deinterlace" != "" ] && add_vf $deinterlace
-    [ "$vf" != "" ] && vf="-vf $vf"
+    #[ "$vf" != "" ] && vf="-vf $vf"
     #exit
     # vdr
     # Stream #0:0[0x100]: Video: h264 (High) ([27][0][0][0] / 0x001B), yuv420p(tv, bt709, progressive), 1280x720 [SAR 1:1 DAR 16:9], 50 fps, 50 tbr, 90k tbn, 100 tbc
@@ -1363,6 +1390,8 @@ analyze() {
     # mpg
     # Stream #0:0[0x1e0]: Video: mpeg2video (Main), yuv420p(tv, fcc/bt470bg/bt470bg, top first), 480x576 [SAR 8:5 DAR 4:3], 25 fps, 25 tbr, 90k tbn, 50 tbc
     # Stream #0:1[0x1c0]: Audio: mp2, 44100 Hz, stereo, s16p, 128 kb/s
+    #
+    # Stream #0:3(ger): Audio: eac3, 48000 Hz, 2 channels, fltp
 
     #set -x
     map="-map 0:v:0"
@@ -1379,7 +1408,12 @@ analyze() {
 	#if [ "$ifmt" == "vdr" -o "$ifmt" == "dvd" -o "$ifmt" == "mpg" -o "$ifmt" == "ts" -o "$ifmt" == "m2ts" -o $ifmt == "BD" -o $ifmt == "MTS" ]
 	if [[ "$str1" == *[* ]]
 	then
+	    #set -x
 	    str=${str1%%[*}
+	    trid=${line#*[}
+	    trid=${trid%%]*}
+	    #[ "${langa[$(($trid))]}" != "" ] && metal="$metal -metadata:s:$stro language=${langa[$(($trid))]}"
+	    #exit
 	else
 	    str=${str1%%(*}
 	    str=${str%%:*}
@@ -1411,6 +1445,16 @@ analyze() {
 	    nw=$(echo $fps1|wc -w)
 	    fps=$(echo $fps1|cut -d \  -f $nw)
 	    ivcodec=$codec
+	    if [ "$OUTPUT" == "vdr" ]
+	    then
+		#[ "$fps" == "23.98" ] && add_vf "fps=25"
+		#[ "$fps" == "29.97" ] && add_vf "fps=50"
+		#[ $fps -lt 25 ] && add_vf "fps=25" && fpso=25
+		[ "$fps" "<" "25" ] && add_vf "fps=25" && fpso=25
+		#[ $fps -gt 25 ] && add_vf "fps=50" && fpso=50
+		[ "$fps" ">" "25" -a "$fps" != "50" ] && add_vf "fps=50" && fpso=50
+	    fi
+	    [ "$vf" != "" ] && vf="-vf $vf"
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
@@ -1425,7 +1469,7 @@ analyze() {
 	    nw=$(echo $ar1|wc -w)
 	    ar1=$(echo $ar1|cut -d \  -f $nw)
 	    #set -x
-	    [ "${lang[$str]}" != "" ] && OPT="$OPT -metadata:s:$str language=${lang[$str]}"
+	    [ "${lang[$str]}" != "" ] && OPT="$OPT -metadata:s:$stro language=${lang[$str]}"
 	    [ "${streamo[$str]}" != "" ] && str=${streamo[$str]}
 	    #exit
 	fi
@@ -1472,6 +1516,9 @@ analyze() {
 		    "vp9")
 			set_vp9
 			;;
+		    "av1")
+			set_av1
+			;;
 		    *)
 			echo "-h264 $h264 wrong"
 			exit 8
@@ -1493,6 +1540,9 @@ analyze() {
 			;;
 		    "copy")
 			nix=
+			;;
+		    "av1")
+			set_av1
 			;;
 		    *)
 			echo "-hevc $hevc wrong"
@@ -1700,6 +1750,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "dvd_subtitle"|"subrip"|"ass")
+		[ "$OUTPUT" == "vdr" ] && continue
 		map="$map -map 0:$str"
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
@@ -1728,7 +1779,7 @@ transcode() {
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
-    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $name"
+    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal $name"
     echo ffmpeg $opt >> $log_c
     #exit
     if [ "$quiet" == 1 ]
@@ -1742,6 +1793,11 @@ transcode() {
     #ffprobe -hide_banner -i $name 2>> $log_c
     ffprobe -hide_banner -i $name 2>$t
     cat $t >> $log_c
+    #set -x
+    line=$(grep "Video:" $t)
+    fps1=${line%fps*}
+    nw=$(echo $fps1|wc -w)
+    fpso=$(echo $fps1|cut -d \  -f $nw)
 }
 
 log_conf() {
@@ -1818,6 +1874,7 @@ copy_vdr() {
     analyze $ffmpeg_i
     #OPT="$OPT -mpegts_flags system_b"
     #OPT="$OPT -mpegts_flags latm"
+    OPT="$OPT -map_chapters -1"
     transcode $dest/00001.ts
     #if [ -e info ]
     #then
@@ -1903,6 +1960,12 @@ copy_vdr() {
     then
 	echo genindex
         nice $vdr --genindex="./$dest"
+        [ "$fpso" == "" ] && fpso=$fps
+        li=$(ls -l $dest/index|cut -d ' ' -f 5)
+        fpso=$(grep ^F $dest/info|cut -d \  -f 2)
+        #si=$(($li/200*25/$fpso))
+        si=$(($li/8/$fpso))
+        #date -u -d @$si +"index %T" >> $log_c
     else
 	echo $vdr "not found" >> $log_c
     fi
@@ -2139,7 +2202,9 @@ sek=$(($ende-$start))
 echo "===========================================================" >> $log_c
 [ -e $vtc ] && mv $vtc $vtc.rdy
 cp -p $log_c $t
+grep "Video:" $t >> $log_c
 grep "Duration:" $t >> $log_c
+[ "$OUTPUT" == "vdr" ] && date -u -d @$si +"index %T" >> $log_c
 echo "Alt" $oldsize >> $log_c
 prz=$(($newsize*100/$oldsize))
 echo "Neu" $newsize $prz"%" >> $log_c
