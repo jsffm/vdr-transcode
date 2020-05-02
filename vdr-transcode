@@ -2,6 +2,8 @@
 
 # vdr-transcode				jsffm@web.de
 
+# ifmt	input extension
+
 #set -x
 
 OUTPUT=vdr
@@ -45,6 +47,7 @@ aac_6ch_br=256k
 
 #aaclib="libfaac"
 aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
+#aaclib=aac
 
 log=vdr-transcode.log
 logs=/var/log/vdr-transcode.log
@@ -57,10 +60,10 @@ confs=/etc/vdr-transcode-s.conf
 runs=/var/run/vt_server.pid
 vtc=vt.conf
 lck=vt.lck
+ffmpeg=ffmpeg
+ffprobe=ffprobe
 declare -a lang
 declare -a langa
-
-#exit
 
 #exit
 
@@ -70,10 +73,11 @@ help() {
     echo "Input"
     echo " -i <file>|vdr|dvd[:<track>]"
     echo " -dvd <path>"
-    echo " -BD <path>   # AVCHD"
-    echo " -tr <track>  # DVD or AVCHD track"
+    echo " -BD <path>    # AVCHD"
+    echo " -tr <track>   # DVD or AVCHD track"
+    echo " -va <seconds> # add video at end, only ts"
     echo "Output"
-    echo " -o vdr|mp4|mkv"
+    echo " -o vdr|mp4|mkv|ts"
     echo " --streams"
     echo " --inf"
     echo " --stat       # status"
@@ -81,13 +85,16 @@ help() {
     echo " -ss <position>"
     echo " -to <position>"
     echo "Video"
-    echo " -h264 copy|hevc|vp8|vp9"
+    echo " -h264 copy|h264|hevc|vp8|vp9"
+    echo " -hevc copy|h264|hevc"
     echo " -mpeg2 copy|h264|hevc|vp8|vp9"
     echo " -mpeg4 copy|h264|hevc"
     echo " -vc1 copy|h264|hevc"
     echo " -vp8 copy|h264|hevc"
     echo " -vp9 copy|h264|hevc"
     echo " -r <n>           # fps"
+    echo " -vf <filter>     # video filter"
+    echo " -maxr <fps>      # max bitrate"
     echo " -crop <w:h>"
     echo " --LB             # -vf crop=iw:ih/4*3 -aspect 16:9"
     echo " -zoom <factor>   # crop=iw/<factor>:ih/<factor>"
@@ -120,10 +127,12 @@ help() {
     echo " -cq <n>          # quality hevc default 28, < = better"
     echo " -gq <n>          # quality vp8 default 30, < = better"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi"
-    echo " -hevcenc hevc_nvenc|hevc_vaapi"
-    echo " -aaclib libfdk_aac|libfaac|aac"
+    echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265"
+    echo " -aaclib aac|libfdk_aac|libfaac"
     echo " -hwaccel cuvid|vaapi|vdpau"
     echo " -vdr <path_to_vdr>"
+    echo " -ffmpeg <path>"
+    echo " -ffprobe <path>"
     exit
 }
 
@@ -161,7 +170,7 @@ parameter() {
 	    ;;
 	"--streams")
 	    TODO=$1
-	    ;;
+    ;;
 	"--inf")
 	    TODO=$1
 	    ;;
@@ -239,6 +248,9 @@ parameter() {
 	"-vp9")
 	    vp9=$2
 	    ;;
+	"-av1")
+	    av1=$2
+	    ;;
 	"-dts")
 	    dts=$2
 	    ;;
@@ -263,6 +275,9 @@ parameter() {
 	"aac_6ch_br")
 	    aac_6ch_br=$2
 	    ;;
+	"-aac_vbr")
+	    aac_vbr=$2
+	    ;;
 	"-mp2")
 	    mp2=$2
 	    ;;
@@ -283,6 +298,9 @@ parameter() {
 	    ;;
 	"-vf")
 	    add_vf $2
+	    ;;
+	"-maxr")
+	    OPT="$OPT -maxrate $2 -bufsize 1835k"
 	    ;;
 	"-crop")
 	    #crop="-vf crop=$2"
@@ -312,6 +330,9 @@ parameter() {
 	    ;;
 	"-aspect")
 	    aspect="-aspect $2"
+	    ;;
+	"-va")
+	    video_add=$2
 	    ;;
 	"-af")
 	    OPT="$OPT -af $2"
@@ -416,6 +437,12 @@ parameter() {
 	    ;;
 	"--apc")
 	    apply_codec=1
+	    ;;
+	"-ffmpeg")
+	    ffmpeg=$2
+	    ;;
+	"-ffprobe")
+	    ffprobe=$2
 	    ;;
 	*)
 	    echo $1 wrong
@@ -587,7 +614,10 @@ status() {
     then
 	#set -x
 	size2=$(($size*1000/$prm))
-	if [[ "$fps1" == *.* ]]
+	#if [[ "$fps1" == *.* ]]
+	[[ "$fps1" == *.* ]] && p1=1
+	[[ "$fps" == *.* ]] && p2=1
+	if [ "$p1" == "1" -o "$p2" == 1 ]
 	then
 	    exptime=$(echo "$restz*$fps1/$fps"|bc)
 	else
@@ -645,7 +675,7 @@ input_file() {
     name=${INPUT%.*}
     name=$(basename $name)
     rec_time=$(date "+%s" -r $INPUT)
-    ffmpeg $ffmpeg_i 2> $t
+    $ffmpeg $ffmpeg_i 2> $t
     c_t=$(grep -i creation_time $t|head -n 1|cut -d ':' -f 2-)
     if [ "$c_t" != "" ]
     then
@@ -717,6 +747,7 @@ input_vdra() {
     name=$(basename $d2)
     [ ${name:0:1} == "%" ] && name=${name:1}
     [ "$name" == "_" ] && name=video
+    OPT="$OPT -copyts -start_at_zero"
     name=../$name
     ifmt="vdr"
     #exit
@@ -1114,7 +1145,7 @@ input_BD() {
 		i=$(($i+1))
 	    done < details.txt
 	fi
-	ffmpeg -hide_banner -i bluray:$bdir 2> $t
+	$ffmpeg -hide_banner -i bluray:$bdir 2> $t
 	grep -a playlist $t
 	exit
     fi
@@ -1233,7 +1264,7 @@ esac
 
 streams() {
     #set -x
-    ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream"
+    $ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream"
     #ffprobe -hide_banner $ffmpeg_i
     exit
 }
@@ -1244,7 +1275,7 @@ inf() {
 	sender=$(grep ^C $info|cut -d \  -f 3-)
 	echo $sender
     fi
-    ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     exit
 }
 
@@ -1295,6 +1326,8 @@ set_vp8() {
 	echo "vdr don´t like vp8"
 	exit 8
     fi
+    #vp8flags="-vp8flags --cq-level=$gq"
+    video="-c:v libvpx $vp8flags -crf $gq $gop $vf $aspect"
     if [ "$hwaccel" == "vaapi" ]
     then
 	#[ "$codec" == "mpeg4" ] && parameter --nohw
@@ -1333,19 +1366,52 @@ set_av1() {
 }
 
 set_aac() {
-    # '[' 2 '!=' stereo ']'
+    if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
+    then
+	ar="-ar:$stro 48000"
+	#audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
+    fi
+    if [ "$aac_vbr" != "" ]
+    then
+	[ "$aaclib" == "libfdk_aac" ] && brv="-vbr $aac_vbr"
+	if [ "$aaclib" == "aac" ]
+	then
+	    brv="-q:$stro $aac_vbr"
+	    #br="-vbr $aac_vbr"
+	fi
+    fi
     if [ "$atyp" != "stereo" -a "$atyp" != "2" ]
     then
-	audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
+	br="-b:$stro $aac_6ch_br"
+	#[ "$aac_vbr" != "" ] && br="-vbr $aac_vbr"
+	[ "$brv" != "" ] && br=$brv
+	audio_t="-c:$stro $aaclib $br -ac:$stro 6"
     else
-	audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+	br="-b:$stro $aac_stereo_br"
+	[ "$brv" != "" ] && br=$brv
+	#if [ "$aac_vbr" != "" ]
+	#then
+	    #[ "$aaclib" == "libfdk_aac" ] && br="-vbr $aac_vbr"
+	    #if [ "$aaclib" == "aac" ]
+	    #then
+		#br="-q:$stro $aac_vbr"
+		#br="-vbr $aac_vbr"
+	    #fi
+	#else
+	    #br="-b:$stro $aac_stereo_br"
+	#fi
+	audio_t="-c:$stro $aaclib $br $ar"
     fi
+}
+
+set_opus() {
+    audio_t="-c:$stro libopus -vbr on"
 }
 
 analyze() {
     #set -x
-    ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
-    cat $t
+    $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+    #cat $t
     #exit
     which mediainfo 2> /dev/null
     if [ $? -eq 0 ]
@@ -1392,15 +1458,19 @@ analyze() {
     # Stream #0:1[0x1c0]: Audio: mp2, 44100 Hz, stereo, s16p, 128 kb/s
     #
     # Stream #0:3(ger): Audio: eac3, 48000 Hz, 2 channels, fltp
+    # Stream #0:0(eng): Video: av1 (Main), none, 1280x720, SAR 1:1 DAR 16:9, 25 fps, 25 tbr, 1k tbn, 1k tbc (default)
 
     #set -x
     map="-map 0:v:0"
     stro1=1
+    bras=0
     while read line
     do
 	echo $line
 	stro=$stro1
 	line2=${line//,/}
+	w1=$(echo $line2|cut -d \  -f 1)
+	[ "$w1" != "Stream" ] && continue
 	codec=$(echo $line|cut -d \  -f 4)
 	codec=${codec//,/}
 	typ=$(echo $line|cut -d \  -f 3)
@@ -1465,6 +1535,7 @@ analyze() {
 	    bra1=${line%kb/s*}
 	    nw=$(echo $bra1|wc -w)
 	    bra=$(echo $bra1|cut -d \  -f $nw)
+	    #bras=$(($bras+$bra))
 	    ar1=${line%Hz*}
 	    nw=$(echo $ar1|wc -w)
 	    ar1=$(echo $ar1|cut -d \  -f $nw)
@@ -1493,6 +1564,7 @@ analyze() {
 	    "h264")
 		#set -x
 		video="-c:v copy"
+		[ "$OUTPUT" == "webm" ] && set_vp8
 		case $h264 in
 		    "hevc")
 			decode_cuvid="-c:v h264_cuvid"
@@ -1598,12 +1670,20 @@ analyze() {
 		[ "$vp9" == "h264" ]  && set_h264
 		[ "$vp9" == "hevc" ]  && set_hevc
 		;;
+	    "av1")
+		video="-c:v copy"
+		[ "$OUTPUT" == "vdr" ] && set_h264
+		[ "$av1" == "h264" ]  && set_h264
+		[ "$av1" == "hevc" ]  && set_hevc
+		;;
 	    "wmv3")
 		set_h264
 		;;
 	    "wmapro")
 		map="$map -map 0:$str"
-		audio="$audio -c:$stro $aaclib -b:$stro $aac_6ch_br"
+		#audio="$audio -c:$stro $aaclib -b:$stro $aac_6ch_br"
+		set_aac
+		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
 	    "ac3")
@@ -1614,29 +1694,15 @@ analyze() {
 		if [ "$ac3" == "aac" ]
 		then
 		    set_aac
-		    #if [ "$atyp" != "stereo" ]
-		    #then
-			#audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
-		    #else
-			#audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		    #fi
 		    ac3_aac=1
 		fi
 		if [ "$atyp" == "stereo" ]
 		then
 		    if [ $bra -gt 192 -a "$ac3_stereo" == "aac" ]
 		    then
-			audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		    #else
-			#if [ "$ac3_stereo" == "aac" -a "$ac3_aac" == "1" ]
-			#then
-			#    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-			#else
-			#    audio_t="-c:$stro copy"
-			#fi
+			#audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+			set_aac
 		    fi
-		    #[ "$ac3v" != "" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -af:$stro volume=$ac3v"
-		    #[ "$ac3v" != "" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:a:$stro volume=$ac3v"
 		    [ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:$stro volume=$ac3v"
 		fi
 		#if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
@@ -1651,12 +1717,6 @@ analyze() {
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
 		[ "$eac3" == "aac" ] && set_aac
-		#if [ "$atyp" != "stereo" ]
-		#then
-		#    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
-		#else
-		#    [ "$eac3" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		#fi
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
@@ -1666,7 +1726,6 @@ analyze() {
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=eac3
 		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
 		[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
-		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_6ch_br"
 		[ "$dts" == "aac" ] && set_aac
 		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 2"
 		if [ "$atyp" == "stereo" ]
@@ -1679,14 +1738,18 @@ analyze() {
 	    "aac")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
+		#[ "$OUTPUT" == "webm" ] && audio_t="-c:$stro libopus"
+		[ "$OUTPUT" == "webm" ] && set_opus
 		if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
 		then
-		    ar="-ar:$stro 48000"
-		    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
+		    #ar="-ar:$stro 48000"
+		    #audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
+		    set_aac
 		fi
 		#[ "$aac" == "opus" ] && audio_t="-c:$stro opus -strict -2"
 		[ "$aac" == "opus" ] && audio_t="-c:$stro libopus"
-		[ "$aac" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		#[ "$aac" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		[ "$aac" == "aac" ] && set_aac
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
@@ -1705,7 +1768,8 @@ analyze() {
 	    "mp2")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
-		[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		[ "$mp2" == "aac" ] && set_aac
 		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 3"
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
@@ -1736,7 +1800,9 @@ analyze() {
 		;;
 	    "opus")
 		map="$map -map 0:$str"
-		audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
+		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
+		set_aac
+		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
 	    "dvb_subtitle")
@@ -1761,7 +1827,7 @@ analyze() {
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
 		;;
-	    "dvd_nav_packet"|"bin_data"|"png")
+	    "dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext")
 		continue
 		;;
 	    *)
@@ -1780,18 +1846,18 @@ transcode() {
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
     opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal $name"
-    echo ffmpeg $opt >> $log_c
+    echo $ffmpeg $opt >> $log_c
     #exit
     if [ "$quiet" == 1 ]
     then
-	nice ffmpeg $opt 2>> $log_c
+	nice $ffmpeg $opt 2>> $log_c
     else
-	nice ffmpeg $opt 2>&1 | tee -a $log_c
+	nice $ffmpeg $opt 2>&1 | tee -a $log_c
     fi
     rm -f ffmetadata
     echo "===========================================================" >> $log_c
     #ffprobe -hide_banner -i $name 2>> $log_c
-    ffprobe -hide_banner -i $name 2>$t
+    $ffprobe -hide_banner -i $name 2>$t
     cat $t >> $log_c
     #set -x
     line=$(grep "Video:" $t)
@@ -1816,7 +1882,7 @@ log_conf() {
 
 header() {
     d=`date +"%F %T"`
-    v=$(ffmpeg -version)
+    v=$($ffmpeg -version)
     v=$(echo $v | cut -d \  -f 3)
     echo "Start $d vdr-transcode ffmpeg Version $v" > $log_c
     uname -p >> $log_c
@@ -1836,7 +1902,7 @@ header() {
 
 info_create() {
     info=$dest/info
-    cat $t
+    #cat $t
     dauer1=$(grep "Duration:" $t)
     dauer2=$(echo $dauer1 | cut -d \  -f 2)
     dauer=$(date -u "+%s" -d "1970-01-01 ${dauer2:0:8}")
@@ -1872,9 +1938,27 @@ copy_vdr() {
     header
     [ "$auto" != "1" ] && echo $d $PWD >> $logs
     analyze $ffmpeg_i
+    if [ "$video_add" != "" ]
+    then
+	#set -x
+	d1=$($ffmpeg -hide_banner $ffmpeg_i 2>&1 | grep "Duration:")
+	# Duration: 00:07:53.36, start: 0.000000, bitrate: 948 kb/s
+	echo "$d1" >> $log_c
+	d2=$(echo $d1|cut -d \  -f 2)
+	d3=${d2:0:8}
+	ds=$(date -u -d "1970-01-01 $d3" "+%s")
+	d=$(($ds+$video_add))
+	# -i concat:00001.ts
+	inp=$(echo $ffmpeg_i|cut -d \  -f 2)
+	[ ${inp:0:7} == "concat:" ] && inp=${inp:7}
+	ffmpeg_i="-i concat:$inp|$inp"
+	OPT_G="$OPT_G -t $d"
+	#exit
+    fi
     #OPT="$OPT -mpegts_flags system_b"
     #OPT="$OPT -mpegts_flags latm"
     OPT="$OPT -map_chapters -1"
+    #OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
     transcode $dest/00001.ts
     #if [ -e info ]
     #then
@@ -1916,15 +2000,26 @@ copy_vdr() {
 	    fi
 	    ;;
 	*)
-	    info_create
+	    if [ -e info.vdr ]
+	    then
+		iconv -f ISO-8859-1 -t UTF-8 < info.vdr > $dest/info
+		echo "F 25" >> $dest/info
+		echo "L 99" >> $dest/info
+		echo "P 50" >> $dest/info
+	    else
+		info_create
+	    fi
 	    ;;
     esac
+    [ ! -e $dest/info ] && info_create
     #fi
     #[ -e marks ] && cp -p marks $dest
-    if [ -e marks ]
+    marks=marks
+    [ -e marks.vdr ] && marks=marks.vdr
+    if [ -e $marks ]
     then
 	echo "======== marks ========" >> $log_c
-	cat marks >> $log_c
+	cat $marks >> $log_c
 	echo "======== marks ========" >> $log_c
     fi
     [ -e messages ] && cp -p messages $dest
@@ -1963,6 +2058,7 @@ copy_vdr() {
         [ "$fpso" == "" ] && fpso=$fps
         li=$(ls -l $dest/index|cut -d ' ' -f 5)
         fpso=$(grep ^F $dest/info|cut -d \  -f 2)
+        [ "$fpso" == "" ] && fpso=25
         #si=$(($li/200*25/$fpso))
         si=$(($li/8/$fpso))
         #date -u -d @$si +"index %T" >> $log_c
@@ -2005,6 +2101,9 @@ copy_file() {
     transcode $out
     newsize=$(ls -l $out|cut -d \  -f 5)
     newsize=$(($newsize/1024))
+    #set -x
+    [ "$fmt" == "ts" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
+    #set +x
 }
 
 copy() {
@@ -2016,6 +2115,12 @@ copy() {
 	    copy_file $OUTPUT
 	    ;;
 	"mp4")
+	    copy_file $OUTPUT
+	    ;;
+	"ts")
+	    copy_file $OUTPUT
+	    ;;
+	"webm")
 	    copy_file $OUTPUT
 	    ;;
 	#"jpg")
@@ -2113,7 +2218,7 @@ auto_check() {
     while read line
     do
 	c=$(echo $line | cut -d \  -f 3-)
-	if [ ! -e $c ]
+	if [ ! -e "$c" ]
 	then
 	    i=$(($i+1))
 	    [ $i -gt 10 ] && break
