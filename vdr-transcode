@@ -2,7 +2,13 @@
 
 # vdr-transcode				jsffm@web.de
 
+# blancs in filename	Frank Kaiser <frank.kaiser@fuxbau.net>
+
 # ifmt	input extension
+# odir
+# marker
+# vcodec ?
+# ivcodec input vcodec
 
 #set -x
 
@@ -46,8 +52,8 @@ aac_stereo_br=96k
 aac_6ch_br=256k
 
 #aaclib="libfaac"
-aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
-#aaclib=aac
+#aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
+aaclib=aac
 
 log=vdr-transcode.log
 logs=/var/log/vdr-transcode.log
@@ -71,19 +77,20 @@ help() {
     echo $(basename $0) parameter
     echo " -h  # this"
     echo "Input"
-    echo " -i <file>|vdr|dvd[:<track>]"
+    echo " -i <file>|vdr|dvd[:<track>]|<http> # standard vdr"
     echo " -dvd <path>"
     echo " -BD <path>    # AVCHD"
     echo " -tr <track>   # DVD or AVCHD track"
     echo " -va <seconds> # add video at end, only ts"
     echo "Output"
-    echo " -o vdr|mp4|mkv|ts"
-    echo " --streams"
-    echo " --inf"
-    echo " --stat       # status"
+    echo " -o vdr|mp4|mkv|ts|mp3 # standard vdr"
     echo " -t <n>       # length in seconds"
     echo " -ss <position>"
     echo " -to <position>"
+    echo " --streams"
+    echo " --inf"
+    echo " --stat       # status"
+    echo " --diag"
     echo "Video"
     echo " -h264 copy|h264|hevc|vp8|vp9"
     echo " -hevc copy|h264|hevc"
@@ -92,6 +99,7 @@ help() {
     echo " -vc1 copy|h264|hevc"
     echo " -vp8 copy|h264|hevc"
     echo " -vp9 copy|h264|hevc"
+    echo " -vc|-vcodec <codec> # overwrites -h264|-hevc|-mpeg2"
     echo " -r <n>           # fps"
     echo " -vf <filter>     # video filter"
     echo " -maxr <fps>      # max bitrate"
@@ -124,15 +132,21 @@ help() {
     echo " -aac_6ch_br      # default 256k"
     echo " -g <n>           # goplength default 50"
     echo " -crf <n>         # quality h264 default 21, < = better"
+    echo " -quality <n>     # vaapi h264 quality"
     echo " -cq <n>          # quality hevc default 28, < = better"
     echo " -gq <n>          # quality vp8 default 30, < = better"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi"
-    echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265"
-    echo " -aaclib aac|libfdk_aac|libfaac"
+    echo " -h264_level <level> # default 4.1"
+    echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265|libkvazaar"
+    echo " -hevc_level <level>"
+    echo " -aaclib aac|libfdk_aac|libfaac # default aac"
     echo " -hwaccel cuvid|vaapi|vdpau"
     echo " -vdr <path_to_vdr>"
-    echo " -ffmpeg <path>"
-    echo " -ffprobe <path>"
+    echo " -ffmpeg <path_to_ffmpeg>"
+    echo " -ffprobe <path_to_ffprobe>"
+    echo " -mark <mark>     # mark at the end of transcoded recordings"
+    echo " -odir <path>     # output directory"
+    #echo "Other"
     exit
 }
 
@@ -170,7 +184,7 @@ parameter() {
 	    ;;
 	"--streams")
 	    TODO=$1
-    ;;
+	    ;;
 	"--inf")
 	    TODO=$1
 	    ;;
@@ -179,12 +193,21 @@ parameter() {
 	    INPUT=none
 	    #status
 	    ;;
+	"--diag")
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"-o")
 	    OUTPUT=$2
 	    ;;
 	"-r")
 	    OPT="$OPT -r $2"
 	    fpso=$2
+	    ;;
+	"-b")
+	    OPT_V="$OPT_V -b:v $2"
+	    mp3_b="-b:a $2"
+	    hevc_cq=0
 	    ;;
 	"-t")
 	    OPT_G="$OPT_G -t $2"
@@ -194,6 +217,7 @@ parameter() {
 	    ;;
 	"-ss")
 	    OPT_G="$OPT_G -ss $2"
+	    ss=$2
 	    ;;
 	"-copytb")
 	    OPT="$OPT -copytb $2"
@@ -251,6 +275,9 @@ parameter() {
 	"-av1")
 	    av1=$2
 	    ;;
+	"-vcodec"|"-vc")
+	    vcodec=$2
+	    ;;
 	"-dts")
 	    dts=$2
 	    ;;
@@ -286,6 +313,9 @@ parameter() {
 	    ;;
 	"-crf")
 	    crf=$2
+	    ;;
+	"-quality")
+	    quality="-quality $2"
 	    ;;
 	"-cq")
 	    hevc_cq=$2
@@ -357,6 +387,10 @@ parameter() {
 	    ;;
 	"-hevcenc")
 	    hevcenc=$2
+	    ;;
+	"-hevc_level")
+	    hevc_level=$2
+	    level_hevc="-level $2"
 	    ;;
 	"-vp9enc")
 	    vp9enc=$2
@@ -444,6 +478,15 @@ parameter() {
 	"-ffprobe")
 	    ffprobe=$2
 	    ;;
+	"-odir")
+	    odir=$2
+	    ;;
+	"-mark")
+	    marker=$2
+	    ;;
+	"-threads")
+	    threads=$2
+	    ;;
 	*)
 	    echo $1 wrong
 	    exit 8
@@ -501,9 +544,9 @@ set_streamo() {
 [ "$conf" != "" ] && read_configuration $conf
 [ "$conf1" != "" ] && read_configuration $conf1
 #declare -a $parametera_log
-while [ $1 ]
+while [ "$1" ]
 do
-    parameter $1 $2 $3 $4
+    parameter "$1" "$2" "$3" "$4"
     if [ "${1:0:1}" == "-" -a "${1:1:1}" != "-" ]
     then
 	parameter_log="$parameter_log $1 $2\n"
@@ -554,27 +597,29 @@ status() {
 
     #set -x
     #log=$(cat $vtlog)
-    log=$1
-    [ ! -e $log ] && exit 8
+    #log="$1"
+    log="$@"
+    [ ! -e "$log" ] && exit 8
     echo $log
-    olddir=$(grep "PWD:" $log)
+    olddir=$(grep "PWD:" "$log")
     olddir=${olddir:5}
-    info=$olddir/info
-    if [ -e $info ]
+    info="$olddir/info"
+    if [ -e "$info" ]
     then
-	sender=$(grep ^C $info|cut -d \  -f 3-)
+	sender=$(grep ^C "$info"|cut -d \  -f 3-)
 	#echo $sender
     fi
-    oldsize=$(grep "oldsize=" $log)
+    oldsize=$(grep "oldsize=" "$log")
     oldsize=${oldsize#*=}
     # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
-    dur=$(grep "Duration:" $log|head -n 2)
+    dur=$(grep "Duration:" "$log"|head -n 2)
     #echo $dur
     dur=$(echo $dur|cut -d \  -f 2)
     dur=${dur:0:8}
     durs=$(date -u "+%s" -d "1970-01-01 $dur")
+    durs1ms=$durs${dur:9:2}
     #fps1=$(grep "Video:" $log|head -n 1)
-    fps1=$(grep "Video:" $log|tail -n 1)
+    fps1=$(grep "Video:" "$log"|tail -n 1)
     # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
     fps1=${fps1%fps,*}
     nw=$(echo $fps1|wc -w)
@@ -585,7 +630,7 @@ status() {
     #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
     # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
     #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
-    l=$(tr '\r' '\n' < $log | grep -a "^frame=" | tail -n 1)
+    l=$(tr '\r' '\n' < "$log" | grep -a "^frame=" | tail -n 1)
     #echo $l
     dur2=${l#*time=}
     dur2=${dur2:0:8}
@@ -635,12 +680,69 @@ status() {
     #exit
 }
 
+diag() {
+    #set -x
+    v=$($ffmpeg -version)
+    v=$(echo $v | cut -d \  -f 3)
+    vtp=$(which vdr-transcode)
+    #exit
+    d=$(date "+%F" -r $vtp)
+    echo "vdr-transcode $d ffmpeg Version $v"
+    uname -p
+    echo
+    if [ -e $conf ]
+    then
+	echo "===================================="
+	echo $conf
+	#cat $1 >> $log_c
+	while read line
+	do
+	    [ "${line:0:1}" != "#" ] && echo $line
+	done < $conf
+	echo "===================================="
+	echo
+    fi
+    which mediainfo 2> /dev/null
+    if [ $? -ne 0 ]
+    then
+	echo "mediainfo missing"
+    fi
+    echo
+    ffmpeg -hide_banner -hwaccels
+    if [ -e /proc/asound/NVidia ]
+    then
+	lspci | grep VGA
+	xlog=/var/log/Xorg.0.log
+	[ -e $xlog ] && grep "NVIDIA GPU " $xlog
+	nvidia-smi | grep NVIDIA-SMI
+	echo
+	ffmpeg -hide_banner -encoders | grep nvenc
+	echo
+	ffmpeg -hide_banner -decoders | grep cuvid
+    fi
+    echo
+    if [ -e /dev/dri/renderD128 ]
+    then
+	ffmpeg -hide_banner -encoders | grep vaapi
+    fi
+    echo
+    ffmpeg -hide_banner -encoders | grep h264
+    ffmpeg -hide_banner -encoders | grep hevc
+    exit
+}
+
 ls_iso() {
     #set -x
+    #[ "$1" != "" ] && mask="$1"
     e=$(readlink $(which ls))
     if [ "$e" == "" ]
     then
-	ls -lL --time-style long-iso $1
+	if [ "$1" != "" ]
+	then
+	    ls -lL --time-style long-iso "$1"
+	else
+	    ls -lL --time-style long-iso
+	fi
     else
 	ls -l $1
     fi
@@ -653,34 +755,47 @@ input_file() {
     ifmt=${INPUT##*.}
     if [ "$ifmt" == "rec" ]
     then
-	cd $INPUT
+	cd "$INPUT"
 	INPUT=vdr
 	input_vdr
 	return
     fi
-    if [ "$(basename $INPUT)" == "VIDEO_TS" ]
+    #if [ "$(basename $INPUT)" == "VIDEO_TS" ]
+    sss="$(basename "$INPUT")"
+    if [ "$sss" == "VIDEO_TS" ]
     then
-	dvd_path=$INPUT
+	dvd_path="$INPUT"
 	INPUT=dvd
 	input_dvd $track
 	return
     fi
-    ls_iso $INPUT > $old
-    # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
-    oldsize=$(ls -lL $INPUT|cut -d \  -f 5)
-    oldsize=$(($oldsize/1024))
-    echo "oldsize="$oldsize >> $old
-    ffmpeg_i="-i $INPUT"
-    input=$INPUT
+    oldsize=1
+    rec_time=$(date "+%s")
+    rm -f $old
+    if [ "${INPUT:0:4}" != "http" ]
+    then
+	ls_iso "$INPUT" > $old
+	# -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
+	oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
+	oldsize=$(($oldsize/1024))
+	echo "oldsize="$oldsize >> $old
+	rec_time=$(date "+%s" -r "$INPUT")
+    fi
+    ffmpeg_i="-i \"$INPUT\""
+    input="$INPUT"
     name=${INPUT%.*}
-    name=$(basename $name)
-    rec_time=$(date "+%s" -r $INPUT)
-    $ffmpeg $ffmpeg_i 2> $t
+    name=$(basename "$name")
+    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    $x $ffmpeg $ffmpeg_i 2> $t
     c_t=$(grep -i creation_time $t|head -n 1|cut -d ':' -f 2-)
     if [ "$c_t" != "" ]
     then
+	#set -x
+	# 2020-08-19T23:20:35.000000Z
 	c_t=${c_t//\"/}
+	c_t=${c_t:0:20}
 	rec_time=$(date "+%s" -d "$c_t")
+	#exit
     fi
     dest=$(date "+%F.%H.%M" -d @$rec_time)".3-0.rec"
     d32=0
@@ -699,7 +814,7 @@ input_file() {
     #OPT_G="$OPT_G -fflags +igndts+genpts"
     #OPT_G="$OPT_G -fflags +genpts"
     #OPT_G="$OPT_G -use_wallclock_as_timestamps 1"
-    info_name=$(basename $PWD)
+    info_name=$(basename "$PWD")
     #exit
 }
 
@@ -729,7 +844,7 @@ input_vdra() {
     dd=${d1:0:16}
     dh=${d1:11:2}
     dm=${d1:14:2}
-    rec_time=$(date "+%s" -d "$dd1 $dh:$dm")
+    rec_time=$(date "+%s" -u -d "$dd1 $dh:$dm")
     #d3=$(echo $d1 | cut -d '.' -f 4-)
     d3="1-0.rec"
     dest=../$dd.$d3
@@ -770,7 +885,7 @@ input_vdr() {
     input=00001.ts
     # 2018-06-09.14.01.50-0.rec
     ffmpeg_i="-i concat:"
-    w="*.ts"
+    w="0*.ts"
     d=
     for r in $w
     do
@@ -778,28 +893,83 @@ input_vdr() {
 	d="|"
     done
     d1=$(basename $PWD)
+    d2=$(dirname $PWD)
+    name=$(basename $d2)
     dd1=${d1:0:10}
     dd=${d1:0:16}
     dh=${d1:11:2}
     dm=${d1:14:2}
-    rec_time=$(date "+%s" -d "$dd1 $dh:$dm")
+    #set -x
+    rec_time=$(date "+%s" -u -d "$dd1 $dh:$dm")
+    if [ "$ss" != "" ]
+    then
+	# ss
+	# date -u "+%s" -d "1970-01-01 0:1:50"
+	nd=$(echo $ss | grep -o ":" | wc -m)
+	case $nd in
+	    0)
+		ss2=0:0:$ss
+		[ $ss -gt 59 ] && ss2=$(date -u "+%T" -d @$ss)
+		;;
+	    2)
+		ss2=0:$ss
+		;;
+	    4)
+		ss2=$ss
+		;;
+	esac
+	ss3=$(date -u "+%s" -d "1970-01-01 $ss2")
+	if [ "$ss3" == "" ]
+	then
+	    echo "-ss $ss wrong"
+	    exit 8
+	fi
+	rec_time=$((rec_time+$ss3))
+	#echo $dd
+	dd=$(date -u "+%F.%H.%M" -d @$rec_time)
+    fi
+    #exit
     d3=$(echo $d1 | cut -d '.' -f 4-)
-    dest=../$dd.$d3
+    dp=".."
+    if [ "$marker" != "" ]
+    then
+	dp="../../$name$marker"
+    fi
+    if [ "$odir" != "" ]
+    then
+	dp=$odir/$name
+	s=$(grep "^S" info)
+	if [ "$s" != "" ]
+	then
+	    s=${s:2}
+	    s=$(echo $s|tr -s ' ' '_')
+	    [[ "$name" == *$s* ]] && serie=1
+	    [[ "$s" == *serie* ]] && serie=1
+	    if [ "$serie" == "1" ]
+	    then
+		d0=$(dirname $d2)
+		d0=$(basename $d0)
+		dp=$odir/$d0/$name
+	    fi
+	fi
+    fi
+    #dest=$dp/$dd.$d3
     d30=$(echo $d3|cut -d '.' -f 1)
     d31=$(echo $d30|cut -d '-' -f 1)
     d32=$(echo $d30|cut -d '-' -f 2)
+    d32=$(($d32+1))
+    dest=$dp/$dd.$d31-$d32.rec
     while [ -e $dest ]
     do
         d32=$(($d32+1))
         #dd2=$(date -u "+%F.%H.%M" -d @$s)
         #dest=$dd2.$d31-$d32.rec
-        dest=../$dd.$d31-$d32.rec
+        dest=$dp/$dd.$d31-$d32.rec
     done
-    d2=$(dirname $PWD)
-    name=$(basename $d2)
     [ ${name:0:1} == "%" ] && name=${name:1}
     [ "$name" == "_" ] && name=video
-    name=../$name
+    [ "$odir" != "" ] && dp=$odir
+    name=$dp/$name
     ifmt="vdr"
     #exit
 }
@@ -1200,82 +1370,68 @@ input_BD() {
     #exit
 }
 
-#if [ "$INPUT" != "" ]
-#then
-#    input_file
-#else
-#    input_vdr
-#fi
+set_hwacc() {
+    case "$hwaccel" in
+	"cuvid")
+	    #OPT_G="$OPT_G -hwaccel cuvid"
+	    # -hwaccel_output_format cuda
+	    #HWACC="-hwaccel cuvid"
+	    HWACC="-hwaccel cuvid -hwaccel_output_format cuda"
+	    #deinterlace="-vf yadif_cuda"
+	    deinterlace="yadif_cuda"
+	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
+	    ;;
+	"vaapi")
+	    #OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	    #OPT_G="$OPT_G -hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	    HWACC="-hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
+	    #deinterlace="-vf deinterlace_vaapi"
+	    deinterlace="deinterlace_vaapi"
+	    [ "$scale" != "" ] && add_vf scale_vaapi=$scale
+	    ;;
+	"vdpau")
+	    export DISPLAY=:0.0
+	    HWACC="-hwaccel vdpau"
+	    [ "$scale" != "" ] && add_vf scale=$scale
+	    ;;
+	"vulkan")
+	    #export DISPLAY=:0.0
+	    HWACC="-hwaccel vulkan"
+	    [ "$scale" != "" ] && add_vf scale=$scale
+	    ;;
+	*)
+	    [ "$scale" != "" ] && add_vf scale=$scale
+	    ;;
+    esac
+}
 
-#set -x
-case "$INPUT" in
-    "vdr"|"")
-	input_vdr
-	;;
-    "dvd")
-	input_dvd $track
-	;;
-    "BD")
-	#set -x
-	input_BD $track
-	#exit
-	;;
-    "none")
-	none=
-	;;
-    *)
-	if [ "${INPUT:0:4}" == "dvd:" ]
-	then
-	    tr=${INPUT:4}
-	    input_dvd $tr
-	else
-	    input_file
-	fi
-	;;
-esac
-
-
-case "$hwaccel" in
-    "cuvid")
-	#OPT_G="$OPT_G -hwaccel cuvid"
-	HWACC="-hwaccel cuvid"
-	#deinterlace="-vf yadif_cuda"
-	deinterlace="yadif_cuda"
-	[ "$scale" != "" ] && add_vf scale_cuda=$scale
-	;;
-    "vaapi")
-	#OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-	#OPT_G="$OPT_G -hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-	HWACC="-hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-	#deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
-	#deinterlace="-vf deinterlace_vaapi"
-	deinterlace="deinterlace_vaapi"
-	[ "$scale" != "" ] && add_vf scale_vaapi=$scale
-	;;
-    "vdpau")
-	export DISPLAY=:0.0
-	HWACC="-hwaccel vdpau"
-	[ "$scale" != "" ] && add_vf scale=$scale
-	;;
-    *)
-	[ "$scale" != "" ] && add_vf scale=$scale
-	;;
-esac
 
 streams() {
     #set -x
-    $ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream"
+    #$ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream"
     #ffprobe -hide_banner $ffmpeg_i
+    #sss="$ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep \"Stream\""
+    #eval $sss
+    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    $x $ffmpeg -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream"
     exit
 }
+
 inf() {
+    #set -x
+    #echo "["$ffmpeg_i"]"
     info=info
     if [ -e $info ]
     then
 	sender=$(grep ^C $info|cut -d \  -f 3-)
 	echo $sender
     fi
-    $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    #$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    #sss="$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E \"Duration|Stream|Chapter\""
+    #eval $sss
+    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    $x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     exit
 }
 
@@ -1290,7 +1446,11 @@ set_h264() {
 	preset="-preset fast -tune film -profile:v $h264_profile $level -crf $crf $maxr"
     fi
     [ $h264enc == "h264_nvenc" ] && preset="-preset hq -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
-    [ $h264enc == "h264_vaapi" ] && preset="-profile:v $h264_profile $level -rc_mode CQP -qp $crf $maxr"
+    if [ $h264enc == "h264_vaapi" ]
+    then
+	[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
+	preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
+    fi
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="-c:v:0 $h264enc $preset $gop $vf $aspect"
     #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
@@ -1300,21 +1460,38 @@ set_h264() {
 }
 
 set_hevc() {
-    # crf=25
-    # h265_level="-x265-params crf=$crf:level-idc=4.1"
-    # preset="$h265_level"
-    # preset="$preset $gop"
-    # video="-c:v $hevcenc $fps $preset $deinterlace $scale $aspect"
-
-    #crf=28
-    h265_level="-x265-params crf=$hevc_cq:level-idc=4.1"
-    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
-    preset="-preset veryfast $h265_level -crf $crf $maxr"
-    [ "$hevcenc" == "hevc_nvenc" ] && preset="-preset hq $level_hevc -rc vbr -cq $hevc_cq $opt_r"
-    #[ "$hevcenc" == "hevc_vaapi" ] && preset="$level_hevc -rc_mode CQP -qp $hevc_cq $opt_r"
-    [ "$hevcenc" == "hevc_vaapi" ] && preset="-profile:v main -tier high $level_hevc -rc_mode CQP -qp $hevc_cq $opt_r"
-    #video="-c:v $hevcenc $preset $gop $deinterlace $scale $crop $aspect"
-    video="-c:v $hevcenc $preset $gop $vf $aspect"
+    case "$hevcenc" in
+	"libx265")
+	    #parameter --nohw
+	    HWACC=
+	    deinterlace="yadif"
+	    x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
+	    [ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
+	    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
+	    #preset="-preset veryfast $h265_level -crf $hevc_cq $maxr"
+	    preset="-preset ultrafast $x265_params -crf $hevc_cq $maxr"
+	    ;;
+	"hevc_nvenc")
+	    preset="-preset hq $level_hevc -rc vbr -cq $hevc_cq $opt_r"
+	    ;;
+	"hevc_vaapi")
+	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
+	    preset="-profile:v main -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
+	    ;;
+	"libkvazaar")
+	    #parameter --nohw
+	    #hwaccel=
+	    HWACC=
+	    deinterlace="yadif"
+	    decode_cuvid=
+	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    ;;
+	*)
+	    echo "-hevcenc=$hevcenc wrong"
+	    exit 8
+	    ;;
+    esac
+    video="-c:v $hevcenc $preset $gop $vf $aspect $OPT_V"
     #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
     vcodec="hevc"
@@ -1410,25 +1587,42 @@ set_opus() {
 
 analyze() {
     #set -x
-    $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+    #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+    #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
+    #eval $sss
+    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     #cat $t
     #exit
+    #set -x
     which mediainfo 2> /dev/null
     if [ $? -eq 0 ]
     then
 	scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
-	echo "scantype=$scantype" >> $log_c
     else
+	echo "mediainfo missing, trying ffmpeg" >> $log_c
 	s1=$(grep "Video:" $t)
-	[[ "$s1" == *progressive* ]] && scantype="Progressive"
+	# Stream #0:0[0x96a]: Video: hevc (Main)
+	codec=$(echo $s1|cut -d \  -f 4)
+	codec=${codec//,/}
+	if [[ "$s1" == *progressive* ]]
+	then
+	    scantype="Progressive"
+	else
+	    scantype="not progr"
+	fi
+	[ "$codec" == "hevc" ] && scantype="Progressive"
+	#echo "ivcodec=$ivcodec"
     fi
+    echo "scantype=$scantype" >> "$log_c"
     if [ "$scantype" == "Progressive" -o "$scantype" == "" ]
     then
 	deinterlace=
     else
 	opt_r="-r 50"
     fi
-    echo "deinterlace=$deinterlace" >> $log_c
+    echo "deinterlace=$deinterlace" >> "$log_c"
+    #exit
     [ "$deinterlace" != "" ] && add_vf $deinterlace
     #[ "$vf" != "" ] && vf="-vf $vf"
     #exit
@@ -1466,7 +1660,7 @@ analyze() {
     bras=0
     while read line
     do
-	echo $line
+	#echo $line
 	stro=$stro1
 	line2=${line//,/}
 	w1=$(echo $line2|cut -d \  -f 1)
@@ -1511,10 +1705,17 @@ analyze() {
 	if [ "$typ" == "Video:" ]
 	then
 	    #set -x
+	    #[ "$ivcodec" != "" ] && continue
 	    fps1=${line%fps*}
 	    nw=$(echo $fps1|wc -w)
 	    fps=$(echo $fps1|cut -d \  -f $nw)
 	    ivcodec=$codec
+	    if [ "$OUTPUT" == "mp3" ]
+	    then
+		video="-vn"
+		map=
+		continue
+	    fi
 	    if [ "$OUTPUT" == "vdr" ]
 	    then
 		#[ "$fps" == "23.98" ] && add_vf "fps=25"
@@ -1552,6 +1753,7 @@ analyze() {
 		#decode_cuvid="-c:v mpeg2_cuvid"
 		decode_cuvid="-c:v ${codec:0:5}_cuvid"
 		#parameter "--nohw"
+		[ "$vcodec" != "" ] && mpeg2=$vcodec
 		if [ "$mpeg2" == "h264" ]
 		then
 		    set_h264
@@ -1564,6 +1766,7 @@ analyze() {
 	    "h264")
 		#set -x
 		video="-c:v copy"
+		[ "$vcodec" != "" ] && h264=$vcodec
 		[ "$OUTPUT" == "webm" ] && set_vp8
 		case $h264 in
 		    "hevc")
@@ -1601,6 +1804,7 @@ analyze() {
 	    "hevc")
 		video="-c:v copy"
 		deinterlace=
+		[ "$vcodec" != "" ] && hevc=$vcodec
 		case $hevc in
 		    "h264")
 			decode_cuvid="-c:v hevc_cuvid"
@@ -1816,18 +2020,26 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "dvd_subtitle"|"subrip"|"ass")
+	    #"dvd_subtitle"|"ass")
 		[ "$OUTPUT" == "vdr" ] && continue
+		[ "$fmt" == "mp4" ] && continue
 		map="$map -map 0:$str"
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
 		;;
+	    #"subrip")
+		#map="$map -map 0:$str"
+		#subt="$subt -c:$stro mov_text"
+		#subt="$subt -c:$stro dvd_subtitle"
+		#stro1=$(($stro1+1))
+		#;;
 	    "hdmv_pgs_subtitle")
 		[ "$fmt" == "mp4" ] && continue
 		map="$map -map 0:$str"
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
 		;;
-	    "dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext")
+	    "dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext"|"none"|"mjpeg")
 		continue
 		;;
 	    *)
@@ -1840,43 +2052,65 @@ analyze() {
 }
 
 transcode() {
-    name=$1
+    #set -x
+    name="$1"
     [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
+    #opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal \"$name\""
+    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && name="\"$name\""
     opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal $name"
-    echo $ffmpeg $opt >> $log_c
+    echo $ffmpeg $opt >> "$log_c"
     #exit
     if [ "$quiet" == 1 ]
     then
-	nice $ffmpeg $opt 2>> $log_c
+	nice $ffmpeg $opt 2>> "$log_c"
     else
-	nice $ffmpeg $opt 2>&1 | tee -a $log_c
+	#nice $ffmpeg $opt 2>&1 | tee -a $log_c
+        #sss="nice $ffmpeg $opt"
+        #eval "$sss" 2>&1 | tee -a "$log_c"
+        [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+	$x nice $ffmpeg $opt 2>&1 | tee -a "$log_c"
     fi
     rm -f ffmetadata
-    echo "===========================================================" >> $log_c
+    echo "===========================================================" >> "$log_c"
     #ffprobe -hide_banner -i $name 2>> $log_c
-    $ffprobe -hide_banner -i $name 2>$t
-    cat $t >> $log_c
+    #$ffprobe -hide_banner -i $name 2>$t
+    #sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
+    #eval $sss
+    #[ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    #$x $ffprobe -hide_banner -i "$name" 2>$t
+    #set -x
+    #if [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ]
+    #then
+	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
+	#eval $sss
+    #else
+	eval $ffprobe -hide_banner -i $name 2>$t
+    #fi
+    cat $t >> "$log_c"
     #set -x
     line=$(grep "Video:" $t)
-    fps1=${line%fps*}
-    nw=$(echo $fps1|wc -w)
-    fpso=$(echo $fps1|cut -d \  -f $nw)
+    if [ "$line" != "" ]
+    then
+	fps1=${line%fps*}
+	nw=$(echo $fps1|wc -w)
+	fpso=$(echo $fps1|cut -d \  -f $nw)
+    fi
 }
 
 log_conf() {
     if [ -e $1 ]
     then
-	echo "====================================" >> $log_c
-	echo $1 >> $log_c
+	echo "====================================" >> "$log_c"
+	echo $1 >> "$log_c"
 	#cat $1 >> $log_c
 	while read line
 	do
-	    [ "${line:0:1}" != "#" ] && echo $line >> $log_c
+	    [ "${line:0:1}" != "#" ] && echo $line >> "$log_c"
 	done < $1
-	echo "====================================" >> $log_c
+	echo "====================================" >> "$log_c"
     fi
 }
 
@@ -1884,20 +2118,20 @@ header() {
     d=`date +"%F %T"`
     v=$($ffmpeg -version)
     v=$(echo $v | cut -d \  -f 3)
-    echo "Start $d vdr-transcode ffmpeg Version $v" > $log_c
-    uname -p >> $log_c
+    echo "Start $d vdr-transcode ffmpeg Version $v" > "$log_c"
+    uname -p >> "$log_c"
     if [ -e /proc/asound/NVidia ]
     then
-	lspci | grep VGA >> $log_c
+	lspci | grep VGA >> "$log_c"
 	xlog=/var/log/Xorg.0.log
-	[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> $log_c
+	[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> "$log_c"
     fi
     log_conf $conf
     log_conf $conf1
-    echo -e -n "Parameter:\n" $parameter_log >> $log_c
+    echo -e -n "Parameter:\n" $parameter_log >> "$log_c"
     log_conf $vtc
-    echo "PWD:" $PWD >> $log_c
-    cat $old >> $log_c
+    echo "PWD:" $PWD >> "$log_c"
+    cat $old >> "$log_c"
 }
 
 info_create() {
@@ -2083,10 +2317,11 @@ copy_vdr() {
 }
 
 copy_file() {
+    #set -x
     fmt=$1
     out=$name.$fmt
     i=1
-    while [ -e $out ]
+    while [ -e "$out" ]
     do
 	i=$(($i+1))
 	out=$name-$i.$fmt
@@ -2098,12 +2333,48 @@ copy_file() {
     #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata \"creation_time=$(date "+%FT%T" -d @$rec_time)\""
     OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
-    transcode $out
-    newsize=$(ls -l $out|cut -d \  -f 5)
+    transcode "$out"
+    newsize=$(ls -l "$out"|cut -d \  -f 5)
     newsize=$(($newsize/1024))
     #set -x
     [ "$fmt" == "ts" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
+    if [ "$ifmt" == "vdr" ]
+    then
+	info=
+	[ -e info ] && info=info
+	[ -e info.vdr ] && info=info.vdr
+	if [ "$info" != "" ]
+	then
+	    grep "^T" $info > $name.inf
+	    grep "^S" $info >> $name.inf
+	    grep "^D" $info >> $name.inf
+	fi
+    fi
     #set +x
+}
+
+copy_mp3() {
+    #set -x
+    fmt=mp3
+    out=$name.mp3
+    oldsize=1
+    i=1
+    while [ -e $out ]
+    do
+	i=$(($i+1))
+	out=$name-$i.mp3
+    done
+    log_c=$out.log
+    echo $PWD/$log_c > /tmp/vt-log
+    header
+    analyze $ffmpeg_i
+    video="-vn"
+    map="-map a:0"
+    [ "$select_str" != "" ] && map="-map 0:$select_str"
+    audio="-c mp3 $mp3_b"
+    OPT_V=
+    transcode $out
+    #exit
 }
 
 copy() {
@@ -2122,6 +2393,9 @@ copy() {
 	    ;;
 	"webm")
 	    copy_file $OUTPUT
+	    ;;
+	"mp3")
+	    copy_mp3 $OUTPUT
 	    ;;
 	#"jpg")
 	#    copy_file $OUTPUT
@@ -2171,7 +2445,7 @@ server() {
 		done
 	    fi
 	done < $confs
-	sleep 1m
+	sleep 60
     done
     rm $runs
     exit
@@ -2211,6 +2485,7 @@ auto_queue() {
 auto_check() {
     #set -x
     t=/tmp/vtc
+    t2=/tmp/vtc2
     tac $logs > $t
     #cat $t
     sum=0
@@ -2237,7 +2512,22 @@ auto_check() {
 	    #s=$(ls -l $c2/index|cut -d \  -f 5)
 	    #echo "index" $s
 	    grep "index=" $c2/logfile
+	    #set -x
 	    grep "Duration:" $c2/logfile | tail -n 2
+	    grep "Duration:" $c2/logfile | tail -n 2 > $t2
+	    #  Duration: 01:39:25.94, start: 7539.052489, bitrate: 9692 kb/s
+	    #  Duration: 01:39:06.66, start: 1.400000, bitrate: 2013 kb/s
+	    d1=$(head -n 1 $t2)
+	    d1=$(echo $d1|cut -d \  -f 2)
+	    d1s=$(date -u "+%s" -d "1970-01-01 ${d1:0:8}")
+	    d1ms=$d1s${d1:9:2}
+	    d2=$(tail -n 1 $t2)
+	    d2=$(echo $d2|cut -d \  -f 2)
+	    d2s=$(date -u "+%s" -d "1970-01-01 ${d2:0:8}")
+	    d2ms=$d2s${d2:9:2}
+	    #echo $d2ms $d1ms
+	    echo "Diff" $(($d2ms-$d1ms))"cs"
+	    #exit
 	    sum=$(($sum+$oldsize))
 	fi
     done < $t
@@ -2264,6 +2554,34 @@ auto_conf() {
     exit
 }
 
+#set -x
+case "$INPUT" in
+    "vdr"|"")
+	input_vdr
+	;;
+    "dvd")
+	input_dvd $track
+	;;
+    "BD")
+	#set -x
+	input_BD $track
+	#exit
+	;;
+    "none")
+	none=
+	;;
+    *)
+	if [ "${INPUT:0:4}" == "dvd:" ]
+	then
+	    tr=${INPUT:4}
+	    input_dvd $tr
+	else
+	    input_file
+	fi
+	;;
+esac
+set_hwacc
+
 start=$(date +"%s")
 
 #set -x
@@ -2278,7 +2596,7 @@ case $TODO in
 	inf
 	;;
     "--stat")
-	status $(cat $vtlog)
+	status $(cat "$vtlog")
 	exit
 	;;
     "--as")
@@ -2296,6 +2614,9 @@ case $TODO in
     "--conf")
 	auto_conf
 	;;
+    "--diag")
+	diag
+	;;
     *)
 	copy
 	;;
@@ -2304,17 +2625,33 @@ esac
 ende=$(date +"%s")
 sek=$(($ende-$start))
 
-echo "===========================================================" >> $log_c
+echo "===========================================================" >> "$log_c"
 [ -e $vtc ] && mv $vtc $vtc.rdy
-cp -p $log_c $t
-grep "Video:" $t >> $log_c
-grep "Duration:" $t >> $log_c
-[ "$OUTPUT" == "vdr" ] && date -u -d @$si +"index %T" >> $log_c
-echo "Alt" $oldsize >> $log_c
-prz=$(($newsize*100/$oldsize))
-echo "Neu" $newsize $prz"%" >> $log_c
-echo -n "Dauer: " >> $log_c
-date -u -d @$sek "+%T" >> $log_c
+cp -p "$log_c" $t
+grep "Video:" $t >> "$log_c"
+grep "Duration:" $t >> "$log_c"
+#set -x
+#if [ "$durs1ms" != "" ]
+#then
+    dur=$(grep "Duration:" $t|head -n 1)
+    dur=$(echo $dur|cut -d \  -f 2)
+    durs1=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    durs1ms=$durs1${dur:9:2}
+    dur=$(grep "Duration:" $t|tail -n 1)
+    dur=$(echo $dur|cut -d \  -f 2)
+    durs2=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    durs2ms=$durs2${dur:9:2}
+    echo "Diff:" $(($durs2ms-$durs1ms))"cs" >> "$log_c"
+#fi
+[ "$OUTPUT" == "vdr" ] && date -u -d @$si +"index %T" >> "$log_c"
+if [ $oldsize -gt 1 ]
+then
+    echo "Alt" $oldsize >> "$log_c"
+    prz=$(($newsize*100/$oldsize))
+    echo "Neu" $newsize $prz"%" >> "$log_c"
+fi
+echo -n "Dauer: " >> "$log_c"
+date -u -d @$sek "+%T" >> "$log_c"
 d=`date +"%F %T"`
-echo "Ende" $d >> $log_c
+echo "Ende" $d >> "$log_c"
 rm -f $lck
