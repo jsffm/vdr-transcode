@@ -12,6 +12,7 @@
 # OUTPUT
 # $(nproc)
 # opus_br 2ch kbit
+# service_name
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -84,13 +85,13 @@ help() {
     echo $(basename $0) parameter
     echo " -h  # this"
     echo "Input"
-    echo " -i <file>|vdr|dvd[:<track>]|<http> # standard vdr"
+    echo " -i <file>|vdr|dvd[:<track>]|<http> # default vdr"
     echo " -dvd <path>"
     echo " -BD <path>    # AVCHD"
     echo " -tr <track>   # DVD or AVCHD track"
     echo " -va <seconds> # add video at end, only ts"
     echo "Output"
-    echo " -o vdr|mp4|mkv|ts|mp3 # standard vdr"
+    echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
     echo " -t <n>       # length in seconds"
     echo " -ss <position>"
     echo " -to <position>"
@@ -820,6 +821,7 @@ input_file() {
 	oldsize=$(($oldsize/1024))
 	echo "oldsize="$oldsize >> $old
 	rec_time=$(date "+%s" -r "$INPUT")
+	#chapt_mediainfo "$INPUT"
     fi
     ffmpeg_i="-i \"$INPUT\""
     input="$INPUT"
@@ -1028,6 +1030,8 @@ input_vdr() {
 
 chapt_mediainfo() {
 #set -x
+which mediainfo 2> /dev/null
+[ $? -ne 0 ] && return
 meta=ffmetadata
 rm $meta
 echo ";FFMETADATA1" > $meta
@@ -2246,6 +2250,7 @@ transcode() {
     #set -x
     name="$1"
     [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
+    OPT="$OPT -metadata service_name=vdr-transcode"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
@@ -2534,6 +2539,7 @@ copy_file() {
     #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata \"creation_time=$(date "+%FT%T" -d @$rec_time)\""
     OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
+    OPT="$OPT -metadata title=\"$(basename $name)\""
     [ "$fmt" == "mp4" ] && OPT="$OPT -movflags faststart"
     transcode "$out"
     newsize=$(ls -l "$out"|cut -d \  -f 5)
@@ -2775,7 +2781,7 @@ auto_check() {
 	    sum=$(($sum+$oldsize))
 	fi
     done < $t
-    echo "Summe="$sum $(($sum/1025))"GB"
+    echo "Summe="$sum $(($sum/1025))"MB"
     exit
 }
 
