@@ -822,6 +822,15 @@ input_file() {
 	echo "oldsize="$oldsize >> $old
 	rec_time=$(date "+%s" -r "$INPUT")
 	#chapt_mediainfo "$INPUT"
+    else
+	#set -x
+	osr=$($ffprobe $INPUT 2>&1 | grep "Duration:")
+	osd=$(echo $osr|cut -d \  -f 2)
+	oss=$(date -u +%s -d "1970-01-01 ${osd:0:8}")
+	osbr=$(echo $osr|cut -d \  -f 6)
+	echo $oldsize
+	oldsize=$(($oss*$osbr/8))
+	#exit
     fi
     ffmpeg_i="-i \"$INPUT\""
     input="$INPUT"
@@ -1591,7 +1600,7 @@ set_vp9() {
     then
 	#crf=33
 	crf=40
-	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1 $vf"
+	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 $vf"
     fi
 }
 
