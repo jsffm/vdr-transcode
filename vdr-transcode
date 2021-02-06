@@ -90,6 +90,7 @@ help() {
     echo " -BD <path>    # AVCHD"
     echo " -tr <track>   # DVD or AVCHD track"
     echo " -va <seconds> # add video at end, only ts"
+    echo " -ia <file>|<http> # second audio source"
     echo "Output"
     echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
     echo " -t <n>       # length in seconds"
@@ -183,6 +184,9 @@ parameter() {
 	    ;;
 	"-i")
 	    INPUT=$2
+	    ;;
+	"-ia")
+	    INPUTA=$2
 	    ;;
 	"-dvd")
 	    INPUT=dvd
@@ -2265,6 +2269,13 @@ transcode() {
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
     #opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal \"$name\""
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && name="\"$name\""
+    if [ "$INPUTA" != "" ]
+    then
+	ffmpeg_i="$ffmpeg_i -i $INPUTA"
+	map="$map -map 1:a"
+	audio="$audio -c:a copy"
+	[ "${lang[2]}" != "" ] && OPT="$OPT -metadata:s:2 language=${lang[2]}"
+    fi
     opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal $name"
     [ "$auto" == "1" ] && opt="-nostdin $opt"
     echo $ffmpeg $opt >> "$log_c"
