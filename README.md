@@ -13,6 +13,10 @@ Aufgerufen wird der Script auf der cli im Aufnahmeverzeichnis der jeweiligen
 Aufnahme, genauer gesagt im .rec Verzeichnis. Sollen eine größere Menge von 
 Aufnahmen gewandelt werden siehe Automation.
 
+Anzeige der Parameter:
+
+vt -h
+
 Eine vdr-Aufzeichnung nach mp4 exportieren: (Standard-Eingabe ist vdr)
 
 vt -o mp4
