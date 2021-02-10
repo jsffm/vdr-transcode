@@ -19,7 +19,7 @@ vt -o mp4
 
 Ein mp4 oder mkv nach vdr konvertieren: (Standard-Ausgabe ist vdr)
 
-vt -i <datei>
+vt -i &lt;datei>
 
 Aufzeichnung in mpeg2 nach h264 konvertieren um Platz zu sparen 
 (mpeg2 -> h264 ist Standard)
