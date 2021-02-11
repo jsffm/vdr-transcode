@@ -1676,11 +1676,45 @@ set_opus() {
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr"
 }
 
+set_ac3() {
+    if [ "$atyp" != "stereo" -a "$atyp" != "2" ]
+    then
+	audio_t="-c:$stro ac3 -b:$stro 448k"
+    else
+	audio_t="-c:$stro ac3 -b:$stro 192k"
+    fi
+}
+
+set_eac3() {
+    if [ "$atyp" != "stereo" -a "$atyp" != "2" ]
+    then
+	audio_t="-c:$stro eac3 -b:$stro 256k"
+    else
+	audio_t="-c:$stro eac3 -b:$stro 128k"
+    fi
+}
+
+set_audio_plus() {
+    map="$map -map 0:$str"
+    audio="$audio -c:$stro copy"
+    stro1=$(($stro1+1))
+    stro=$stro1
+    codec1=${codec1:1}
+}
+
 set_audio() {
     #set -x
-    case $1 in
+    codec1=$1
+    [ ${codec1:0:1} == "+" ] && set_audio_plus
+    case $codec1 in
 	"copy")
 	    audio_t="-c:$stro copy"
+	    ;;
+	"ac3")
+	    set_ac3
+	    ;;
+	"eac3")
+	    set_eac3
 	    ;;
 	"aac")
 	    set_aac
@@ -2124,7 +2158,9 @@ analyze() {
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
 		#[ "$OUTPUT" == "webm" ] && audio_t="-c:$stro libopus"
-		[ "$OUTPUT" == "webm" ] && set_opus
+		#[ "$OUTPUT" == "webm" ] && set_opus
+		[ "$OUTPUT" == "webm" ] && aac=opus
+		set_audio $aac
 		if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
 		then
 		    #ar="-ar:$stro 48000"
@@ -2133,11 +2169,11 @@ analyze() {
 		fi
 		#[ "$aac" == "opus" ] && audio_t="-c:$stro opus -strict -2"
 		#[ "$aac" == "opus" ] && audio_t="-c:$stro libopus"
-		[ "$aac" == "opus" ] && set_opus
+		#[ "$aac" == "opus" ] && set_opus
 		#[ "$aac" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		[ "$aac" == "aac" ] && set_aac
-		[ "$aac" == "aac_he" ] && set_aac he
-		[ "$aac" == "aac_he_v2" ] && set_aac he_v2
+		#[ "$aac" == "aac" ] && set_aac
+		#[ "$aac" == "aac_he" ] && set_aac he
+		#[ "$aac" == "aac_he_v2" ] && set_aac he_v2
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
