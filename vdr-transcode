@@ -2180,14 +2180,16 @@ analyze() {
 	    "aac_latm")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
-		if [ "$OUTPUT" == "mp4" ]
-		then
-		    br=
-		    [ "$atyp" == "stereo" ] && br="-b:$stro $aac_stereo_br"
-		    audio_t="-c:$stro $aaclib $br"
-		fi
-		[ "$aac" == "opus" ] && set_opus
-		[ "$aac" == "aac_he" ] && set_aac he
+		#if [ "$OUTPUT" == "mp4" ]
+		#then
+		#    br=
+		#    [ "$atyp" == "stereo" ] && br="-b:$stro $aac_stereo_br"
+		#    audio_t="-c:$stro $aaclib $br"
+		#fi
+		[ "$OUTPUT" == "mp4" ] && aac=aac
+		#[ "$aac" == "opus" ] && set_opus
+		#[ "$aac" == "aac_he" ] && set_aac he
+		set_audio $aac
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
@@ -2340,12 +2342,15 @@ transcode() {
     #[ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
     #$x $ffprobe -hide_banner -i "$name" 2>$t
     #set -x
+    #name=${name/\(/(}
+    #name=${name/\)/)}
     #if [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ]
     #then
 	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
 	#eval $sss
     #else
 	eval $ffprobe -hide_banner -i $name 2>$t
+	#$ffprobe -hide_banner -i $name 2>$t
     #fi
     cat $t >> "$log_c"
     #set -x
