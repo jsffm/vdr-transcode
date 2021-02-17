@@ -2,6 +2,8 @@
 
 # vdr-transcode				jsffm@web.de
 
+# https://github.com/jsffm/vdr-transcode
+
 # blancs in filename	Frank Kaiser <frank.kaiser@fuxbau.net>
 
 # ifmt	input extension
@@ -823,7 +825,6 @@ input_file() {
 	# -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
 	oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
 	oldsize=$(($oldsize/1024))
-	echo "oldsize="$oldsize >> $old
 	rec_time=$(date "+%s" -r "$INPUT")
 	#chapt_mediainfo "$INPUT"
     else
@@ -836,6 +837,7 @@ input_file() {
 	oldsize=$(($oss*$osbr/8))
 	#exit
     fi
+    echo "oldsize="$oldsize >> $old
     ffmpeg_i="-i \"$INPUT\""
     input="$INPUT"
     name=${INPUT%.*}
