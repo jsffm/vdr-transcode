@@ -170,7 +170,7 @@ add_vf() {
     #set -x
     if [ "$vf" == "" ]
     then
-	vf=$1
+	vf="-vf $1"
     else
 	vf=$vf","$1
     fi
@@ -387,6 +387,9 @@ parameter() {
 		    ;;
 		"qhd")
 		    scale="960:540"
+		    ;;
+		"pal")
+		    scale="720:576"
 		    ;;
 	    esac
 	    ;;
@@ -1595,6 +1598,12 @@ set_vp9() {
     # crf 0..63
     # crf=33
     # video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1"
+    if [ "$hwaccel" == "cuvid" ]
+    then
+	add_vf hwdownload
+	add_vf format=nv12
+	OPT_I="$OPT_I $decode_cuvid"
+    fi
     if [ "$hwaccel" == "vaapi" ]
     then
 	video="-c:v vp9_vaapi -rc_mode CQP $gop $vf $aspect"
@@ -1616,6 +1625,23 @@ set_av1() {
     aopt="$aopt -tiles 2x2"
     aopt="$aopt -threads 8"
     video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
+}
+
+set_mpeg2() {
+    br="-b:v 4000k"
+    [ "$h264_br" != "" ] && br=$h264_br
+    #add_vf hwupload
+    if [ "$hwaccel" == "cuvid" ]
+    then
+	add_vf hwdownload
+	add_vf format=nv12
+	OPT_I="$OPT_I $decode_cuvid"
+    fi
+    add_vf tinterlace=5
+    #video="$vf $aspect -c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1"
+    video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 $vf $aspect"
+    #HWACC=
+    #[ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
 }
 
 set_aac() {
@@ -1696,6 +1722,10 @@ set_eac3() {
     fi
 }
 
+set_mp2() {
+    audio_t="-c:$stro libtwolame -b:$stro 192k"
+}
+
 set_audio_plus() {
     map="$map -map 0:$str"
     audio="$audio -c:$stro copy"
@@ -1729,6 +1759,9 @@ set_audio() {
 	    ;;
 	"opus")
 	    set_opus
+	    ;;
+	"mp2")
+	    set_mp2
 	    ;;
 	*)
 	    echo $1 wrong
@@ -1914,7 +1947,7 @@ analyze() {
 		#[ $fps -gt 25 ] && add_vf "fps=50" && fpso=50
 		[ "$fps" ">" "25" -a "$fps" != "50" ] && add_vf "fps=50" && fpso=50
 	    fi
-	    [ "$vf" != "" ] && vf="-vf $vf"
+	    #[ "$vf" != "" ] && vf="-vf $vf"
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
@@ -1960,6 +1993,7 @@ analyze() {
 		video="-c:v copy"
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		[ "$OUTPUT" == "webm" ] && set_vp8
+		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
 		case $h264 in
 		    "hevc")
 			decode_cuvid="-c:v h264_cuvid"
@@ -1992,6 +2026,10 @@ analyze() {
 		    "av1")
 			set_av1
 			;;
+		    "mpeg2")
+			decode_cuvid="-c:v h264_cuvid"
+			set_mpeg2
+			;;
 		    *)
 			echo "-h264 $h264 wrong"
 			exit 8
@@ -2004,6 +2042,7 @@ analyze() {
 		deinterlace=
 		#[ "$vcodec" != "" ] && hevc=$vcodec
 		[ "$vcodec" != "" -a "$vcodec" != "hevc" ] && hevc=$vcodec
+		[ "$OUTPUT" == "mpg" ] && hevc=mpeg2
 		case $hevc in
 		    "h264")
 			decode_cuvid="-c:v hevc_cuvid"
@@ -2018,6 +2057,10 @@ analyze() {
 			;;
 		    "av1")
 			set_av1
+			;;
+		    "mpeg2")
+			decode_cuvid="-c:v hevc_cuvid"
+			set_mpeg2
 			;;
 		    *)
 			echo "-hevc $hevc wrong"
@@ -2131,6 +2174,7 @@ analyze() {
 		;;
 	    "eac3")
 		map="$map -map 0:$str"
+		[ "$OUTPUT" == "mpg" ] && eac3=mp2
 		set_audio $eac3
 		#audio_t="-c:$stro copy"
 		#[ "$eac3" == "aac" ] && set_aac
@@ -2162,6 +2206,7 @@ analyze() {
 		#[ "$OUTPUT" == "webm" ] && audio_t="-c:$stro libopus"
 		#[ "$OUTPUT" == "webm" ] && set_opus
 		[ "$OUTPUT" == "webm" ] && aac=opus
+		[ "$OUTPUT" == "mpg" ] && aac=mp2
 		set_audio $aac
 		if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
 		then
@@ -2189,6 +2234,7 @@ analyze() {
 		#    audio_t="-c:$stro $aaclib $br"
 		#fi
 		[ "$OUTPUT" == "mp4" ] && aac=aac
+		[ "$OUTPUT" == "mpg" ] && aac=mp2
 		#[ "$aac" == "opus" ] && set_opus
 		#[ "$aac" == "aac_he" ] && set_aac he
 		set_audio $aac
@@ -2691,6 +2737,9 @@ copy() {
 	    copy_file $OUTPUT
 	    ;;
 	"mp4")
+	    copy_file $OUTPUT
+	    ;;
+	"mpg")
 	    copy_file $OUTPUT
 	    ;;
 	"ts")
