@@ -1994,16 +1994,17 @@ analyze() {
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		[ "$OUTPUT" == "webm" ] && set_vp8
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
+		decode_cuvid="-c:v h264_cuvid"
 		case $h264 in
 		    "hevc")
-			decode_cuvid="-c:v h264_cuvid"
+			#decode_cuvid="-c:v h264_cuvid"
 			#decode_mmal="-c:v h264_mmal"
 			decode_mmal="-c:v "$codec"_mmal"
 			set_hevc
 			#video="-c:v:0 $hevcenc $preset"
 			;;
 		    "h264")
-			decode_cuvid="-c:v h264_cuvid"
+			#decode_cuvid="-c:v h264_cuvid"
 			#decode_mmal="-c:v h264_mmal"
 			decode_mmal="-c:v "$codec"_mmal"
 			set_h264
@@ -2011,7 +2012,7 @@ analyze() {
 		    "copy")
 			if [ "$fpso" != "" ]
 			then
-			    decode_cuvid="-c:v h264_cuvid"
+			    #decode_cuvid="-c:v h264_cuvid"
 			    #decode_mmal="-c:v h264_mmal"
 			    decode_mmal="-c:v "$codec"_mmal"
 			    set_h264
@@ -2027,7 +2028,7 @@ analyze() {
 			set_av1
 			;;
 		    "mpeg2")
-			decode_cuvid="-c:v h264_cuvid"
+			#decode_cuvid="-c:v h264_cuvid"
 			set_mpeg2
 			;;
 		    *)
