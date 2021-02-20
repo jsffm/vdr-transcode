@@ -1638,10 +1638,11 @@ set_mpeg2() {
 	OPT_I="$OPT_I $decode_cuvid"
     fi
     add_vf tinterlace=5
-    #video="$vf $aspect -c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1"
     video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 $vf $aspect"
     #HWACC=
     #[ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
+    [ "$aac" == "copy" ] && aac=mp2
+    [ "$eac3" == "copy" ] && eac3=mp2
 }
 
 set_aac() {
