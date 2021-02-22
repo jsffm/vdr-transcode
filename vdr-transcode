@@ -15,6 +15,7 @@
 # $(nproc)
 # opus_br 2ch kbit
 # service_name
+# h264_level	automatic ?
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -28,6 +29,8 @@ hevc=copy
 mpeg2=h264
 mpeg4=copy
 #mpeg4=h264
+vp8=copy
+vp9=copy
 ac3=copy
 #ac3_stereo=aac
 eac3=copy
@@ -83,9 +86,7 @@ declare -a langa
 
 #exit
 
-help() {
-    echo $(basename $0) parameter
-    echo " -h  # this"
+help_Input() {
     echo "Input"
     echo " -i <file>|vdr|dvd[:<track>]|<http> # default vdr"
     echo " -dvd <path>"
@@ -93,6 +94,9 @@ help() {
     echo " -tr <track>   # DVD or AVCHD track"
     echo " -va <seconds> # add video at end, only ts"
     echo " -ia <file>|<http> # second audio source"
+}
+
+help_Output() {
     echo "Output"
     echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
     echo " -t <n>       # length in seconds"
@@ -102,14 +106,17 @@ help() {
     echo " --inf"
     echo " --stat       # status"
     echo " --diag"
+}
+
+help_Video() {
     echo "Video"
-    echo " -h264 copy|h264|hevc|vp8|vp9"
-    echo " -hevc copy|h264|hevc"
-    echo " -mpeg2 copy|h264|hevc|vp8|vp9"
-    echo " -mpeg4 copy|h264|hevc"
-    echo " -vc1 copy|h264|hevc"
-    echo " -vp8 copy|h264|hevc"
-    echo " -vp9 copy|h264|hevc"
+    echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -hevc copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -mpeg2 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -mpeg4 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -vc1 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -vp8 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -vp9 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -vc|-vcodec <codec> # overwrites -h264|-hevc|-mpeg2"
     echo " -r <n>           # fps"
     echo " -b <n>           # constant bitrate for mp3, h264_omx"
@@ -121,6 +128,9 @@ help() {
     echo " -scale <w:h>|hd720|hd1080|qhd"
     echo " -aspect <aspect> # 16:9|4:3"
     echo " --nohw           # no hardwaredecoding"
+}
+
+help_Audio() {
     echo "Audio"
     echo " -ac3 copy|eac3|aac|aac_he|aac_he_v2|opus"
     echo " -ac3_stereo aac|aac_he"
@@ -132,6 +142,9 @@ help() {
     echo " --selb           # select best audio track"
     echo " -vol <factor>|<stream>=<factor> # Volume"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
+}
+
+help_Automation() {
     echo "Automation"
     echo " --as &             # server start, search pathes in /etc/vdr-transcode-s.conf"
     echo " --ak               # server stop"
@@ -139,12 +152,23 @@ help() {
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
+}
+
+help_Configuration() {
     echo "Configuration /etc/vdr-transcode.conf"
+    help_Configuration_V
+    help_Configuration_A
+    echo " other"
     echo " -o vdr|mp4|mkv      # default vdr"
-    echo " -aac_stereo_br|-aac_br <br> # default 96k"
-    echo " -aac_6ch_br <br>    # default 256k"
-    echo " -aac_vbr <1-5>"
-    echo " -opus_br <kbit>     # 2ch br in kbit default 64"
+    echo " -vdr <path_to_vdr>"
+    echo " -ffmpeg <path_to_ffmpeg>"
+    echo " -ffprobe <path_to_ffprobe>"
+    echo " -mark <mark>     # mark at the end of transcoded recordings"
+    echo " -odir <path>     # output directory"
+}
+
+help_Configuration_V() {
+    echo " video"
     echo " -g <n>           # goplength default 50"
     echo " -crf <n>         # quality h264 default 21, < = better"
     echo " -quality <n>     # vaapi h264 quality"
@@ -155,13 +179,28 @@ help() {
     echo " -h264_br         # bitrate for h264_omx, -b works too"
     echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265|libkvazaar"
     echo " -hevc_level <level>"
-    echo " -aaclib aac|libfdk_aac|libfaac # default aac"
     echo " -hwaccel cuvid|vaapi|vdpau"
-    echo " -vdr <path_to_vdr>"
-    echo " -ffmpeg <path_to_ffmpeg>"
-    echo " -ffprobe <path_to_ffprobe>"
-    echo " -mark <mark>     # mark at the end of transcoded recordings"
-    echo " -odir <path>     # output directory"
+}
+
+help_Configuration_A() {
+    echo " audio"
+    echo " -aac_stereo_br|-aac_br <br> # default 96k"
+    echo " -aac_6ch_br <br>    # default 256k"
+    echo " -aac_vbr <1-5>"
+    echo " -opus_br <kbit>     # 2ch br in kbit default 64"
+    echo " -aaclib aac|libfdk_aac|libfaac # default aac"
+}
+
+help() {
+    #echo [$1][$2]
+    echo $(basename $0) parameter
+    echo " -h  # this"
+    help_Input
+    help_Output
+    help_Video
+    help_Audio
+    help_Automation
+    help_Configuration
     #echo "Other"
     exit
 }
@@ -2106,20 +2145,23 @@ analyze() {
 	    "vc1")
 		video="-c:v copy"
 		[ "$OUTPUT" == "vdr" -a "$vc1" == "copy" ] && vc1=h264
-		if [ "$vc1" == "h264" ]
-		then
-		    decode_cuvid="-c:v vc1_cuvid"
-		    decode_mmal="-c:v "$codec"_mmal"
-		    set_h264
+		decode_cuvid="-c:v vc1_cuvid"
+		decode_mmal="-c:v "$codec"_mmal"
+		#if [ "$vc1" == "h264" ]
+		#then
+		#    decode_cuvid="-c:v vc1_cuvid"
+		#    decode_mmal="-c:v "$codec"_mmal"
+		#    set_h264
 		    #video="-c:v:0 h264_nvenc $preset"
-		fi
-		if [ "$vc1" == "hevc" ]
-		then
-		    decode_cuvid="-c:v vc1_cuvid"
-		    decode_mmal="-c:v "$codec"_mmal"
-		    set_hevc
+		#fi
+		#if [ "$vc1" == "hevc" ]
+		#then
+		#    decode_cuvid="-c:v vc1_cuvid"
+		#    decode_mmal="-c:v "$codec"_mmal"
+		#    set_hevc
 		    #video="-c:v:0 $hevcenc $preset"
-		fi
+		#fi
+		set_video $vc1
 		;;
 	    "msmpeg4v3"|"msmpeg4v2"|"mpeg4")
 		# [mpeg4 @ 0x7fffeb2a7500] Video uses a non-standard and 
@@ -2133,15 +2175,16 @@ analyze() {
 		#decode_cuvid="-c:v mpeg4_cuvid"
 		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
 		#[ $codec == "mpeg4" ] && decode_mmal="-c:v "$codec"_mmal"
-		if [ "$mpeg4" == "h264" ]
-		then
-		    [ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
-		    set_h264
+		#if [ "$mpeg4" == "h264" ]
+		#then
+		#    [ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
+		#    set_h264
 		    #video="-c:v:0 h264_nvenc $preset"
-		fi
-		[ "$mpeg4" == "hevc" ] && set_hevc
-		[ "$mpeg4" == "vp8" ] && set_vp8
-		[ "$mpeg4" == "vp9" ] && set_vp9
+		#fi
+		#[ "$mpeg4" == "hevc" ] && set_hevc
+		#[ "$mpeg4" == "vp8" ] && set_vp8
+		#[ "$mpeg4" == "vp9" ] && set_vp9
+		set_video $mpeg4
 		#OPT_G="$OPT_G -bsf mpeg4_unpack_bframes"
 		;;
 	    "vp6f"|"flv1")
@@ -2152,22 +2195,28 @@ analyze() {
 	    "vp8")
 		decode_cuvid="-c:v vp8_cuvid"
 		video="-c:v copy"
-		[ "$OUTPUT" == "vdr" ] && set_h264
-		[ "$vp8" == "h264" ]  && set_h264
-		[ "$vp8" == "hevc" ]  && set_hevc
+		#[ "$OUTPUT" == "vdr" ] && set_h264
+		[ "$OUTPUT" == "vdr" -a "$vp8" == "copy" ] && vp8=h264
+		#[ "$vp8" == "h264" ]  && set_h264
+		#[ "$vp8" == "hevc" ]  && set_hevc
+		set_video $vp8
 		;;
 	    "vp9")
 		decode_cuvid="-c:v vp9_cuvid"
 		video="-c:v copy"
-		[ "$OUTPUT" == "vdr" ] && set_h264
-		[ "$vp9" == "h264" ]  && set_h264
-		[ "$vp9" == "hevc" ]  && set_hevc
+		#[ "$OUTPUT" == "vdr" ] && set_h264
+		[ "$OUTPUT" == "vdr" -a "$vp9" == "copy" ] && vp9=h264
+		#[ "$vp9" == "h264" ]  && set_h264
+		#[ "$vp9" == "hevc" ]  && set_hevc
+		set_video $vp9
 		;;
 	    "av1")
 		video="-c:v copy"
-		[ "$OUTPUT" == "vdr" ] && set_h264
-		[ "$av1" == "h264" ]  && set_h264
-		[ "$av1" == "hevc" ]  && set_hevc
+		#[ "$OUTPUT" == "vdr" ] && set_h264
+		[ "$OUTPUT" == "vdr" -a "$av1" == "copy" ] && av1=h264
+		#[ "$av1" == "h264" ]  && set_h264
+		#[ "$av1" == "hevc" ]  && set_hevc
+		set_video $av1
 		;;
 	    "wmv3")
 		set_h264
@@ -2984,7 +3033,7 @@ start=$(date +"%s")
 #set -x
 case $TODO in
     "-h")
-	help
+	help $2
 	;;
     "--streams")
 	streams
