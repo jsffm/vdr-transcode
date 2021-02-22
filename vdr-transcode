@@ -168,7 +168,8 @@ help_Configuration() {
 }
 
 help_Configuration_V() {
-    echo " video"
+    #echo " video"
+    echo " video configuration"
     echo " -g <n>           # goplength default 50"
     echo " -crf <n>         # quality h264 default 21, < = better"
     echo " -quality <n>     # vaapi h264 quality"
@@ -183,7 +184,7 @@ help_Configuration_V() {
 }
 
 help_Configuration_A() {
-    echo " audio"
+    echo " audio configuration"
     echo " -aac_stereo_br|-aac_br <br> # default 96k"
     echo " -aac_6ch_br <br>    # default 256k"
     echo " -aac_vbr <1-5>"
@@ -193,8 +194,21 @@ help_Configuration_A() {
 
 help() {
     #echo [$1][$2]
+    #echo [$decition]
     echo $(basename $0) parameter
-    echo " -h  # this"
+    if [ "$decition" == "-v" ]
+    then
+	help_Video
+	help_Configuration_V
+	exit
+    fi
+    if [ "$decition" == "-a" ]
+    then
+	help_Audio
+	help_Configuration_A
+	exit
+    fi
+    echo " -h <-v|-a> # this"
     help_Input
     help_Output
     help_Video
@@ -221,6 +235,7 @@ parameter() {
 	"-h")
 	    TODO=$1
 	    INPUT=none
+	    decition=$2
 	    #help
 	    ;;
 	"-i")
@@ -2018,6 +2033,14 @@ analyze() {
 		[ "$fps" ">" "25" -a "$fps" != "50" ] && add_vf "fps=50" && fpso=50
 	    fi
 	    #[ "$vf" != "" ] && vf="-vf $vf"
+	    #set -x
+	    hw=${line%%[SAR*}
+	    nw=$(echo $hw|wc -w)
+	    hw=$(echo $hw|cut -d \  -f $nw)
+	    vw=$(echo $hw|cut -d 'x' -f 2)
+	    hw=$(echo $hw|cut -d 'x' -f 1)
+	    [ $vw -le 576 ] && h264_level=3.0
+	    [ $vw -ge 1080 ] && h264_level=4.2
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
