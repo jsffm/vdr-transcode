@@ -1451,6 +1451,7 @@ set_hwacc() {
 	    # -hwaccel_output_format cuda
 	    #HWACC="-hwaccel cuvid"
 	    HWACC="-hwaccel cuvid -hwaccel_output_format cuda"
+	    #HWACC="-hwaccel cuvid -hwaccel_output_format nv12"
 	    #deinterlace="-vf yadif_cuda"
 	    deinterlace="yadif_cuda"
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
@@ -1507,6 +1508,29 @@ inf() {
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
     $x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     exit
+}
+
+set_video() {
+    case $1 in
+	copy)
+	    video="-c:v:0 copy"
+	    ;;
+	h264)
+	    set_h264
+	    ;;
+	hevc)
+	    set_hevc
+	    ;;
+	vp8)
+	    set_vp8
+	    ;;
+	vp9)
+	    set_vp9
+	    ;;
+	mpeg2)
+	    set_mpeg2
+	    ;;
+    esac
 }
 
 set_h264() {
@@ -1595,11 +1619,17 @@ set_vp8() {
 }
 
 set_vp9() {
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	echo "vdr don´t like vp9"
+	exit 8
+    fi
     # crf 0..63
     # crf=33
     # video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1"
     if [ "$hwaccel" == "cuvid" ]
     then
+	#add_vf format=yuv420p
 	add_vf hwdownload
 	add_vf format=nv12
 	OPT_I="$OPT_I $decode_cuvid"
@@ -1633,6 +1663,7 @@ set_mpeg2() {
     #add_vf hwupload
     if [ "$hwaccel" == "cuvid" ]
     then
+	#add_vf format=nv12
 	add_vf hwdownload
 	add_vf format=nv12
 	OPT_I="$OPT_I $decode_cuvid"
@@ -1890,7 +1921,6 @@ analyze() {
 	codec=${codec//,/}
 	typ=$(echo $line|cut -d \  -f 3)
 	str1=${line#*:}
-	#if [ "$ifmt" == "vdr" -o "$ifmt" == "dvd" -o "$ifmt" == "mpg" -o "$ifmt" == "ts" -o "$ifmt" == "m2ts" -o $ifmt == "BD" -o $ifmt == "MTS" ]
 	#set -x
 	if [[ "$str1" == *[0* ]]
 	then
@@ -1977,17 +2007,16 @@ analyze() {
 	    "mpeg2video"|"mpeg1video")
 		#set -x
 		video="-c:v:0 copy"
-		#[ "$mpeg2" == "h264" ] && video="-c:v:0 libx264"
-		#[ "$mpeg2" == "h264" ] && video="-c:v:0 h264_nvenc"
 		#decode_cuvid="-c:v mpeg2_cuvid"
 		decode_cuvid="-c:v ${codec:0:5}_cuvid"
 		#decode_mmal="-c:v ${codec:0:5}_mmal"
 		#parameter "--nohw"
 		[ "$vcodec" != "" ] && mpeg2=$vcodec
-		[ "$mpeg2" == "h264" ] &&  set_h264
-		[ "$mpeg2" == "hevc" ] && set_hevc
-		[ "$mpeg2" == "vp8" ] && set_vp8
-		[ "$mpeg2" == "vp9" ] && set_vp9
+		#[ "$mpeg2" == "h264" ] &&  set_h264
+		#[ "$mpeg2" == "hevc" ] && set_hevc
+		#[ "$mpeg2" == "vp8" ] && set_vp8
+		#[ "$mpeg2" == "vp9" ] && set_vp9
+		set_video $mpeg2
 		;;
 	    "h264")
 		#set -x
@@ -2045,13 +2074,14 @@ analyze() {
 		#[ "$vcodec" != "" ] && hevc=$vcodec
 		[ "$vcodec" != "" -a "$vcodec" != "hevc" ] && hevc=$vcodec
 		[ "$OUTPUT" == "mpg" ] && hevc=mpeg2
+		decode_cuvid="-c:v hevc_cuvid"
 		case $hevc in
 		    "h264")
-			decode_cuvid="-c:v hevc_cuvid"
+			#decode_cuvid="-c:v hevc_cuvid"
 			set_h264
 			;;
 		    "hevc")
-			decode_cuvid="-c:v hevc_cuvid"
+			#decode_cuvid="-c:v hevc_cuvid"
 			set_hevc
 			;;
 		    "copy")
@@ -2060,8 +2090,11 @@ analyze() {
 		    "av1")
 			set_av1
 			;;
+		    "vp9")
+			set_vp9
+			;;
 		    "mpeg2")
-			decode_cuvid="-c:v hevc_cuvid"
+			#decode_cuvid="-c:v hevc_cuvid"
 			set_mpeg2
 			;;
 		    *)
