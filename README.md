@@ -31,7 +31,7 @@ Aufzeichnung in mpeg2 nach h264 konvertieren um Platz zu sparen
 vt kein Parameter notwendig.
 
 Aufzeichnung nach hevc konvertieren um Platz zu sparen, derzeit nur mit 
-NVIDIA-Karte mit encoder oder vaapi möglich, per CPU sehr zeitaufwändig. 
+NVIDIA-Karte mit encoder oder vaapi sinnvoll, per CPU sehr zeitaufwändig. 
 Sinnvoll bei HD.
 
 vt -h264 hevc
