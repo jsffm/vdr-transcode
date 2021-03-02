@@ -16,6 +16,7 @@
 # opus_br 2ch kbit
 # service_name
 # h264_level	automatic ?
+# -strict experimental
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -1665,7 +1666,7 @@ set_vp8() {
     if [ "$hwaccel" == "vaapi" ]
     then
 	#[ "$codec" == "mpeg4" ] && parameter --nohw
-	video="-c:v vp8_vaapi -rc_mode CQP -global_quality $gq $gop $vf $aspect"
+	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
@@ -1690,7 +1691,7 @@ set_vp9() {
     fi
     if [ "$hwaccel" == "vaapi" ]
     then
-	video="-c:v vp9_vaapi -rc_mode CQP $gop $vf $aspect"
+	video="-c:v vp9_vaapi -rc_mode:v CQP $gop $vf $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
