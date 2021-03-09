@@ -421,14 +421,17 @@ parameter() {
 	    ;;
 	"-crop")
 	    #crop="-vf crop=$2"
+	    [ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
 	    add_vf "crop=$2"
 	    ;;
 	"--LB")
+	    [ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
 	    add_vf "crop=iw:ih/4*3"
 	    aspect="-aspect 16:9"
 	    parameter "--nohw"
 	    ;;
 	"-zoom")
+	    [ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
 	    add_vf "crop=iw/$2:ih/$2"
 	    ;;
 	"-scale")
@@ -1691,7 +1694,7 @@ set_vp9() {
     fi
     if [ "$hwaccel" == "vaapi" ]
     then
-	video="-c:v vp9_vaapi -rc_mode:v CQP $gop $vf $aspect"
+	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
