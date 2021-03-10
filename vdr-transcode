@@ -231,6 +231,16 @@ add_vf() {
     #set +x
 }
 
+hwdownload() {
+    if [ "$hwaccel" == "cuvid" ]
+    then
+	add_vf hwdownload
+	add_vf format=nv12
+	deinterlace="yadif"
+	#hwaccel=
+    fi
+}
+
 parameter() {
     case $1 in
 	"-h")
@@ -421,18 +431,24 @@ parameter() {
 	    ;;
 	"-crop")
 	    #crop="-vf crop=$2"
-	    [ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
-	    add_vf "crop=$2"
+	    #hwdownload
+	    #[ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
+	    #add_vf "crop=$2"
+	    crop="crop=$2"
 	    ;;
 	"--LB")
-	    [ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
-	    add_vf "crop=iw:ih/4*3"
+	    #hwdownload
+	    #[ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
+	    #add_vf "crop=iw:ih/4*3"
+	    crop="crop=iw:ih/4*3"
 	    aspect="-aspect 16:9"
-	    parameter "--nohw"
+	    #parameter "--nohw"
 	    ;;
 	"-zoom")
-	    [ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
-	    add_vf "crop=iw/$2:ih/$2"
+	    #hwdownload
+	    #[ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
+	    #add_vf "crop=iw/$2:ih/$2"
+	    crop="crop=iw/$2:ih/$2"
 	    ;;
 	"-scale")
 	    scale=$2
@@ -1687,9 +1703,10 @@ set_vp9() {
     # video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1"
     if [ "$hwaccel" == "cuvid" ]
     then
+	hwdownload
 	#add_vf format=yuv420p
-	add_vf hwdownload
-	add_vf format=nv12
+	#add_vf hwdownload
+	#add_vf format=nv12
 	OPT_I="$OPT_I $decode_cuvid"
     fi
     if [ "$hwaccel" == "vaapi" ]
@@ -1721,9 +1738,10 @@ set_mpeg2() {
     #add_vf hwupload
     if [ "$hwaccel" == "cuvid" ]
     then
+	hwdownload
 	#add_vf format=nv12
-	add_vf hwdownload
-	add_vf format=nv12
+	#add_vf hwdownload
+	#add_vf format=nv12
 	OPT_I="$OPT_I $decode_cuvid"
     fi
     add_vf tinterlace=5
@@ -1900,6 +1918,7 @@ analyze() {
     echo "deinterlace=$deinterlace" >> "$log_c"
     #exit
     [ "$deinterlace" != "" ] && add_vf $deinterlace
+    [ "$crop" != "" ] && hwdownload && add_vf $crop
     #[ "$vf" != "" ] && vf="-vf $vf"
     #exit
     # vdr
