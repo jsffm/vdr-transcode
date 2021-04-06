@@ -1088,7 +1088,7 @@ input_vdr() {
 	if [ "$s" != "" ]
 	then
 	    s=${s:2}
-	    s=$(echo $s|tr -s ' ' '_')
+	    s=$(echo $s|tr -s ' ' '_')	# checkme
 	    [[ "$name" == *$s* ]] && serie=1
 	    [[ "$s" == *serie* ]] && serie=1
 	    if [ "$serie" == "1" ]
@@ -1250,7 +1250,7 @@ input_dvd() {
     d=$PWD
     #name=../$(basename $d)-$tr
     name=$(basename $d)-$tr
-    info_name=$(echo $(basename $d)|tr '_' ' ')
+    info_name=$(echo $(basename $d)|tr '_' ' ')	# checkme
     ifmt="dvd"
     if [ "$OUTPUT" == "vdr" ]
     then
@@ -1481,7 +1481,7 @@ input_BD() {
 	echo $z
 	name=$(echo $z | cut -d ';' -f 1 | iconv -f ISO-8859-15 -t UTF-8)
 	info_name=$name
-	name=$(echo $name|tr ' ' '_')
+	name=$(echo $name|tr ' ' '_')	# checkme
     fi
     ifmt="BD"
     mpls=$(printf "$bdir/BDMV/PLAYLIST/%05d.mpls" $playlist)
@@ -2583,7 +2583,7 @@ info_create() {
     dauer=$(date -u "+%s" -d "1970-01-01 ${dauer2:0:8}")
     echo "C M vdr-transcode" > $info
     echo "E 0 $rec_time $dauer" >> $info
-    [ "$info_name" != "" ] && echo "T" $(echo $info_name|tr '_' ' ') >> $info
+    [ "$info_name" != "" ] && echo "T" $(echo $info_name|tr '_' ' ') >> $info	# checkme
     [ "$fpso" == "" ] && fpso=$fps
     echo "F $fpso" >> $info
     echo "P 50" >> $info
