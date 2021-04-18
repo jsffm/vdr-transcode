@@ -52,6 +52,7 @@ h264_level=4.1
 #h264_level=4.2
 #hevc_level=4.0
 hevc_level=4.1
+hevc_profile=main
 h264enc=libx264
 #h264enc="h264_nvenc"
 #hevcenc=libx265
@@ -166,6 +167,7 @@ help_Configuration() {
     echo " -ffprobe <path_to_ffprobe>"
     echo " -mark <mark>     # mark at the end of transcoded recordings"
     echo " -odir <path>     # output directory"
+    echo " -probesize <n>   # probesize"
 }
 
 help_Configuration_V() {
@@ -181,6 +183,7 @@ help_Configuration_V() {
     echo " -h264_br         # bitrate for h264_omx, -b works too"
     echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265|libkvazaar"
     echo " -hevc_level <level>"
+    echo " -hevc_profile <profile>     # main|main10"
     echo " -hwaccel cuvid|vaapi|vdpau"
 }
 
@@ -501,6 +504,9 @@ parameter() {
 	    hevc_level=$2
 	    level_hevc="-level $2"
 	    ;;
+	"-hevc_profile")
+	    hevc_profile=$2
+	    ;;
 	"-vp9enc")
 	    vp9enc=$2
 	    ;;
@@ -531,7 +537,7 @@ parameter() {
 	"-lang")
 	    set_lang $2
 	    ;;
-	"-probe")
+	"-probesize")
 	    OPT_G="$OPT_G -probesize $2"
 	    ;;
 	"-anal")
@@ -1646,12 +1652,12 @@ set_hevc() {
 	    preset="-preset ultrafast $x265_params -crf $hevc_cq $maxr"
 	    ;;
 	"hevc_nvenc")
-	    preset="-preset hq $level_hevc -rc vbr -cq $hevc_cq $opt_r"
+	    preset="-preset hq -profile:v $hevc_profile $level_hevc -rc vbr -cq $hevc_cq $opt_r"
 	    ;;
 	"hevc_vaapi")
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    [ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
-	    preset="-profile:v main -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
+	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
 	    ;;
 	"libkvazaar")
 	    #parameter --nohw
@@ -1659,7 +1665,7 @@ set_hevc() {
 	    HWACC=
 	    deinterlace="yadif"
 	    decode_cuvid=
-	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    ;;
 	*)
 	    echo "-hevcenc=$hevcenc wrong"
@@ -1948,6 +1954,8 @@ analyze() {
     #
     # Stream #0:3(ger): Audio: eac3, 48000 Hz, 2 channels, fltp
     # Stream #0:0(eng): Video: av1 (Main), none, 1280x720, SAR 1:1 DAR 16:9, 25 fps, 25 tbr, 1k tbn, 1k tbc (default)
+    # UHD
+    # Stream #0:0: Video: hevc (Main 10) (hev1 / 0x31766568), yuv420p10le(tv, bt2020nc/bt2020/arib-std-b67), 3840x2160 [SAR 1:1 DAR 16:9], q=2-31, 50 fps, 50 tbr, 12800 tbn, 25 tbc
 
     #set -x
     #sel_best=1
