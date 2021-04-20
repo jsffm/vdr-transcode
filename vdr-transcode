@@ -184,6 +184,7 @@ help_Configuration_V() {
     echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265|libkvazaar"
     echo " -hevc_level <level>"
     echo " -hevc_profile <profile>     # main|main10"
+    echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|vaapi|vdpau"
 }
 
@@ -506,6 +507,9 @@ parameter() {
 	    ;;
 	"-hevc_profile")
 	    hevc_profile=$2
+	    ;;
+	"-pix_fmt")
+	    OPT="$OPT -pix_fmt $2"
 	    ;;
 	"-vp9enc")
 	    vp9enc=$2
