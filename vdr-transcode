@@ -127,7 +127,7 @@ help_Video() {
     echo " -crop <w:h>"
     echo " --LB             # -vf crop=iw:ih/4*3 -aspect 16:9"
     echo " -zoom <factor>   # crop=iw/<factor>:ih/<factor>"
-    echo " -scale <w:h>|hd720|hd1080|qhd"
+    echo " -scale <w:h>|hd720|hd1080|qhd|pal"
     echo " -aspect <aspect> # 16:9|4:3"
     echo " --nohw           # no hardwaredecoding"
 }
@@ -2070,8 +2070,15 @@ analyze() {
 	    hw=$(echo $hw|cut -d \  -f $nw)
 	    vw=$(echo $hw|cut -d 'x' -f 2)
 	    hw=$(echo $hw|cut -d 'x' -f 1)
+	    if [ "$scale" != "" ]
+	    then
+		#echo $scale
+		hw=$(echo $scale|cut -d ':' -f 1)
+		vw=$(echo $scale|cut -d ':' -f 2)
+	    fi
 	    [ $vw -le 576 ] && h264_level=3.1
 	    [ $vw -ge 1080 ] && h264_level=4.2
+	    [ $vw -gt 2000 ] && hevc_level=5.1; h264_level=5.2
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
