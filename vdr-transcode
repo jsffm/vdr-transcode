@@ -17,6 +17,8 @@
 # service_name
 # h264_level	automatic ?
 # -strict experimental
+# echo $USER
+# id -g -n <user>
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -2792,7 +2794,7 @@ copy_file() {
 	out=$name-$i.$fmt
     done
     log_c=$out.log
-    echo $PWD/$log_c > /tmp/vt-log
+    echo $PWD/$log_c > $vtlog
     header
     analyze $ffmpeg_i
     #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
@@ -2832,7 +2834,7 @@ copy_mp3() {
 	out=$name-$i.mp3
     done
     log_c=$out.log
-    echo $PWD/$log_c > /tmp/vt-log
+    echo $PWD/$log_c > $vtlog
     header
     #analyze $ffmpeg_i
     video="-vn"
@@ -2856,7 +2858,7 @@ copy_m4a() {
 	out=$name-$i.m4a
     done
     log_c=$out.log
-    echo $PWD/$log_c > /tmp/vt-log
+    echo $PWD/$log_c > $vtlog
     header
     #set -x
     #analyze $ffmpeg_i
@@ -3141,8 +3143,10 @@ ende=$(date +"%s")
 sek=$(($ende-$start))
 
 [ -e $vtc ] && mv $vtc $vtc.rdy
-cp -p "$log_c" $t
 #set -x
+cp -p "$log_c" $t
+g=$(id -g -n $USER)
+chown $USER:$g $t
 r=$(grep "^video:" $t)
 videos=$(echo $r|cut -d \  -f 1)
 videos=$(echo $videos|cut -d ':' -f 2)
