@@ -1670,6 +1670,7 @@ set_hevc() {
 	    deinterlace="yadif"
 	    decode_cuvid=
 	    preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
 	    ;;
 	*)
 	    echo "-hevcenc=$hevcenc wrong"
@@ -2082,7 +2083,7 @@ analyze() {
 	    fi
 	    [ $vw -le 576 ] && h264_level=3.1
 	    [ $vw -ge 1080 ] && h264_level=4.2
-	    [ $vw -gt 2000 ] && hevc_level=5.1; h264_level=5.2
+	    [ $vw -gt 2000 ] && hevc_level=5.1; level_hevc="-level 5.1"; h264_level=5.2
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
@@ -2423,7 +2424,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		#exit
 		;;
-	    "pcm_dvd"|"pcm_s16le"|"pcm_bluray")
+	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
 		map="$map -map 0:$str"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
 		audio="$audio -c:$stro $aaclib -b:$stro 128k"
