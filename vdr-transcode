@@ -170,6 +170,8 @@ help_Configuration() {
     echo " -mark <mark>     # mark at the end of transcoded recordings"
     echo " -odir <path>     # output directory"
     echo " -probesize <n>   # probesize"
+    echo " -server_pid <pid_file>      # default /var/run/vt_server.pid"
+    echo "                             # for run as user use e.g. ~/vt_server.pid"
 }
 
 help_Configuration_V() {
@@ -575,6 +577,9 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    #server_kill
+	    ;;
+	"-server_pid")
+	    eval runs=$2
 	    ;;
 	"--conf")
 	    TODO=$1
