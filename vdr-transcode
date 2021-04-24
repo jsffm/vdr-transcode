@@ -172,6 +172,8 @@ help_Configuration() {
     echo " -probesize <n>   # probesize"
     echo " -server_pid <pid_file>      # default /var/run/vt_server.pid"
     echo "                             # for run as user use e.g. ~/vt_server.pid"
+    echo " -server_log <log_file>      # default /var/log/vdr-transcode.log"
+    echo "                             # for run as user use e.g. ~/vdr-transcode.log"
 }
 
 help_Configuration_V() {
@@ -580,6 +582,9 @@ parameter() {
 	    ;;
 	"-server_pid")
 	    eval runs=$2
+	    ;;
+	"-server_log")
+	    eval logs=$2
 	    ;;
 	"--conf")
 	    TODO=$1
