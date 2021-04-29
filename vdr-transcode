@@ -604,6 +604,10 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
+	"--lsdel")
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"--auto")
 	    auto=1
 	    #quiet=1
@@ -3006,6 +3010,31 @@ auto_queue() {
     exit
 }
 
+ls_del() {
+    # records marked for deleting
+    #set -x
+    sum=0
+    while read line
+    do
+	if [ -e $line ]
+	then
+	    for rh in $(find $line -type d -name "*.del")
+	    do
+		size=$(du $rh)
+		size=$(echo $size | cut -d \  -f 1)
+		echo $size $rh
+		#rmdir $rh
+		rm $rh/*
+		rmdir --ignore-fail-on-non-empty $rh
+		#exit
+		sum=$(($sum+$size))
+	    done
+	fi
+    done < $confs
+    echo "Summe="$(($sum/1024))"Mb"
+    exit
+}
+
 auto_check() {
     #set -x
     t=/tmp/vtc
@@ -3134,6 +3163,9 @@ case $TODO in
 	;;
     "--aq")
 	auto_queue
+	;;
+    "--lsdel")
+	ls_del
 	;;
     "--ac")
 	auto_check
