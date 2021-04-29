@@ -608,6 +608,10 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
+	"--lsdel2")
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"--auto")
 	    auto=1
 	    #quiet=1
@@ -3035,6 +3039,38 @@ ls_del() {
     exit
 }
 
+ls_del_2() {
+    # records marked for deleting
+    #set -x
+    t=/tmp/vtc
+    t2=/tmp/vtc2
+    tac $logs > $t
+    sum=0
+    i=0
+    while read line
+    do
+	c=$(echo $line | cut -d \  -f 3-)
+	ext=${c##*.}
+	[ "$ext" != "rec" ] && continue
+	c2=${c%.*}".del"
+	if [ ! -e "$c2" ]
+	then
+	    i=$(($i+1))
+	    [ $i -gt 10 ] && break
+	    continue
+	fi
+	size=$(du $c2)
+	size=$(echo $size | cut -d \  -f 1)
+	echo $size $c2
+	rm $c2/*
+	rmdir --ignore-fail-on-non-empty $c2
+	sum=$(($sum+$size))
+	#exit
+    done < $t
+    echo "Summe="$sum $(($sum/1025))"MB"
+    exit
+}
+
 auto_check() {
     #set -x
     t=/tmp/vtc
@@ -3092,6 +3128,7 @@ auto_conf() {
     #set -x
     #echo $parameter_log
     #echo $parameter_auto
+    touch $vtc
     #IFS=$'\n'
     #IFS='\n'
     IFS='|'
@@ -3166,6 +3203,9 @@ case $TODO in
 	;;
     "--lsdel")
 	ls_del
+	;;
+    "--lsdel2")
+	ls_del_2
 	;;
     "--ac")
 	auto_check
