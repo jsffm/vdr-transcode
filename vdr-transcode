@@ -156,6 +156,7 @@ help_Automation() {
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
+    echo " --lsdel            # deletes processed records, marked to delete, use on your risk"
 }
 
 help_Configuration() {
@@ -608,7 +609,7 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
-	"--lsdel2")
+	"--lsdel_s")
 	    TODO=$1
 	    INPUT=none
 	    ;;
@@ -3014,8 +3015,8 @@ auto_queue() {
     exit
 }
 
-ls_del() {
-    # records marked for deleting
+ls_del_s() {
+    # records marked to delete
     #set -x
     sum=0
     while read line
@@ -3029,7 +3030,8 @@ ls_del() {
 		echo $size $rh
 		#rmdir $rh
 		rm $rh/*
-		rmdir --ignore-fail-on-non-empty $rh
+		#rmdir --ignore-fail-on-non-empty $rh
+		rmdir $rh
 		#exit
 		sum=$(($sum+$size))
 	    done
@@ -3039,8 +3041,8 @@ ls_del() {
     exit
 }
 
-ls_del_2() {
-    # records marked for deleting
+ls_del() {
+    # records marked to delete
     #set -x
     t=/tmp/vtc
     t2=/tmp/vtc2
@@ -3063,7 +3065,8 @@ ls_del_2() {
 	size=$(echo $size | cut -d \  -f 1)
 	echo $size $c2
 	rm $c2/*
-	rmdir --ignore-fail-on-non-empty $c2
+	#rmdir --ignore-fail-on-non-empty $c2
+	rmdir $c2
 	sum=$(($sum+$size))
 	#exit
     done < $t
@@ -3204,8 +3207,8 @@ case $TODO in
     "--lsdel")
 	ls_del
 	;;
-    "--lsdel2")
-	ls_del_2
+    "--lsdel_s")
+	ls_del_s
 	;;
     "--ac")
 	auto_check
