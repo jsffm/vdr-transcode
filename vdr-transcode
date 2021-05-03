@@ -156,7 +156,7 @@ help_Automation() {
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
-    echo " --lsdel            # deletes processed records, marked to delete, use on your risk"
+    echo " --lsdel            # deletes processed records, marked to delete, use on your own risk"
 }
 
 help_Configuration() {
