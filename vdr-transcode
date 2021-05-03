@@ -2689,7 +2689,7 @@ copy_vdr() {
 	    then
 		#cp -p info.vdr $dest/info
 		iconv -f ISO-8859-1 -t UTF-8 < info.vdr > $dest/info
-		echo "F 25" >> $dest/info
+		#echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
 	    fi
@@ -2789,10 +2789,13 @@ copy_vdr() {
     then
 	[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
 	[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
+        si1=$(($is1/8/$fps))
 	is2=$(ls -l $dest/index|cut -d \  -f 5)
 	echo "===========================================================" >> $log_c
-	echo "index=$is1" >> $log_c
-	echo "index=$is2" >> $log_c
+	echo -n "index=$is1" >> $log_c
+	date -u -d @$si1 +" %T" >> "$log_c"
+	echo -n "index=$is2" >> $log_c
+	[ "$si" != "" ] && date -u -d @$si +" %T" >> "$log_c"
     fi
     if [ -e $VIDEODIR ]
     then
