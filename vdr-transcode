@@ -81,6 +81,7 @@ conf1=$(realpath $0)".conf"
 conf=/etc/vdr-transcode.conf
 confs=/etc/vdr-transcode-s.conf
 runs=/var/run/vt_server.pid
+runvt=/var/run/vt.pid
 vtc=vt.conf
 lck=vt.lck
 ffmpeg=ffmpeg
@@ -173,6 +174,9 @@ help_Configuration() {
     echo " -probesize <n>   # probesize"
     echo " -server_pid <pid_file>      # default /var/run/vt_server.pid"
     echo "                             # for run as user use e.g. ~/vt_server.pid"
+    echo "                             # deprecated, use -pid_dir"
+    echo " -pid_dir <pid_path>         # default /var/log"
+    echo "                             # for run as user use e.g. ~"
     echo " -server_log <log_file>      # default /var/log/vdr-transcode.log"
     echo "                             # for run as user use e.g. ~/vdr-transcode.log"
 }
@@ -582,7 +586,13 @@ parameter() {
 	    #server_kill
 	    ;;
 	"-server_pid")
+	    echo "deprecated, use -pid_dir"
 	    eval runs=$2
+	    eval runvt=(dirname $2)/vt.pid
+	    ;;
+	"-pid_dir")
+	    eval runs=$2/vt_server.pid
+	    eval runvt=$2/vt.pid
 	    ;;
 	"-server_log")
 	    eval logs=$2
@@ -2905,6 +2915,18 @@ copy_m4a() {
 }
 
 copy() {
+    #set -x
+    if [ -e $runvt ]
+    then
+	oldpid=$(cat $runvt)
+	if [ -e /proc/$oldpid ]
+	then
+	    echo "already running"
+	    exit 99
+	fi
+    fi
+    echo $$ > $runvt
+    #exit
     case $OUTPUT in
 	"vdr")
 	    copy_vdr
@@ -3271,3 +3293,4 @@ date -u -d @$sek "+%T" >> "$log_c"
 d=`date +"%F %T"`
 echo "Ende" $d >> "$log_c"
 rm -f $lck
+rm $runvt
