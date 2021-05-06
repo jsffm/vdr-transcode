@@ -2789,7 +2789,7 @@ copy_vdr() {
     then
 	[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
 	[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
-	fpsi=$(grep ^F info|cut -d \  -f 2)
+	[ -e info ] && fpsi=$(grep ^F info|cut -d \  -f 2)
 	[ "$fpsi" == "" ] && fpsi=25
 	si1=$(($is1/8/$fpsi))
 	is2=$(ls -l $dest/index|cut -d \  -f 5)
