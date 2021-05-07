@@ -3268,19 +3268,25 @@ audios=$(echo $audios|cut -d ':' -f 2)
 audios=${audios:0:${#audios}-2}
 dur=$(grep "Duration:" $t|head -n 1)
 dur=$(echo $dur|cut -d \  -f 2)
-durs1=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
-brv=$(($videos*8/$durs1))
-bra=$(($audios*8/$durs1))
+if [ "$dur" != "N/A," ]
+then
+    durs1=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    brv=$(($videos*8/$durs1))
+    bra=$(($audios*8/$durs1))
+fi
 echo "===========================================================" >> "$log_c"
 echo "Video:" $brv"kb/s Audio:" $bra"kb/s" >> "$log_c"
 grep "Video:" $t >> "$log_c"
 grep "Duration:" $t >> "$log_c"
-durs1ms=$durs1${dur:9:2}
-dur=$(grep "Duration:" $t|tail -n 1)
-dur=$(echo $dur|cut -d \  -f 2)
-durs2=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
-durs2ms=$durs2${dur:9:2}
+if [ "$dur" != "N/A," ]
+then
+    durs1ms=$durs1${dur:9:2}
+    dur=$(grep "Duration:" $t|tail -n 1)
+    dur=$(echo $dur|cut -d \  -f 2)
+    durs2=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    durs2ms=$durs2${dur:9:2}
 echo "Diff:" $(($durs2ms-$durs1ms))"cs" >> "$log_c"
+fi
 [ "$OUTPUT" == "vdr" -a "$si" != "" ] && date -u -d @$si +"index %T" >> "$log_c"
 if [ $oldsize -gt 1 ]
 then
