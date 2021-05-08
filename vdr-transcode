@@ -774,10 +774,18 @@ status() {
     oldsize=$(grep "oldsize=" "$log")
     oldsize=${oldsize#*=}
     # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
-    dur=$(grep "Duration:" "$log"|head -n 2)
+    dur1=$(grep "Duration:" "$log"|head -n 2)
     #echo $dur
-    dur=$(echo $dur|cut -d \  -f 2)
+    dur=$(echo $dur1|cut -d \  -f 2)
     dur=${dur:0:8}
+    #set -x
+    if [ "${dur:0:3}" == "N/A" ]
+    then
+	#echo $dur1 | tail -n 1
+	dur=${dur1##*Duration: }
+	dur=${dur:0:8}
+    fi
+    #exit
     durs=1
     [ "${dur:0:3}" != "N/A" ] && durs=$(date -u "+%s" -d "1970-01-01 $dur")
     durs1ms=$durs${dur:9:2}
@@ -1626,6 +1634,7 @@ inf() {
     #sss="$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E \"Duration|Stream|Chapter\""
     #eval $sss
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i -i $INPUTA"
     $x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     exit
 }
@@ -1882,7 +1891,7 @@ set_mp2() {
 }
 
 set_audio_plus() {
-    map="$map -map 0:$str"
+    map="$map -map $str0:$str"
     audio="$audio -c:$stro copy"
     stro1=$(($stro1+1))
     stro=$stro1
@@ -1932,7 +1941,16 @@ analyze() {
     #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
     #eval $sss
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
-    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+    if [ "$INPUTA" != "" ]
+    then
+	ffmpeg_i="$ffmpeg_i -i $INPUTA"
+	#map="$map -map 1:a"
+	#audio="$audio -c:a copy"
+	#[ "${lang[2]}" != "" ] && OPT="$OPT -metadata:s:2 language=${lang[2]}"
+	$x $ffmpeg -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+    else
+	$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+    fi
     #cat $t
     #exit
     #set -x
@@ -1995,6 +2013,7 @@ analyze() {
     #
     # Stream #0:3(ger): Audio: eac3, 48000 Hz, 2 channels, fltp
     # Stream #0:0(eng): Video: av1 (Main), none, 1280x720, SAR 1:1 DAR 16:9, 25 fps, 25 tbr, 1k tbn, 1k tbc (default)
+    # Stream #1:0: Audio: mp2, 48000 Hz, stereo, fltp, 192 kb/s
     # UHD
     # Stream #0:0: Video: hevc (Main 10) (hev1 / 0x31766568), yuv420p10le(tv, bt2020nc/bt2020/arib-std-b67), 3840x2160 [SAR 1:1 DAR 16:9], q=2-31, 50 fps, 50 tbr, 12800 tbn, 25 tbc
 
@@ -2046,8 +2065,10 @@ analyze() {
 	codec=$(echo $line|cut -d \  -f 4)
 	codec=${codec//,/}
 	typ=$(echo $line|cut -d \  -f 3)
-	str1=${line#*:}
 	#set -x
+	str0=${line%%:*}
+	str0=${str0:${#str0}-1:1}
+	str1=${line#*:}
 	if [[ "$str1" == *[0* ]]
 	then
 	    #set -x
@@ -2068,7 +2089,8 @@ analyze() {
 	fi
 	#exit
 	[ "$ifmt" == "avi" ] && str=${str1%%:*}
-	
+	#exit
+
 	if [ "$select_str2" != "" -a "$typ" != "Video:" ]
 	then
 	    IFS=,
@@ -2324,7 +2346,7 @@ analyze() {
 		set_h264
 		;;
 	    "wmapro")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_6ch_br"
 		set_aac
 		audio="$audio $audio_t"
@@ -2332,7 +2354,7 @@ analyze() {
 		;;
 	    "ac3")
 		#set -x
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
 		if [ "$ac3" == "aac" ]
@@ -2371,7 +2393,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "dts")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=aac
 		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
@@ -2387,7 +2409,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "aac")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		#[ "$OUTPUT" == "webm" ] && audio_t="-c:$stro libopus"
 		#[ "$OUTPUT" == "webm" ] && set_opus
@@ -2428,7 +2450,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "mp2")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
 		set_audio $mp2
@@ -2442,7 +2464,7 @@ analyze() {
 		;;
 	    "mp3")
 		#set -x
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		#audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" ] && mp3=aac
 		[ "$OUTPUT" == "webm" ] && mp3=opus
@@ -2461,14 +2483,14 @@ analyze() {
 		#exit
 		;;
 	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
 		audio="$audio -c:$stro $aaclib -b:$stro 128k"
 		#audio="$audio -c:$stro $aaclib -vdr 2"
 		stro1=$(($stro1+1))
 		;;
 	    "opus")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		#audio_t="-c:$stro copy"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
 		#[ "$OUTPUT" == "vdr" ] && set_aac
@@ -2478,7 +2500,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "dvb_subtitle")
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		if [ "$fmt" == "mp4" ]
 		then
 		    subt="$subt -c:$stro dvd_subtitle"
@@ -2491,7 +2513,7 @@ analyze() {
 	    #"dvd_subtitle"|"ass")
 		[ "$OUTPUT" == "vdr" ] && continue
 		[ "$fmt" == "mp4" ] && continue
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
 		;;
@@ -2503,7 +2525,7 @@ analyze() {
 		#;;
 	    "hdmv_pgs_subtitle")
 		[ "$fmt" == "mp4" ] && continue
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
 		;;
@@ -2515,7 +2537,7 @@ analyze() {
 		#set -x
 		[ "$OUTPUT" == "vdr" ] && continue
 		[ "$fmt" == "mkv" ] && continue
-		map="$map -map 0:$str"
+		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
@@ -2541,13 +2563,6 @@ transcode() {
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
     #opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal \"$name\""
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && name="\"$name\""
-    if [ "$INPUTA" != "" ]
-    then
-	ffmpeg_i="$ffmpeg_i -i $INPUTA"
-	map="$map -map 1:a"
-	audio="$audio -c:a copy"
-	[ "${lang[2]}" != "" ] && OPT="$OPT -metadata:s:2 language=${lang[2]}"
-    fi
     opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal $name"
     [ "$auto" == "1" ] && opt="-nostdin $opt"
     echo $ffmpeg $opt >> "$log_c"
@@ -2878,7 +2893,7 @@ copy_mp3() {
     #analyze $ffmpeg_i
     video="-vn"
     map="-map a:0"
-    [ "$select_str" != "" ] && map="-map 0:$select_str"
+    [ "$select_str" != "" ] && map="-map $str0:$select_str"
     audio="-c mp3 $mp3_b"
     OPT_V=
     transcode "$out"
@@ -2913,7 +2928,7 @@ copy_m4a() {
     fi
     #exit
     map="-map a:0"
-    [ "$select_str" != "" ] && map="-map 0:$select_str"
+    [ "$select_str" != "" ] && map="-map $str0:$select_str"
     OPT_V=
     transcode "$out"
     #exit
