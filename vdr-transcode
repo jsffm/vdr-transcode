@@ -2106,6 +2106,7 @@ analyze() {
 	if [ "$typ" == "Video:" ]
 	then
 	    #set -x
+	    [ $str0 -gt 0 ] && continue
 	    #[ "$ivcodec" != "" ] && continue
 	    fps1=${line%fps*}
 	    nw=$(echo $fps1|wc -w)
