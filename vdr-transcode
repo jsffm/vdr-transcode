@@ -1943,7 +1943,7 @@ analyze() {
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
     if [ "$INPUTA" != "" ]
     then
-	ffmpeg_i="$ffmpeg_i -i $INPUTA"
+	ffmpeg_i="$ffmpeg_i -i \"$INPUTA\""
 	#map="$map -map 1:a"
 	#audio="$audio -c:a copy"
 	#[ "${lang[2]}" != "" ] && OPT="$OPT -metadata:s:2 language=${lang[2]}"
