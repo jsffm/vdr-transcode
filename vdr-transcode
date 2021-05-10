@@ -4,6 +4,8 @@
 
 # https://github.com/jsffm/vdr-transcode
 
+# $Id$
+
 # blancs in filename	Frank Kaiser <frank.kaiser@fuxbau.net>
 
 # ifmt	input extension
@@ -2632,6 +2634,8 @@ header() {
     v=$($ffmpeg -version)
     v=$(echo $v | cut -d \  -f 3)
     echo "Start $d vdr-transcode ffmpeg Version $v" > "$log_c"
+    sd=$(date +"%F %T" -r $0)
+    echo "script date" $sd >> "$log_c"
     uname -p >> "$log_c"
     if [ -e /proc/asound/NVidia ]
     then
