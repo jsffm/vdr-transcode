@@ -165,7 +165,7 @@ help_Configuration() {
     help_Configuration_V
     help_Configuration_A
     echo " other"
-    echo " -o vdr|mp4|mkv      # default vdr"
+    echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
     echo " -vdr <path_to_vdr>"
     echo " -ffmpeg <path_to_ffmpeg>"
     echo " -ffprobe <path_to_ffprobe>"
