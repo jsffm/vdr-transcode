@@ -2637,9 +2637,9 @@ header() {
     sd=$(date +"%F %T" -r $0)
     echo "script date" $sd >> "$log_c"
     uname -p >> "$log_c"
+    lspci | grep VGA >> "$log_c"
     if [ -e /proc/asound/NVidia ]
     then
-	lspci | grep VGA >> "$log_c"
 	xlog=/var/log/Xorg.0.log
 	[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> "$log_c"
     fi
