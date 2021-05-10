@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cp -pv vdr-transcode /usr/local/bin
+
+if [ -e /etc/vdr-transcode.conf ]
+then
+    cp -pv vdr-transcode.conf /etc/vdr-transcode.conf.template
+else
+    cp -pv vdr-transcode.conf /etc
+fi
