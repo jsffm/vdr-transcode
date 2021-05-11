@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# vdr-transcode update from git
+
+which git 2> /dev/null
+if [ $? -ne 0 ]
+then
+    echo "No git installed"
+    exit
+fi
+wd=$PWD
+instdir=/usr/local/src
+if [ -d $instdir/vdr-transcode ]
+then
+    cd $instdir/vdr-transcode
+    git pull
+    install
+else
+    cd $instdir
+    git clone https://github.com/jsffm/vdr-transcode.git
+    cd vdr-transcode
+    install
+fi
+cd $wd
