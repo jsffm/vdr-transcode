@@ -1,10 +1,19 @@
 #!/bin/bash
 
-cp -pv vdr-transcode /usr/local/bin
+instp=/usr/local/bin
+cp -pv vdr-transcode $instp
 
 if [ -e /etc/vdr-transcode.conf ]
 then
     cp -pv vdr-transcode.conf /etc/vdr-transcode.conf.template
 else
     cp -pv vdr-transcode.conf /etc
+fi
+if [ ! -e $instp/vt ]
+then
+    echo link
+    wd=$PWD
+    cd $instp
+    ln -s vdr-transcode vt
+    cd $wd
 fi
