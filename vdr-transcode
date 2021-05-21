@@ -886,9 +886,9 @@ diag() {
     fi
     echo
     ffmpeg -hide_banner -hwaccels
+    lspci | grep VGA
     if [ -e /proc/asound/NVidia ]
     then
-	lspci | grep VGA
 	#lspci -nnk | grep -A3 "\[03..\]:"
 	xlog=/var/log/Xorg.0.log
 	[ -e $xlog ] && grep "NVIDIA GPU " $xlog
@@ -2814,8 +2814,12 @@ copy_vdr() {
         li=$(ls -l $dest/index|cut -d ' ' -f 5)
         fpso=$(grep ^F $dest/info|cut -d \  -f 2)
         [ "$fpso" == "" ] && fpso=25
+        #set -x
         #si=$(($li/200*25/$fpso))
-        si=$(($li/8/$fpso))
+        #si=$(($li/8/$fpso))
+        sic1=$(($li*100/8/$fpso))
+        si=$(($sic1/100))
+        sic=$(($sic1-($si*100)))
         #date -u -d @$si +"index %T" >> $log_c
     else
 	echo $vdr "not found" >> $log_c
@@ -2826,13 +2830,16 @@ copy_vdr() {
 	[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
 	[ -e info ] && fpsi=$(grep ^F info|cut -d \  -f 2)
 	[ "$fpsi" == "" ] && fpsi=25
-	si1=$(($is1/8/$fpsi))
+	#si1=$(($is1/8/$fpsi))
+	sic1=$(($is1*100/8/$fpsi))
+        si1=$(($sic1/100))
+        sic1=$(($sic1-($si1*100)))
 	is2=$(ls -l $dest/index|cut -d \  -f 5)
 	echo "===========================================================" >> $log_c
 	echo -n "index=$is1" >> $log_c
-	date -u -d @$si1 +" %T" >> "$log_c"
+	date -u -d @$si1 +" %T."$sic1 >> "$log_c"
 	echo -n "index=$is2" >> $log_c
-	[ "$si" != "" ] && date -u -d @$si +" %T" >> "$log_c"
+	[ "$si" != "" ] && date -u -d @$si +" %T."$sic >> "$log_c"
     fi
     if [ -e $VIDEODIR ]
     then
