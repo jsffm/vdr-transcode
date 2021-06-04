@@ -667,10 +667,12 @@ read_configuration() {
 	    #echo $line
 	    [ "${line:0:1}" == "#" ] && continue
 	    [ "$line" == "" ] && continue
-	    line=$(echo $line|cut -d '#' -f 1)
+	    #line=$(echo $line|cut -d '#' -f 1)
+	    IFS=# read line _ <<< $line
 	    parameter $line
 	done < $1
     fi
+    #set +x
     #exit
 }
 
@@ -859,10 +861,12 @@ status() {
 
 diag() {
     #set -x
-    v=$($ffmpeg -version)
-    v=$(echo $v | cut -d \  -f 3)
-    vtp=$(which vdr-transcode)
+    #v=$($ffmpeg -version)
+    #v=$(echo $v | cut -d \  -f 3)
+    read _ _ v _ <<< $($ffmpeg -version)
+    #echo $v
     #exit
+    vtp=$(which vdr-transcode)
     d=$(date "+%F" -r $vtp)
     echo "vdr-transcode $d ffmpeg Version $v"
     uname -p
@@ -1040,8 +1044,9 @@ input_vdra() {
     d3="1-0.rec"
     dest=../$dd.$d3
     d30=$(echo $d3|cut -d '.' -f 1)
-    d31=$(echo $d30|cut -d '-' -f 1)
-    d32=$(echo $d30|cut -d '-' -f 2)
+    #d31=$(echo $d30|cut -d '-' -f 1)
+    #d32=$(echo $d30|cut -d '-' -f 2)
+    IFS=- read d31 d32 <<< $d30
     while [ -e $dest ]
     do
         d32=$(($d32+1))
@@ -1157,8 +1162,9 @@ input_vdr() {
     fi
     #dest=$dp/$dd.$d3
     d30=$(echo $d3|cut -d '.' -f 1)
-    d31=$(echo $d30|cut -d '-' -f 1)
-    d32=$(echo $d30|cut -d '-' -f 2)
+    #d31=$(echo $d30|cut -d '-' -f 1)
+    #d32=$(echo $d30|cut -d '-' -f 2)
+    IFS=- read d31 d32 <<< $d30
     d32=$(($d32+1))
     dest=$dp/$dd.$d31-$d32.rec
     while [ -e $dest ]
@@ -1629,7 +1635,8 @@ inf() {
     info=info
     if [ -e $info ]
     then
-	sender=$(grep ^C $info|cut -d \  -f 3-)
+	#sender=$(grep ^C $info|cut -d \  -f 3-)
+	read _ _ sender <<< $(grep ^C $info)
 	echo $sender
     fi
     #$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
@@ -2062,11 +2069,12 @@ analyze() {
 	#echo $line
 	stro=$stro1
 	line2=${line//,/}
-	w1=$(echo $line2|cut -d \  -f 1)
+	#w1=$(echo $line2|cut -d \  -f 1)
+	read w1 _ typ codec _ <<< $line2
 	[ "$w1" != "Stream" ] && continue
-	codec=$(echo $line|cut -d \  -f 4)
-	codec=${codec//,/}
-	typ=$(echo $line|cut -d \  -f 3)
+	#codec=$(echo $line|cut -d \  -f 4)
+	#codec=${codec//,/}
+	#typ=$(echo $line|cut -d \  -f 3)
 	#set -x
 	str0=${line%%:*}
 	str0=${str0:${#str0}-1:1}
@@ -2134,13 +2142,15 @@ analyze() {
 	    hw=${line%%[SAR*}
 	    nw=$(echo $hw|wc -w)
 	    hw=$(echo $hw|cut -d \  -f $nw)
-	    vw=$(echo $hw|cut -d 'x' -f 2)
-	    hw=$(echo $hw|cut -d 'x' -f 1)
+	    #vw=$(echo $hw|cut -d 'x' -f 2)
+	    #hw=$(echo $hw|cut -d 'x' -f 1)
+	    IFS=x read hw vw <<< $hw
 	    if [ "$scale" != "" ]
 	    then
 		#echo $scale
-		hw=$(echo $scale|cut -d ':' -f 1)
-		vw=$(echo $scale|cut -d ':' -f 2)
+		#hw=$(echo $scale|cut -d ':' -f 1)
+		#vw=$(echo $scale|cut -d ':' -f 2)
+		IFS=: read hw vw <<< $scale
 	    fi
 	    [ $vw -le 576 ] && h264_level=3.1
 	    [ $vw -ge 1080 ] && h264_level=4.2
@@ -2775,6 +2785,7 @@ copy_vdr() {
     fi
     [ -e messages ] && cp -p messages $dest
     [ -e logfile ] && cp -p logfile $dest/logfile1
+    [ -e tscheck ] && cp -p tscheck $dest
     if [ -e logfile1 ]
     then
 	fd=$(date -r logfile1 "+%Y%m%d%H%M")
