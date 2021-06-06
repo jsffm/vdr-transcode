@@ -2848,8 +2848,10 @@ copy_vdr() {
 	is2=$(ls -l $dest/index|cut -d \  -f 5)
 	echo "===========================================================" >> $log_c
 	echo -n "index=$is1" >> $log_c
+	sic1=$(printf "%02d" $sic1)
 	date -u -d @$si1 +" %T."$sic1 >> "$log_c"
 	echo -n "index=$is2" >> $log_c
+	sic=$(printf "%02d" $sic)
 	[ "$si" != "" ] && date -u -d @$si +" %T."$sic >> "$log_c"
     fi
     if [ -e $VIDEODIR ]
