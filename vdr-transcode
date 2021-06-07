@@ -2835,6 +2835,7 @@ copy_vdr() {
     else
 	echo $vdr "not found" >> $log_c
     fi
+    echo "===========================================================" >> $log_c
     if [ "$ifmt" == "vdr" ]
     then
 	[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
@@ -2846,14 +2847,15 @@ copy_vdr() {
         si1=$(($sic1/100))
         sic1=$(($sic1-($si1*100)))
 	is2=$(ls -l $dest/index|cut -d \  -f 5)
-	echo "===========================================================" >> $log_c
+	#echo "===========================================================" >> $log_c
 	echo -n "index=$is1" >> $log_c
 	sic1=$(printf "%02d" $sic1)
 	date -u -d @$si1 +" %T."$sic1 >> "$log_c"
-	echo -n "index=$is2" >> $log_c
-	sic=$(printf "%02d" $sic)
-	[ "$si" != "" ] && date -u -d @$si +" %T."$sic >> "$log_c"
     fi
+    echo -n "index=$is2" >> $log_c
+    sic=$(printf "%02d" $sic)
+    [ "$si" != "" ] && date -u -d @$si +" %T."$sic >> "$log_c"
+    #fi
     if [ -e $VIDEODIR ]
     then
         /usr/bin/touch $VIDEODIR/.update
@@ -3332,7 +3334,7 @@ then
     durs2ms=$durs2${dur:9:2}
     echo "Diff:" $(($durs2ms-$durs1ms))"cs" >> "$log_c"
 fi
-[ "$OUTPUT" == "vdr" -a "$si" != "" ] && date -u -d @$si +"index %T" >> "$log_c"
+#[ "$OUTPUT" == "vdr" -a "$si" != "" ] && date -u -d @$si +"index %T" >> "$log_c"
 if [ $oldsize -gt 1 ]
 then
     echo "Alt" $oldsize >> "$log_c"
