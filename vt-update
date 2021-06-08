@@ -14,11 +14,11 @@ if [ -d $instdir/vdr-transcode ]
 then
     cd $instdir/vdr-transcode
     git pull
-    install
+    ./install
 else
     cd $instdir
     git clone https://github.com/jsffm/vdr-transcode.git
     cd vdr-transcode
-    install
+    ./install
 fi
 cd $wd
