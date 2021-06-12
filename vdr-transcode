@@ -61,6 +61,7 @@ h264enc=libx264
 #h264enc="h264_nvenc"
 #hevcenc=libx265
 hevcenc="hevc_nvenc"
+av1enc=librav1e		# libaom-av1
 #deinterlace="-filter:v yadif"
 deinterlace="yadif"
 #deinterlace="-vf yadif_cuda"
@@ -526,6 +527,9 @@ parameter() {
 	    ;;
 	"-vp9enc")
 	    vp9enc=$2
+	    ;;
+	"-av1enc")
+	    av1enc=$2
 	    ;;
 	"-aaclib")
 	    aaclib=$2
@@ -1668,6 +1672,9 @@ set_video() {
 	mpeg2)
 	    set_mpeg2
 	    ;;
+	av1)
+	    set_av1
+	    ;;
     esac
 }
 
@@ -1690,9 +1697,8 @@ set_h264() {
     [ $h264enc == "h264_omx" ] && preset="-profile:v high"
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="-c:v:0 $h264enc $preset $gop $vf $aspect $h264_br"
-    #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
-    [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
-    [ "$hwaccel" == "mmal" ] && OPT_I="$OPT_I $decode_mmal"
+    [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
+    [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     vcodec="h264"
     #exit
 }
@@ -1732,9 +1738,8 @@ set_hevc() {
 	    ;;
     esac
     video="-c:v $hevcenc $preset $gop $vf $aspect $OPT_V"
-    #[ "$hwaccel" == "cuvid" ] && OPT_G="$OPT_G $decode_cuvid"
-    [ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
-    [ "$hwaccel" == "mmal" ] && OPT_I="$OPT_I $decode_mmal"
+    [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
+    [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     vcodec="hevc"
 }
 
@@ -1772,7 +1777,7 @@ set_vp9() {
 	#add_vf format=yuv420p
 	#add_vf hwdownload
 	#add_vf format=nv12
-	OPT_I="$OPT_I $decode_cuvid"
+	OPT_I="$decode_cuvid"
     fi
     if [ "$hwaccel" == "vaapi" ]
     then
@@ -1790,11 +1795,25 @@ set_vp9() {
 }
 
 set_av1() {
-    aopt="-row-mt 1"
-    #aopt="$aopt -tiles 4x1"
-    aopt="$aopt -tiles 2x2"
-    aopt="$aopt -threads 8"
-    video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
+    if [ "$hwaccel" == "cuvid" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    if [ "$av1enc" == "libaom-av1" ]
+    then
+	aopt="-row-mt 1"
+	#aopt="$aopt -tiles 4x1"
+	aopt="$aopt -tiles 2x2"
+	aopt="$aopt -threads "$(nproc)
+	video="-c:v libaom-av1 -cpu-used "$(nproc)" -crf $crf $aopt -strict experimental"
+    fi
+    if [ "$av1enc" == "librav1e" ]
+    then
+	video="-c:v librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
+	#[ "$h264_br" != "" ] && video="$video "
+    fi
+    video="$video $gop $vf $aspect"
 }
 
 set_mpeg2() {
@@ -1807,7 +1826,7 @@ set_mpeg2() {
 	#add_vf format=nv12
 	#add_vf hwdownload
 	#add_vf format=nv12
-	OPT_I="$OPT_I $decode_cuvid"
+	OPT_I="$decode_cuvid"
     fi
     add_vf tinterlace=5
     video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 $vf $aspect"
@@ -2201,6 +2220,7 @@ analyze() {
 		[ "$OUTPUT" == "webm" ] && set_vp8
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
 		decode_cuvid="-c:v h264_cuvid"
+		set_video $h264
 		case $h264 in
 		    "hevc")
 			#decode_cuvid="-c:v h264_cuvid"
@@ -2465,6 +2485,7 @@ analyze() {
 	    "mp2")
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
+		[ "$OUTPUT" == "webm" ] && mp2=opus
 		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
 		set_audio $mp2
 		#[ "$mp2" == "aac" ] && set_aac
