@@ -2398,6 +2398,7 @@ analyze() {
 		#set -x
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
+		[ "$OUTPUT" == "webm" ] && ac3=opus
 		[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
 		if [ "$ac3" == "aac" ]
 		then
