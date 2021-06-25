@@ -1653,7 +1653,10 @@ inf() {
 }
 
 set_video() {
-    case $1 in
+    c=$1
+    #[ "$OUTPUT" == "webm" ] && c=vp9
+    [ "$vcodec" != "" ] && c=$vcodec
+    case $c in
 	copy)
 	    video="-c:v:0 copy"
 	    ;;
@@ -1699,7 +1702,7 @@ set_h264() {
     video="-c:v:0 $h264enc $preset $gop $vf $aspect $h264_br"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
-    vcodec="h264"
+    [ "$vcodec" == "" ] && vcodec="h264"
     #exit
 }
 
@@ -1740,7 +1743,7 @@ set_hevc() {
     video="-c:v $hevcenc $preset $gop $vf $aspect $OPT_V"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
-    vcodec="hevc"
+    [ "$vcodec" == "" ] && vcodec="hevc"
 }
 
 set_vp8() {
@@ -1806,7 +1809,7 @@ set_av1() {
 	#aopt="$aopt -tiles 4x1"
 	aopt="$aopt -tiles 2x2"
 	aopt="$aopt -threads "$(nproc)
-	video="-c:v libaom-av1 -cpu-used "$(nproc)" -crf $crf $aopt -strict experimental"
+	video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
     fi
     if [ "$av1enc" == "librav1e" ]
     then
@@ -1892,7 +1895,8 @@ set_opus() {
     #abr=64000
     #[ "$opus_br" != "" ] && abr=opus_br
     abr=$((opus_br*1000))
-    [ "$atyp" != "stereo" -a "$atyp" != "2" ] && abr=$(($abr*3))
+    [ "$atyp" != "stereo" -a "$atyp" != "2" -a "$atyp" != "mono" ] && abr=$(($abr*3))
+    [ "$atyp" == "mono" ] && abr=$(($abr/2))
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr"
 }
 
@@ -2342,12 +2346,17 @@ analyze() {
 		#[ "$mpeg4" == "vp8" ] && set_vp8
 		#[ "$mpeg4" == "vp9" ] && set_vp9
 		set_video $mpeg4
+		[ "$OUTPUT" == "webm" ] && set_video vp9
+		#[ "$vcodec" != "" ] && set_video $vcodec
 		#OPT_G="$OPT_G -bsf mpeg4_unpack_bframes"
 		;;
 	    "vp6f"|"flv1")
 		parameter --nohw
 		video="-c:v copy"
-		[ "$OUTPUT" == "vdr" ] && set_h264
+		set_video copy
+		[ "$OUTPUT" == "vdr" ] && set_video h264
+		[ "$OUTPUT" == "webm" ] && set_video vp9
+		#[ "$vcodec" != "" ] && set_video $vcodec
 		;;
 	    "vp8")
 		decode_cuvid="-c:v vp8_cuvid"
