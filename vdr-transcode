@@ -1654,7 +1654,7 @@ inf() {
 
 set_video() {
     c=$1
-    #[ "$OUTPUT" == "webm" ] && c=vp9
+    [ "$OUTPUT" == "webm" ] && c=vp9
     [ "$vcodec" != "" ] && c=$vcodec
     case $c in
 	copy)
@@ -1892,12 +1892,15 @@ set_opus() {
 	echo "opus not supported by vdr"
 	exit 8
     fi
+    # Stream #0:3[0x81]: Audio: ac3, 48000 Hz, 5.0(side), fltp, 448 kb/s
     #abr=64000
     #[ "$opus_br" != "" ] && abr=opus_br
     abr=$((opus_br*1000))
     [ "$atyp" != "stereo" -a "$atyp" != "2" -a "$atyp" != "mono" ] && abr=$(($abr*3))
     [ "$atyp" == "mono" ] && abr=$(($abr/2))
-    audio_t="-c:$stro libopus -vbr on -b:$stro $abr"
+    ch=
+    [ "${atyp:0:3}" == "5.0" ] && ch="-ac:$stro 6"
+    audio_t="-c:$stro libopus -vbr on -b:$stro $abr $ch"
 }
 
 set_ac3() {
@@ -2216,12 +2219,13 @@ analyze() {
 		#[ "$mpeg2" == "vp8" ] && set_vp8
 		#[ "$mpeg2" == "vp9" ] && set_vp9
 		set_video $mpeg2
+		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		;;
 	    "h264")
 		#set -x
 		video="-c:v copy"
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
-		[ "$OUTPUT" == "webm" ] && set_vp8
+		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
 		decode_cuvid="-c:v h264_cuvid"
 		set_video $h264
@@ -2266,6 +2270,7 @@ analyze() {
 			exit 8
 			;;
 		esac
+		[ "$OUTPUT" == "webm" ] && set_video vp9
 		#exit
 		;;
 	    "hevc")
@@ -2346,7 +2351,7 @@ analyze() {
 		#[ "$mpeg4" == "vp8" ] && set_vp8
 		#[ "$mpeg4" == "vp9" ] && set_vp9
 		set_video $mpeg4
-		[ "$OUTPUT" == "webm" ] && set_video vp9
+		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		#[ "$vcodec" != "" ] && set_video $vcodec
 		#OPT_G="$OPT_G -bsf mpeg4_unpack_bframes"
 		;;
@@ -2355,7 +2360,7 @@ analyze() {
 		video="-c:v copy"
 		set_video copy
 		[ "$OUTPUT" == "vdr" ] && set_video h264
-		[ "$OUTPUT" == "webm" ] && set_video vp9
+		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		#[ "$vcodec" != "" ] && set_video $vcodec
 		;;
 	    "vp8")
