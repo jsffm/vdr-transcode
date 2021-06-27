@@ -1793,7 +1793,7 @@ set_vp9() {
     then
 	#crf=33
 	crf=40
-	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 $vf"
+	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
     fi
 }
 
@@ -1893,6 +1893,7 @@ set_opus() {
 	exit 8
     fi
     # Stream #0:3[0x81]: Audio: ac3, 48000 Hz, 5.0(side), fltp, 448 kb/s
+    # 5.1(side)
     #abr=64000
     #[ "$opus_br" != "" ] && abr=opus_br
     abr=$((opus_br*1000))
@@ -1901,6 +1902,7 @@ set_opus() {
     ch=
     [ "${atyp:0:3}" == "5.0" ] && ch="-ac:$stro 6"
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr $ch"
+    [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -af channelmap=channel_layout=5.1"
 }
 
 set_ac3() {
