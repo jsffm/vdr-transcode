@@ -1295,6 +1295,7 @@ input_dvd() {
     #oldsize=$(echo $s|cut -d \  -f 1)
     ffmpeg_i="-i concat:"
     input=$dvd_path"VTS_"$tr2"_1.VOB"
+    ifofile=$dvd_path"VTS_"$tr2"_0.IFO"
     #w="VTS_0"$tr"_*.VOB"
     i=1
     del=
@@ -1999,6 +2000,11 @@ analyze() {
     if [ $? -eq 0 ]
     then
 	scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
+	if [ "$ifofile" != "" ]
+	then
+	    echo -n "Duration: " >> $log_c
+	    mediainfo --Inform="General;%Duration/String3%" $ifofile >> $log_c
+	fi
     else
 	echo "mediainfo missing, trying ffmpeg" >> $log_c
 	s1=$(grep "Video:" $t)
