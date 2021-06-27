@@ -1774,7 +1774,8 @@ set_vp9() {
     # crf 0..63
     # crf=33
     # video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1"
-    if [ "$hwaccel" == "cuvid" ]
+    #if [ "$hwaccel" == "cuvid" ]
+    if [ "$decode_cuvid" != "" ]
     then
 	hwdownload
 	#add_vf format=yuv420p
@@ -1793,12 +1794,14 @@ set_vp9() {
     then
 	#crf=33
 	crf=40
-	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
+	#video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
+	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -speed 4 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
     fi
 }
 
 set_av1() {
-    if [ "$hwaccel" == "cuvid" ]
+    #if [ "$hwaccel" == "cuvid" ]
+    if [ "$decode_cuvid" != "" ]
     then
 	hwdownload
 	OPT_I="$decode_cuvid"
@@ -1823,7 +1826,8 @@ set_mpeg2() {
     br="-b:v 4000k"
     [ "$h264_br" != "" ] && br=$h264_br
     #add_vf hwupload
-    if [ "$hwaccel" == "cuvid" ]
+    #if [ "$hwaccel" == "cuvid" ]
+    if [ "$decode_cuvid" != "" ]
     then
 	hwdownload
 	#add_vf format=nv12
@@ -2342,6 +2346,12 @@ analyze() {
 		[ "$OUTPUT" == "vdr" -a "$mpeg4" == "copy" ] && mpeg4=h264
 		#decode_cuvid="-c:v mpeg4_cuvid"
 		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
+		#if [ $codec == "mpeg4" ]
+		#then
+		#    decode_cuvid="-c:v mpeg4_cuvid"
+		#else
+		#    parameter --nohw
+		#fi
 		#[ $codec == "mpeg4" ] && decode_mmal="-c:v "$codec"_mmal"
 		#if [ "$mpeg4" == "h264" ]
 		#then
