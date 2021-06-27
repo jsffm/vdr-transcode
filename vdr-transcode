@@ -1775,7 +1775,7 @@ set_vp9() {
     # crf=33
     # video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -frame-parallel 1"
     #if [ "$hwaccel" == "cuvid" ]
-    if [ "$decode_cuvid" != "" ]
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
     then
 	hwdownload
 	#add_vf format=yuv420p
@@ -1801,7 +1801,7 @@ set_vp9() {
 
 set_av1() {
     #if [ "$hwaccel" == "cuvid" ]
-    if [ "$decode_cuvid" != "" ]
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
     then
 	hwdownload
 	OPT_I="$decode_cuvid"
@@ -1827,7 +1827,7 @@ set_mpeg2() {
     [ "$h264_br" != "" ] && br=$h264_br
     #add_vf hwupload
     #if [ "$hwaccel" == "cuvid" ]
-    if [ "$decode_cuvid" != "" ]
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
     then
 	hwdownload
 	#add_vf format=nv12
@@ -1906,7 +1906,7 @@ set_opus() {
     ch=
     [ "${atyp:0:3}" == "5.0" ] && ch="-ac:$stro 6"
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr $ch"
-    [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -af channelmap=channel_layout=5.1"
+    [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -af:$stro channelmap=channel_layout=5.1"
 }
 
 set_ac3() {
@@ -2573,6 +2573,7 @@ analyze() {
 	    "dvd_subtitle"|"subrip"|"ass")
 	    #"dvd_subtitle"|"ass")
 		[ "$OUTPUT" == "vdr" ] && continue
+		[ "$OUTPUT" == "webm" ] && continue
 		[ "$fmt" == "mp4" ] && continue
 		map="$map -map $str0:$str"
 		subt="$subt -c:$stro copy"
