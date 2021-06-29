@@ -250,6 +250,7 @@ add_vf() {
 }
 
 hwdownload() {
+    [ "$deinterlace" == "yadif" ] && return
     if [ "$hwaccel" == "cuvid" ]
     then
 	add_vf hwdownload
