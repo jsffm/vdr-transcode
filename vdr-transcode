@@ -2593,6 +2593,7 @@ analyze() {
 		#;;
 	    "hdmv_pgs_subtitle")
 		[ "$fmt" == "mp4" ] && continue
+		[ "$OUTPUT" == "webm" ] && continue
 		map="$map -map $str0:$str"
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
