@@ -1655,7 +1655,7 @@ inf() {
 
 set_video() {
     c=$1
-    [ "$OUTPUT" == "webm" ] && c=vp9
+    [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" ] && c=vp9
     [ "$vcodec" != "" ] && c=$vcodec
     case $c in
 	copy)
@@ -2005,6 +2005,8 @@ analyze() {
 	    echo -n "Duration: " >> $log_c
 	    mediainfo --Inform="General;%Duration/String3%" $ifofile >> $log_c
 	fi
+	hw=$(mediainfo --Inform="Video;%Width%" "$input")
+	vw=$(mediainfo --Inform="Video;%Height%" "$input")
     else
 	echo "mediainfo missing, trying ffmpeg" >> $log_c
 	s1=$(grep "Video:" $t)
@@ -2177,12 +2179,15 @@ analyze() {
 	    fi
 	    #[ "$vf" != "" ] && vf="-vf $vf"
 	    #set -x
-	    hw=${line%%[SAR*}
-	    nw=$(echo $hw|wc -w)
-	    hw=$(echo $hw|cut -d \  -f $nw)
-	    #vw=$(echo $hw|cut -d 'x' -f 2)
-	    #hw=$(echo $hw|cut -d 'x' -f 1)
-	    IFS=x read hw vw <<< $hw
+	    if [ "$vw" == "" ]
+	    then
+		hw=${line%%[SAR*}	# checkme
+		nw=$(echo $hw|wc -w)
+		hw=$(echo $hw|cut -d \  -f $nw)
+		#vw=$(echo $hw|cut -d 'x' -f 2)
+		#hw=$(echo $hw|cut -d 'x' -f 1)
+		IFS=x read hw vw <<< $hw
+	    fi
 	    if [ "$scale" != "" ]
 	    then
 		#echo $scale
@@ -2352,12 +2357,6 @@ analyze() {
 		[ "$OUTPUT" == "vdr" -a "$mpeg4" == "copy" ] && mpeg4=h264
 		#decode_cuvid="-c:v mpeg4_cuvid"
 		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
-		#if [ $codec == "mpeg4" ]
-		#then
-		#    decode_cuvid="-c:v mpeg4_cuvid"
-		#else
-		#    parameter --nohw
-		#fi
 		#[ $codec == "mpeg4" ] && decode_mmal="-c:v "$codec"_mmal"
 		#if [ "$mpeg4" == "h264" ]
 		#then
