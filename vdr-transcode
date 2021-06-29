@@ -106,7 +106,7 @@ help_Input() {
 
 help_Output() {
     echo "Output"
-    echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
+    echo " -o vdr|mp4|mkv|webm|ts|mp3 # default vdr"
     echo " -t <n>       # length in seconds"
     echo " -ss <position>"
     echo " -to <position>"
@@ -1656,7 +1656,7 @@ inf() {
 
 set_video() {
     c=$1
-    [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" ] && c=vp9
+    [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" -a "$ivcodec" != "vp8" ] && c=vp9
     [ "$vcodec" != "" ] && c=$vcodec
     case $c in
 	copy)
