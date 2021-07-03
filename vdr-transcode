@@ -1721,7 +1721,7 @@ set_hevc() {
 	    ;;
 	"hevc_vaapi")
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
-	    [ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
+	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
 	    ;;
 	"libkvazaar")
