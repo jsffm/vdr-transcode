@@ -1785,7 +1785,8 @@ set_vp9() {
 	#add_vf format=nv12
 	OPT_I="$decode_cuvid"
     fi
-    if [ "$hwaccel" == "vaapi" ]
+    #if [ "$hwaccel" == "vaapi" ]
+    if [ "$vp9enc" == "vp9_vaapi" ]
     then
 	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
     #else
@@ -2010,6 +2011,7 @@ analyze() {
 	vw=$(mediainfo --Inform="Video;%Height%" "$input")
     else
 	echo "mediainfo missing, trying ffmpeg" >> $log_c
+	# ffprobe -hide_banner -show_streams <input> | grep field_order=
 	s1=$(grep "Video:" $t)
 	# Stream #0:0[0x96a]: Video: hevc (Main)
 	codec=$(echo $s1|cut -d \  -f 4)
@@ -2182,6 +2184,7 @@ analyze() {
 	    #set -x
 	    if [ "$vw" == "" ]
 	    then
+		# ffprobe -hide_banner -show_streams
 		hw=${line%%[SAR*}	# checkme
 		nw=$(echo $hw|wc -w)
 		hw=$(echo $hw|cut -d \  -f $nw)
@@ -2297,6 +2300,7 @@ analyze() {
 		#[ "$vcodec" != "" ] && hevc=$vcodec
 		[ "$vcodec" != "" -a "$vcodec" != "hevc" ] && hevc=$vcodec
 		[ "$OUTPUT" == "mpg" ] && hevc=mpeg2
+		[ "$OUTPUT" == "webm" ] && hevc=vp9
 		decode_cuvid="-c:v hevc_cuvid"
 		case $hevc in
 		    "h264")
@@ -2627,6 +2631,7 @@ transcode() {
     name="$1"
     [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
     OPT="$OPT -metadata service_name=vdr-transcode"
+    OPT="$OPT -metadata SOFTWARE=vdr-transcode"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
