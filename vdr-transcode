@@ -2360,9 +2360,9 @@ analyze() {
 		#[ "$OUTPUT" == "mp4" ] && echo "mpeg4 in mp4 not allowed" && exit 8
 		video="-c:v $mpeg4"
 		[ "$OUTPUT" == "vdr" -a "$mpeg4" == "copy" ] && mpeg4=h264
-		#decode_cuvid="-c:v mpeg4_cuvid"
 		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
 		#[ $codec == "mpeg4" ] && decode_mmal="-c:v "$codec"_mmal"
+		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="-vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
 		#if [ "$mpeg4" == "h264" ]
 		#then
 		#    [ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
