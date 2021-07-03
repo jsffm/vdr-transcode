@@ -1589,9 +1589,6 @@ input_BD() {
 set_hwacc() {
     case "$hwaccel" in
 	"cuvid")
-	    #OPT_G="$OPT_G -hwaccel cuvid"
-	    # -hwaccel_output_format cuda
-	    #HWACC="-hwaccel cuvid"
 	    HWACC="-hwaccel cuvid -hwaccel_output_format cuda"
 	    #HWACC="-hwaccel cuvid -hwaccel_output_format nv12"
 	    #deinterlace="-vf yadif_cuda"
@@ -1599,9 +1596,8 @@ set_hwacc() {
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
 	    ;;
 	"vaapi")
-	    #OPT_G="$OPT_G -hwaccel vaapi -hwaccel_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-	    #OPT_G="$OPT_G -hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
-	    HWACC="-hwaccel vaapi -vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	    VAAPI="-vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	    HWACC="-hwaccel vaapi $VAAPI"
 	    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
 	    #deinterlace="-vf deinterlace_vaapi"
 	    deinterlace="deinterlace_vaapi"
@@ -2362,7 +2358,7 @@ analyze() {
 		[ "$OUTPUT" == "vdr" -a "$mpeg4" == "copy" ] && mpeg4=h264
 		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
 		#[ $codec == "mpeg4" ] && decode_mmal="-c:v "$codec"_mmal"
-		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="-vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="$VAAPI"
 		#if [ "$mpeg4" == "h264" ]
 		#then
 		#    [ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
@@ -2453,6 +2449,7 @@ analyze() {
 	    "eac3")
 		map="$map -map 0:$str"
 		[ "$OUTPUT" == "mpg" ] && eac3=mp2
+		[ "$OUTPUT" == "webm" ] && eac3=opus
 		set_audio $eac3
 		#audio_t="-c:$stro copy"
 		#[ "$eac3" == "aac" ] && set_aac
@@ -2466,6 +2463,7 @@ analyze() {
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=aac
+		[ "$OUTPUT" == "webm" ] && dts=opus
 		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
 		[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
 		[ "$dts" == "aac" ] && set_aac
