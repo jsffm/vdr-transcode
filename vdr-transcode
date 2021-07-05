@@ -125,7 +125,7 @@ help_Video() {
     echo " -vc1 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -vp8 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -vp9 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -vc|-vcodec <codec> # overwrites -h264|-hevc|-mpeg2"
+    echo " -vc|-vcodec <codec> # overwrites Video Codec"
     echo " -r <n>           # fps"
     echo " -b <n>           # constant bitrate for mp3, h264_omx"
     echo " -vf <filter>     # video filter"
@@ -146,6 +146,7 @@ help_Audio() {
     echo " -dts copy|ac3|eac3|aac|opus"
     echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
     echo " -mp3 copy|aac"
+    echo " -ac|-acodec <codec> # overwrites Audio Codec"
     echo " -sel <n-n,n>     # audio, subtitle stream select"
     echo " --selb           # select best audio track"
     echo " -vol <factor>|<stream>=<factor> # Volume"
@@ -384,6 +385,9 @@ parameter() {
 	    ;;
 	"-vcodec"|"-vc")
 	    vcodec=$2
+	    ;;
+	"-acodec"|"-ac")
+	    acodec=$2
 	    ;;
 	"-dts")
 	    dts=$2
@@ -1944,6 +1948,7 @@ set_audio() {
     #set -x
     codec1=$1
     [ ${codec1:0:1} == "+" ] && set_audio_plus
+    [ "$acodec" != "" ] && codec1=$acodec
     case $codec1 in
 	"copy")
 	    audio_t="-c:$stro copy"
@@ -1970,7 +1975,7 @@ set_audio() {
 	    set_mp2
 	    ;;
 	*)
-	    echo $1 wrong
+	    echo $codec1 wrong
 	    exit 8
 	    ;;
     esac
