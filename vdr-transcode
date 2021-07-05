@@ -1785,6 +1785,7 @@ set_vp9() {
     if [ "$vp9enc" == "vp9_vaapi" ]
     then
 	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
+	#video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
@@ -1906,7 +1907,7 @@ set_opus() {
     ch=
     [ "${atyp:0:3}" == "5.0" ] && ch="-ac:$stro 6"
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr $ch"
-    [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -af:$stro channelmap=channel_layout=5.1"
+    [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -ac:$stro 6"
 }
 
 set_ac3() {
