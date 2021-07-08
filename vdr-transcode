@@ -275,6 +275,10 @@ parameter() {
 	"-ia")
 	    INPUTA=$2
 	    ;;
+	"-ic")
+	    INPUTC=$2
+	    OPT="$OPT -map_chapters 1"
+	    ;;
 	"-dvd")
 	    INPUT=dvd
 	    dvd_path=$2
@@ -1724,6 +1728,7 @@ set_hevc() {
 	    preset="-preset hq -profile:v $hevc_profile $level_hevc -rc vbr -cq $hevc_cq $opt_r"
 	    ;;
 	"hevc_vaapi")
+	    #LIBVA_DRIVER_NAME=iHD
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
@@ -1759,6 +1764,7 @@ set_vp8() {
     video="-c:v libvpx $vp8flags -crf $gq $gop $opt_vp8 $vf $aspect"
     if [ "$hwaccel" == "vaapi" ]
     then
+	#LIBVA_DRIVER_NAME=i965
 	#[ "$codec" == "mpeg4" ] && parameter --nohw
 	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
     #else
@@ -1788,6 +1794,7 @@ set_vp9() {
     #if [ "$hwaccel" == "vaapi" ]
     if [ "$vp9enc" == "vp9_vaapi" ]
     then
+	#LIBVA_DRIVER_NAME=i965
 	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
 	#video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
     #else
@@ -1998,6 +2005,7 @@ analyze() {
     else
 	$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     fi
+    [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
     #cat $t
     #exit
     #set -x
@@ -2677,7 +2685,7 @@ transcode() {
 	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
 	#eval $sss
     #else
-	eval $ffprobe -hide_banner -i $name 2>$t
+	eval $ffprobe -hide_banner -i $name 2>$t	# checkme
 	#$ffprobe -hide_banner -i $name 2>$t
     #fi
     cat $t >> "$log_c"
