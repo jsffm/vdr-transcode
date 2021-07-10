@@ -2436,6 +2436,7 @@ analyze() {
 		#set -x
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
+		[ "$acodec" != "" ] && ac3=$acodec
 		[ "$OUTPUT" == "webm" ] && ac3=opus
 		[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
 		if [ "$ac3" == "aac" ]
@@ -2741,7 +2742,9 @@ info_create() {
     dauer1=$(grep "Duration:" $t)
     dauer2=$(echo $dauer1 | cut -d \  -f 2)
     dauer=$(date -u "+%s" -d "1970-01-01 ${dauer2:0:8}")
-    echo "C M vdr-transcode" > $info
+    sender=vdr-transcode
+    [[ "$INPUT" == *arteptweb* ]] && sender=Arte
+    echo "C M $sender" > $info
     echo "E 0 $rec_time $dauer" >> $info
     [ "$info_name" != "" ] && echo "T" $(echo $info_name|tr '_' ' ') >> $info	# checkme
     [ "$fpso" == "" ] && fpso=$fps
