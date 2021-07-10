@@ -2743,7 +2743,13 @@ info_create() {
     dauer2=$(echo $dauer1 | cut -d \  -f 2)
     dauer=$(date -u "+%s" -d "1970-01-01 ${dauer2:0:8}")
     sender=vdr-transcode
-    [[ "$INPUT" == *arteptweb* ]] && sender=Arte
+    if [ "${INPUT:0:4}" == "http" ]
+    then
+	[[ "$INPUT" == *arteptweb* ]] && sender=Arte
+	[[ "$INPUT" == *rodlzdf* ]] && sender=ZDF
+	[[ "$INPUT" == *odmdr* ]] && sender=mdr
+	[[ "$INPUT" == *cdn-storage.br.de* ]] && sender=br
+    fi
     echo "C M $sender" > $info
     echo "E 0 $rec_time $dauer" >> $info
     [ "$info_name" != "" ] && echo "T" $(echo $info_name|tr '_' ' ') >> $info	# checkme
