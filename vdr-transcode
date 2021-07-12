@@ -21,6 +21,7 @@
 # -strict experimental
 # echo $USER
 # id -g -n <user>
+# local
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -152,6 +153,8 @@ help_Audio() {
     echo " --selb           # select best audio track"
     echo " -vol <factor>|<stream>=<factor> # Volume"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
+    echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
+    echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
 }
 
 help_Automation() {
@@ -714,6 +717,8 @@ set_streamo() {
 	str=${s%=*}
 	to=${s#*=}
 	streamo[$str]=$to
+	[ $to -eq 1 ] && disp="$disp -disposition:1 default"
+	[ $to -gt 1 ] && disp="$disp -disposition:$to 0"
     done
     unset IFS
     #exit
@@ -2652,7 +2657,7 @@ transcode() {
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
     #opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal \"$name\""
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && name="\"$name\""
-    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal $name"
+    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $disp $subt $OPT $metal $name"
     [ "$auto" == "1" ] && opt="-nostdin $opt"
     echo $ffmpeg $opt >> "$log_c"
     if [ "$sim" != "" ]
