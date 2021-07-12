@@ -2576,8 +2576,10 @@ analyze() {
 	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
 		map="$map -map $str0:$str"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
-		audio="$audio -c:$stro $aaclib -b:$stro 128k"
+		audio_t="$audio -c:$stro $aaclib -b:$stro 128k"
 		#audio="$audio -c:$stro $aaclib -vdr 2"
+		[ "$OUTPUT" == "webm" ] && set_opus
+		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
 	    "opus")
