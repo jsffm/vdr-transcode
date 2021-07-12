@@ -2476,7 +2476,7 @@ analyze() {
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
-	    "dts")
+	    "dts"|"truehd")
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=aac
