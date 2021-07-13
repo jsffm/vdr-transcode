@@ -50,6 +50,7 @@ opus=copy
 crf=21
 hevc_cq=28
 gq=30		# VP8
+#[ -e /dev/dri/renderD128 ] && gq=120
 gop="-g 50"
 
 #h264_level=3.0  # 720x576i
@@ -197,6 +198,7 @@ help_Configuration_V() {
     echo " -quality <n>     # vaapi h264 quality"
     echo " -cq <n>          # quality hevc default 28, < = better"
     echo " -gq <n>          # quality vp8 default 30, < = better"
+    echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_omx"
     echo " -h264_level <level> # default 4.1"
     echo " -h264_br         # bitrate for h264_omx, -b works too"
@@ -1801,6 +1803,11 @@ set_vp9() {
     if [ "$vp9enc" == "vp9_vaapi" ]
     then
 	#LIBVA_DRIVER_NAME=i965
+	if [ $gq -lt 50 ]
+	then
+	    gq=120
+	    echo "gq= changed to $gq" >> $log_c
+	fi
 	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
 	#video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
     #else
