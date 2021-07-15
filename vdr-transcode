@@ -1340,9 +1340,13 @@ input_dvd() {
     then
 	#set -x
 	s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
-	if [ -e ../info.vdr ]
+	[ -e ../info.vdr ] && info=../info.vdr
+	[ -e info.vdr ] && info=info.vdr
+	[ -e $(dirname $dvd_path)/info.vdr ] && info=$(dirname $dvd_path)/info.vdr
+	#if [ -e ../info.vdr ]
+	if [ "$info" != "" ]
 	then
-	    e=$(grep "^E" ../info.vdr)
+	    e=$(grep "^E" $info)
 	    s=$(echo $e|cut -d \  -f 3)
 	fi
 	rec_time=$s
@@ -2461,7 +2465,7 @@ analyze() {
 		then
 		    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && set_aac
 		    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && set_aac he
-		    [ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:$stro volume=$ac3v"
+		    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:$stro volume=$ac3v"
 		fi
 		#if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
 		#then
@@ -2471,6 +2475,7 @@ analyze() {
 		[ "$ac3" == "aac_he" ] && set_aac he
 		[ "$ac3" == "aac_he_v2" ] && set_aac he_v2
 		[ "$ac3" == "opus" ] && set_opus
+		[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="$audio_t -filter:$stro volume=$ac3v"
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		#exit
@@ -2585,6 +2590,7 @@ analyze() {
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
 		audio_t="$audio -c:$stro $aaclib -b:$stro 128k"
 		#audio="$audio -c:$stro $aaclib -vdr 2"
+		[ "$acodec" != "" ] && set_audio $acodec
 		[ "$OUTPUT" == "webm" ] && set_opus
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
@@ -2839,9 +2845,11 @@ copy_vdr() {
 	    ;;
 	"dvd")
 	    #set -x
-	    if [ -e ../info.vdr ]
+	    #if [ -e ../info.vdr ]
+	    if [ "$info" != "" ]
 	    then
-		cp ../info.vdr $dest/info
+		#cp ../info.vdr $dest/info
+		cp $info $dest/info
 		echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
