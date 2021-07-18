@@ -149,7 +149,7 @@ help_Audio() {
     echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
     echo " -mp3 copy|aac|aac_he|aac_he_v2|opus"
     echo " -opus copy|ac3|eac3|aac|aac_he|aac_he_v2"
-    echo " -ac|-acodec <codec> # overwrites Audio Codec"
+    echo " -ac|-acodec [<str>=]<codec> # overwrites Audio Codec"
     echo " -sel <n-n,n>     # audio, subtitle stream select"
     echo " --selb           # select best audio track"
     echo " -vol <factor>|<stream>=<factor> # Volume"
