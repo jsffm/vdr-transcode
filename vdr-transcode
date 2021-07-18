@@ -397,7 +397,16 @@ parameter() {
 	    vcodec=$2
 	    ;;
 	"-acodec"|"-ac")
-	    acodec=$2
+	    #set -x
+	    str=${2%=*}
+	    ac=${2#*=}
+	    if [ "$str" != "$ac" ]
+	    then
+		acodeca[$str]=$ac
+	    else
+		acodec=$2
+	    fi
+	    #exit
 	    ;;
 	"-dts")
 	    dts=$2
@@ -1982,6 +1991,8 @@ set_audio() {
 	fi
     fi
     [ "$acodec" != "" ] && codec1=$acodec
+    [ "${acodeca[$str]}" != "" ] && codec1=${acodeca[$str]}
+    #exit
     case $codec1 in
 	"copy")
 	    audio_t="-c:$stro copy"
