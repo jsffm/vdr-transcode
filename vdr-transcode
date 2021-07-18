@@ -1906,7 +1906,7 @@ set_aac() {
 	    #br="-vbr $aac_vbr"
 	fi
     fi
-    if [ "$atyp" != "stereo" -a "$atyp" != "2" ]
+    if [ "$atyp" != "stereo" -a "$atyp" != "2" -a "$atyp" != "mono" ]
     then
 	br="-b:$stro $aac_6ch_br"
 	#[ "$aac_vbr" != "" ] && br="-vbr $aac_vbr"
