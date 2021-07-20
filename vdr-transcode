@@ -152,7 +152,7 @@ help_Audio() {
     echo " -ac|-acodec [<str>=]<codec> # overwrites Audio Codec"
     echo " -sel <n-n,n>     # audio, subtitle stream select"
     echo " --selb           # select best audio track"
-    echo " -vol <factor>|<stream>=<factor> # Volume"
+    echo " -vol [<str>=]<factor> # Volume"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
