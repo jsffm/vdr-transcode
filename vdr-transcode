@@ -2116,6 +2116,8 @@ analyze() {
     # Stream #1:0: Audio: mp2, 48000 Hz, stereo, fltp, 192 kb/s
     # UHD
     # Stream #0:0: Video: hevc (Main 10) (hev1 / 0x31766568), yuv420p10le(tv, bt2020nc/bt2020/arib-std-b67), 3840x2160 [SAR 1:1 DAR 16:9], q=2-31, 50 fps, 50 tbr, 12800 tbn, 25 tbc
+    #
+    # Stream #0:2(eng): Audio: pcm_s16le ([1][0][0][0] / 0x0001), 48000 Hz, 5.1(side), s16, 4608 kb/s
 
     #set -x
     #sel_best=1
@@ -2170,7 +2172,7 @@ analyze() {
 	str0=${line%%:*}
 	str0=${str0:${#str0}-1:1}
 	str1=${line#*:}
-	if [[ "$str1" == *[0* ]]
+	if [[ "$str1" == *[0x* ]]
 	then
 	    #set -x
 	    str=${str1%%[*}
@@ -2254,6 +2256,7 @@ analyze() {
 	fi
 	if [ "$typ" == "Audio:" ]
 	then
+	    #set -x
 	    atyp1=${line2#*Hz*}
 	    atyp=$(echo $atyp1 | cut -d ' ' -f 1)
 	    atyp=${atyp//,/}
