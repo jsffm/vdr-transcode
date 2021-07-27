@@ -104,6 +104,7 @@ help_Input() {
     echo " -tr <track>   # DVD or AVCHD track"
     echo " -va <seconds> # add video at end, only ts"
     echo " -ia <file>|<http> # second audio source"
+    echo " -ic <file>        # copy chapters from an other file"
 }
 
 help_Output() {
