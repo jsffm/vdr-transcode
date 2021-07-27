@@ -328,10 +328,13 @@ parameter() {
 	    OPT_G="$OPT_G -t $2"
 	    ;;
 	"-to")
-	    OPT_G="$OPT_G -to $2"
+	    #OPT_G="$OPT_G -to $2"
+	    OPT="$OPT -to $2"
 	    ;;
 	"-ss")
-	    OPT_G="$OPT_G -ss $2"
+	    # When using -ss, -to only works as expected if -ss is used as an output option.
+	    #OPT_G="$OPT_G -ss $2"
+	    OPT="$OPT -ss $2"
 	    ss=$2
 	    ;;
 	"-copytb")
