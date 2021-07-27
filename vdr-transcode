@@ -2672,6 +2672,7 @@ analyze() {
 		#set -x
 		[ "$OUTPUT" == "vdr" ] && continue
 		[ "$fmt" == "mkv" ] && continue
+		[ "$fmt" == "webm" ] && continue
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		audio="$audio $audio_t"
