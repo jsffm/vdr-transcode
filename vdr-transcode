@@ -1771,7 +1771,7 @@ set_hevc() {
 	    exit 8
 	    ;;
     esac
-    video="-c:v $hevcenc $preset $gop $vf $aspect $OPT_V"
+    video="-c:v:0 $hevcenc $preset $gop $vf $aspect $OPT_V"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$vcodec" == "" ] && vcodec="hevc"
@@ -2197,7 +2197,8 @@ analyze() {
 	[ "$ifmt" == "avi" ] && str=${str1%%:*}
 	#exit
 
-	if [ "$select_str2" != "" -a "$typ" != "Video:" ]
+	#if [ "$select_str2" != "" -a "$typ" != "Video:" ]
+	if [ "$select_str2" != "" ]
 	then
 	    IFS=,
 	    ok=0
@@ -2206,6 +2207,7 @@ analyze() {
 		[ $str == $s ] && ok=1
 	    done
 	    unset IFS
+	    [ $str == 0 ] && ok=1
 	    [ $ok == 0 ] && continue
 	fi
 	
