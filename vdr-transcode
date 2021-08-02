@@ -1298,7 +1298,7 @@ echo "title="$chna >> $meta
 input_dvd() {
     #echo
     #set -x
-    parameter --nohw
+    #[ "$hwaccel" == "cuvid" ] && parameter --nohw
     tr=1
     [ "$1" != "" ] && tr=$1
     tr2=$(printf "%02d" $tr)
@@ -1349,10 +1349,11 @@ input_dvd() {
     name=$(basename $d)-$tr
     info_name=$(echo $(basename $d)|tr '_' ' ')	# checkme
     ifmt="dvd"
+    s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
+    rec_time=$s
     if [ "$OUTPUT" == "vdr" ]
     then
 	#set -x
-	s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
 	[ -e ../info.vdr ] && info=../info.vdr
 	[ -e info.vdr ] && info=info.vdr
 	[ -e $(dirname $dvd_path)/info.vdr ] && info=$(dirname $dvd_path)/info.vdr
@@ -1362,7 +1363,6 @@ input_dvd() {
 	    e=$(grep "^E" $info)
 	    s=$(echo $e|cut -d \  -f 3)
 	fi
-	rec_time=$s
 	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
 	dest=$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
 	#exit
@@ -1730,7 +1730,7 @@ set_h264() {
     fi
     [ $h264enc == "h264_omx" ] && preset="-profile:v high"
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
-    video="-c:v:0 $h264enc $preset $gop $vf $aspect $h264_br"
+    video="-c:v:0 $h264enc $preset $gop $aspect $h264_br"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$vcodec" == "" ] && vcodec="h264"
@@ -1772,7 +1772,7 @@ set_hevc() {
 	    exit 8
 	    ;;
     esac
-    video="-c:v:0 $hevcenc $preset $gop $vf $aspect $OPT_V"
+    video="-c:v:0 $hevcenc $preset $gop $aspect $OPT_V"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$vcodec" == "" ] && vcodec="hevc"
@@ -1786,12 +1786,12 @@ set_vp8() {
     fi
     #vp8flags="-vp8flags --cq-level=$gq"
     opt_vp8="-quality good -speed 1 -cpu-used -5"
-    video="-c:v libvpx $vp8flags -crf $gq $gop $opt_vp8 $vf $aspect"
+    video="-c:v libvpx $vp8flags -crf $gq $gop $opt_vp8 $aspect"
     if [ "$hwaccel" == "vaapi" ]
     then
 	#LIBVA_DRIVER_NAME=i965
 	#[ "$codec" == "mpeg4" ] && parameter --nohw
-	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
+	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
@@ -1825,7 +1825,7 @@ set_vp9() {
 	    gq=120
 	    echo "gq= changed to $gq" >> $log_c
 	fi
-	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $vf $aspect"
+	video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $aspect"
 	#video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
     #else
 	#echo "Only vaapi"
@@ -1836,7 +1836,7 @@ set_vp9() {
 	#crf=33
 	crf=40
 	#video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
-	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -speed 4 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
+	video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -speed 4 -frame-parallel 1 -cpu-used -5 -row-mt 1"
     fi
 }
 
@@ -1860,7 +1860,7 @@ set_av1() {
 	video="-c:v librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
 	#[ "$h264_br" != "" ] && video="$video "
     fi
-    video="$video $gop $vf $aspect"
+    video="$video $gop $aspect"
 }
 
 set_mpeg2() {
@@ -1877,7 +1877,7 @@ set_mpeg2() {
 	OPT_I="$decode_cuvid"
     fi
     add_vf tinterlace=5
-    video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $vf $aspect"
+    video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $aspect"
     #HWACC=
     #[ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
     [ "$aac" == "copy" ] && aac=mp2
@@ -2086,7 +2086,10 @@ analyze() {
     fi
     echo "deinterlace=$deinterlace" >> "$log_c"
     #exit
-    [ "$deinterlace" != "" ] && add_vf $deinterlace
+    if [ "$hwaccel" != "vaapi" ]
+    then
+	[ "$deinterlace" != "" ] && add_vf $deinterlace
+    fi
     [ "$crop" != "" ] && hwdownload && add_vf $crop
     #[ "$vf" != "" ] && vf="-vf $vf"
     #exit
@@ -2292,6 +2295,7 @@ analyze() {
 		#decode_mmal="-c:v ${codec:0:5}_mmal"
 		#parameter "--nohw"
 		[ "$vcodec" != "" ] && mpeg2=$vcodec
+		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="$VAAPI"
 		#[ "$mpeg2" == "h264" ] &&  set_h264
 		#[ "$mpeg2" == "hevc" ] && set_hevc
 		#[ "$mpeg2" == "vp8" ] && set_vp8
@@ -2689,6 +2693,11 @@ analyze() {
 		;;
 	esac
     done < $t
+    if [ "$hwaccel" == "vaapi" ]
+    then
+	[ "$deinterlace" != "" ] && add_vf $deinterlace
+    fi
+    video="$video $vf"
     #exit
 }
 
