@@ -1362,6 +1362,7 @@ input_dvd() {
 	then
 	    e=$(grep "^E" $info)
 	    s=$(echo $e|cut -d \  -f 3)
+	    rec_time=$s
 	fi
 	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
 	dest=$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
@@ -2082,7 +2083,8 @@ analyze() {
     then
 	deinterlace=
     else
-	opt_r="-r 50"
+	#opt_r="-r 50"
+	opt_r=""
     fi
     echo "deinterlace=$deinterlace" >> "$log_c"
     #exit
