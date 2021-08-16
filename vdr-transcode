@@ -22,6 +22,7 @@
 # echo $USER
 # id -g -n <user>
 # local
+# -disposition disp= ?
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -2086,6 +2087,7 @@ analyze() {
 	#opt_r="-r 50"
 	opt_r=""
     fi
+    [ "$OUTPUT" == "mpg" ] && deinterlace=
     echo "deinterlace=$deinterlace" >> "$log_c"
     #exit
     if [ "$hwaccel" != "vaapi" ]
@@ -2302,6 +2304,7 @@ analyze() {
 		#[ "$mpeg2" == "hevc" ] && set_hevc
 		#[ "$mpeg2" == "vp8" ] && set_vp8
 		#[ "$mpeg2" == "vp9" ] && set_vp9
+		[ "$OUTPUT" == "mpg" ] && mpeg2=copy && deinterlace=
 		set_video $mpeg2
 		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		;;
@@ -2592,6 +2595,7 @@ analyze() {
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "webm" ] && mp2=opus
 		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
+		[ "$OUTPUT" == "mpg" ] && mp2=copy
 		set_audio $mp2
 		#[ "$mp2" == "aac" ] && set_aac
 		#[ "$mp2" == "aac_he" ] && set_aac he
