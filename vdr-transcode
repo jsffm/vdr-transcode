@@ -23,6 +23,7 @@
 # id -g -n <user>
 # local
 # -disposition disp= ?
+# info series detect
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -46,6 +47,7 @@ aac=copy
 mp2=aac
 mp3=copy
 #mp3=aac
+mp3_b="-b:a 128k"
 dts=copy
 opus=copy
 crf=21
@@ -1692,6 +1694,10 @@ set_video() {
     case $c in
 	copy)
 	    video="-c:v:0 copy"
+	    deinterlace=
+	    #echo $vf
+	    [ "$vf" == "yadif_cuda" -o "$vf" == "yadif" ] && vf=
+	    #exit
 	    ;;
 	h264)
 	    set_h264
@@ -1707,6 +1713,12 @@ set_video() {
 	    ;;
 	mpeg2)
 	    set_mpeg2
+	    ;;
+	mpeg4)
+	    set_mpeg4
+	    ;;
+	xvid)
+	    set_xvid
 	    ;;
 	av1)
 	    set_av1
@@ -1887,6 +1899,24 @@ set_mpeg2() {
     [ "$mp3" == "copy" ] && mp3=mp2
 }
 
+set_mpeg4() {
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    video="-c:v mpeg4"
+}
+
+set_xvid() {
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    video="-c:v libxvid -flags aic -ssim_acc 0"
+}
+
 set_aac() {
     if [ "$1" == "he" ]
     then
@@ -1975,6 +2005,10 @@ set_mp2() {
     audio_t="-c:$stro libtwolame -b:$stro 192k"
 }
 
+set_mp3() {
+    audio_t="-c:$stro mp3 $mp3_b"
+}
+
 set_audio_plus() {
     map="$map -map $str0:$str"
     audio="$audio -c:$stro copy"
@@ -2023,6 +2057,9 @@ set_audio() {
 	    ;;
 	"mp2")
 	    set_mp2
+	    ;;
+	"mp3")
+	    set_mp3
 	    ;;
 	*)
 	    echo $codec1 wrong
@@ -2088,6 +2125,7 @@ analyze() {
 	opt_r=""
     fi
     [ "$OUTPUT" == "mpg" ] && deinterlace=
+    [ "$OUTPUT" == "avi" ] && deinterlace=
     echo "deinterlace=$deinterlace" >> "$log_c"
     #exit
     if [ "$hwaccel" != "vaapi" ]
@@ -2228,6 +2266,14 @@ analyze() {
 	    nw=$(echo $fps1|wc -w)
 	    fps=$(echo $fps1|cut -d \  -f $nw)
 	    ivcodec=$codec
+	    #echo "deinterlace=$deinterlace" >> "$log_c"
+	    #eval ovcodec=$$ivcodec
+	    #echo $vcodec
+	    #exit
+	    #if [ "$hwaccel" != "vaapi" ]
+	    #then
+		#[ "$deinterlace" != "" ] && add_vf $deinterlace
+	    #fi
 	    if [ "$OUTPUT" == "mp3" ]
 	    then
 		video="-vn"
@@ -2351,6 +2397,12 @@ analyze() {
 		    "mpeg2")
 			#decode_cuvid="-c:v h264_cuvid"
 			set_mpeg2
+			;;
+		    "mpeg4")
+			set_mpeg4
+			;;
+		    "xvid")
+			set_xvid
 			;;
 		    *)
 			echo "-h264 $h264 wrong"
@@ -3143,6 +3195,9 @@ copy() {
 	    copy_file $OUTPUT
 	    ;;
 	"webm")
+	    copy_file $OUTPUT
+	    ;;
+	"avi")
 	    copy_file $OUTPUT
 	    ;;
 	"mp3")
