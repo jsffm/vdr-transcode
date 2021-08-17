@@ -328,6 +328,9 @@ parameter() {
 	    mp3_b="-b:a $2"
 	    hevc_cq=0
 	    ;;
+	"-m4_b")
+	    mpeg4_b=$2
+	    ;;
 	"-t")
 	    OPT_G="$OPT_G -t $2"
 	    ;;
@@ -1906,6 +1909,8 @@ set_mpeg4() {
 	OPT_I="$decode_cuvid"
     fi
     video="-c:v mpeg4"
+    [ "$mpeg4_b" == "" ] && mpeg4_b=1200k
+    [ "$mpeg4_b" != "" ] && video="$video -b $mpeg4_b"
 }
 
 set_xvid() {
@@ -1914,7 +1919,10 @@ set_xvid() {
 	hwdownload
 	OPT_I="$decode_cuvid"
     fi
-    video="-c:v libxvid -flags aic -ssim_acc 0"
+    #video="-c:v libxvid -flags aic -ssim_acc 0"
+    video="-c:v libxvid -flags aic"
+    [ "$mpeg4_b" == "" ] && mpeg4_b=1200k
+    [ "$mpeg4_b" != "" ] && video="$video -b $mpeg4_b"
 }
 
 set_aac() {
