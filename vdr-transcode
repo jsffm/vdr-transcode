@@ -2763,7 +2763,7 @@ analyze() {
     then
 	[ "$deinterlace" != "" ] && add_vf $deinterlace
     fi
-    video="$video $vf"
+    [ "$vcodec" != "copy" ] && video="$video $vf"
     #exit
 }
 
