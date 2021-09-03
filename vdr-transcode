@@ -21,9 +21,14 @@
 # -strict experimental
 # echo $USER
 # id -g -n <user>
+#
+# Todo:
+#
 # local
 # -disposition disp= ?
 # info series detect
+# -vb
+# -ab
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -37,6 +42,7 @@ hevc=copy
 mpeg2=h264
 mpeg4=copy
 #mpeg4=h264
+mpeg4_b=1200k
 vp8=copy
 vp9=copy
 ac3=copy
@@ -212,6 +218,7 @@ help_Configuration_V() {
     echo " -hevc_profile <profile>     # main|main10"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|vaapi|vdpau"
+    echo " -m4_b                       # mpeg4 bitrate"
 }
 
 help_Configuration_A() {
@@ -328,6 +335,18 @@ parameter() {
 	    h264_br="-b:v $2"
 	    mp3_b="-b:a $2"
 	    hevc_cq=0
+	    ;;
+	"-ab")
+	    mp3_b="-b:a $2"
+	    aac_stereo_br=$2
+	    opus_br=$2
+	    [ "${opus_br:${#opus_br}-1:1}" == "k" ] && opus_br=${opus_br:0:${#opus_br}-1}
+	    ;;
+	"-vb")
+	    OPT_V="$OPT_V -b:v $2"
+	    h264_br="-b:v $2"
+	    hevc_cq=0
+	    mpeg4_b=$2
 	    ;;
 	"-m4_b")
 	    mpeg4_b=$2
@@ -1913,8 +1932,7 @@ set_mpeg4() {
 	OPT_I="$decode_cuvid"
     fi
     video="-c:v mpeg4"
-    [ "$mpeg4_b" == "" ] && mpeg4_b=1200k
-    [ "$mpeg4_b" != "" ] && video="$video -b $mpeg4_b"
+    [ "$mpeg4_b" != "" ] && video="$video -b:v $mpeg4_b"
 }
 
 set_xvid() {
@@ -1925,8 +1943,7 @@ set_xvid() {
     fi
     #video="-c:v libxvid -flags aic -ssim_acc 0"
     video="-c:v libxvid -flags aic"
-    [ "$mpeg4_b" == "" ] && mpeg4_b=1200k
-    [ "$mpeg4_b" != "" ] && video="$video -b $mpeg4_b"
+    [ "$mpeg4_b" != "" ] && video="$video -b:v $mpeg4_b"
 }
 
 set_aac() {
