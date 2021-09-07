@@ -130,16 +130,8 @@ help_Output() {
 
 help_Video() {
     echo "Video"
-    echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -hevc copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -mpeg2 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -mpeg4 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -vc1 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -vp8 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -vp9 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -vc|-vcodec <codec> # overwrites Video Codec"
+    echo " -vc|-vcodec <codec> # Video Codec copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -r <n>           # fps"
-    echo " -b <n>           # constant bitrate for mp3, h264_omx"
     echo " -vf <filter>     # video filter"
     echo " -maxr <fps>      # max bitrate"
     echo " -crop <w:h>"
@@ -148,22 +140,19 @@ help_Video() {
     echo " -scale <w:h>|hd720|hd1080|qhd|pal"
     echo " -aspect <aspect> # 16:9|4:3"
     echo " --nohw           # no hardwaredecoding"
+    #echo " -b <n>           # constant bitrate for mp3, h264_omx"
+    echo " -vb              # constant bitrate for h264_omx"
 }
 
 help_Audio() {
     echo "Audio"
-    echo " -ac3 copy|eac3|aac|aac_he|aac_he_v2|opus"
-    echo " -ac3_stereo aac|aac_he"
-    echo " -eac3 copy|aac|aac_he|aac_he_v2|opus"
-    echo " -dts copy|ac3|eac3|aac|opus"
-    echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
-    echo " -mp3 copy|aac|aac_he|aac_he_v2|opus"
-    echo " -opus copy|ac3|eac3|aac|aac_he|aac_he_v2"
-    echo " -ac|-acodec [<str>=]<codec> # overwrites Audio Codec"
-    echo " -sel <n-n,n>     # audio, subtitle stream select"
+    echo " -ac|-acodec [<str>=]<codec> # Audio Codec copy|eac3|aac|aac_he|aac_he_v2|opus"
+    echo " -sel <n[-n][,n]>     # audio, subtitle stream select"
     echo " --selb           # select best audio track"
     echo " --sel_eac3       # select eac3"
     echo " -vol [<str>=]<factor> # Volume"
+    #echo " -b <n>           # constant bitrate for mp3, h264_omx"
+    echo " -ab              # constant bitrate for mp3, aac_stereo"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
@@ -204,6 +193,13 @@ help_Configuration() {
 help_Configuration_V() {
     #echo " video"
     echo " video configuration"
+    echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -hevc copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -mpeg2 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -mpeg4 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -vc1 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -vp8 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -vp9 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -g <n>           # goplength default 50"
     echo " -crf <n>         # quality h264 default 21, < = better"
     echo " -quality <n>     # vaapi h264 quality"
@@ -223,6 +219,13 @@ help_Configuration_V() {
 
 help_Configuration_A() {
     echo " audio configuration"
+    echo " -ac3 copy|eac3|aac|aac_he|aac_he_v2|opus"
+    echo " -ac3_stereo aac|aac_he"
+    echo " -eac3 copy|aac|aac_he|aac_he_v2|opus"
+    echo " -dts copy|ac3|eac3|aac|opus"
+    echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
+    echo " -mp3 copy|aac|aac_he|aac_he_v2|opus"
+    echo " -opus copy|ac3|eac3|aac|aac_he|aac_he_v2"
     echo " -aac_stereo_br|-aac_br <br> # default 96k"
     echo " -aac_6ch_br <br>    # default 256k"
     echo " -aac_vbr <1-5>"
@@ -246,7 +249,7 @@ help() {
 	help_Configuration_A
 	exit
     fi
-    echo " -h <-v|-a> # this"
+    echo " -h [-v|-a] # this"
     help_Input
     help_Output
     help_Video
