@@ -141,7 +141,7 @@ help_Video() {
     echo " -aspect <aspect> # 16:9|4:3"
     echo " --nohw           # no hardwaredecoding"
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
-    echo " -vb              # constant bitrate for h264_omx"
+    echo " -vb <n>          # constant bitrate for h264_omx"
 }
 
 help_Audio() {
@@ -152,7 +152,7 @@ help_Audio() {
     echo " --sel_eac3       # select eac3"
     echo " -vol [<str>=]<factor> # Volume"
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
-    echo " -ab              # constant bitrate for mp3, aac_stereo"
+    echo " -ab <n>          # constant bitrate for mp3, aac_stereo"
     echo " -lang <str>=<lang>[,<str>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
