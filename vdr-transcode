@@ -1713,6 +1713,8 @@ inf() {
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
     [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i -i $INPUTA"
     $x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    rm -f $t
+    rm -f $old
     exit
 }
 
