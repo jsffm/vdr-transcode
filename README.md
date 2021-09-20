@@ -29,6 +29,10 @@ Aufzeichnung nach hevc konvertieren um Platz zu sparen, derzeit nur mit NVIDIA-K
 
 vt -h264 hevc
 
+oder
+
+vt -vc hevc
+
 Standard Vorgaben können in einer Datei /etc/vdr-transcode.conf eingetragen werden.
 
 ## Automation:

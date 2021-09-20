@@ -2013,6 +2013,7 @@ set_opus() {
     [ "$atyp" == "mono" ] && abr=$(($abr/2))
     ch=
     [ "${atyp:0:3}" == "5.0" ] && ch="-ac:$stro 6"
+    [ "${atyp:0:3}" == "7.1" ] && ch="-ac:$stro 6"
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr $ch"
     [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -ac:$stro 6"
 }
