@@ -616,9 +616,11 @@ parameter() {
 	    #exit
 	    ;;
 	"--selb")
+	    select_str0=0
 	    sel_best=1
 	    ;;
 	"--sel_eac3")
+	    select_str0=0
 	    sel_best="eac3"
 	    ;;
 	"--info")
