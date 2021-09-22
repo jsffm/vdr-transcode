@@ -147,7 +147,7 @@ help_Video() {
 help_Audio() {
     echo "Audio"
     echo " -ac|-acodec [<str>=]<codec> # Audio Codec copy|eac3|aac|aac_he|aac_he_v2|opus"
-    echo " -sel <n[-n][,n]>     # audio, subtitle stream select"
+    echo " -sel [<file>:]<n[-n][,n]>   # audio, subtitle stream select"
     echo " --selb           # select best audio track"
     echo " --sel_eac3       # select eac3"
     echo " -vol [<str>=]<factor> # Volume"
@@ -604,7 +604,16 @@ parameter() {
 	    vdr=$2
 	    ;;
 	"-sel")
-	    select_str=$2
+	    #set -x
+	    select_str0=0
+	    if [[ "$2" == *:* ]]
+	    then
+		select_str0=${2%:*}
+		select_str=${2#*:}
+	    else
+		select_str=$2
+	    fi
+	    #exit
 	    ;;
 	"--selb")
 	    sel_best=1
@@ -2293,7 +2302,7 @@ analyze() {
 	#exit
 
 	#if [ "$select_str2" != "" -a "$typ" != "Video:" ]
-	if [ "$select_str2" != "" ]
+	if [ "$select_str2" != "" -a "$select_str0" == "$str0" ]
 	then
 	    IFS=,
 	    ok=0
