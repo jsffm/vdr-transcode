@@ -3148,7 +3148,12 @@ copy_file() {
     OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata title=\"$(basename $name)\""
     nameb=$(basename "$name")
-    OPT="$OPT -metadata title=\"$nameb\""
+    if [[ "$nameb" == *" "* ]]
+    then
+	OPT="$OPT -metadata title=\"$nameb\""
+    else
+	OPT="$OPT -metadata title=$nameb"
+    fi
     [ "$fmt" == "mp4" ] && OPT="$OPT -movflags faststart"
     transcode "$out"
     newsize=$(ls -l "$out"|cut -d \  -f 5)
