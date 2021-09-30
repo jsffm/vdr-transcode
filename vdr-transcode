@@ -3461,8 +3461,13 @@ auto_check() {
 	    #  Duration: 01:39:06.66, start: 1.400000, bitrate: 2013 kb/s
 	    d1=$(head -n 1 $t2)
 	    d1=$(echo $d1|cut -d \  -f 2)
-	    d1s=$(date -u "+%s" -d "1970-01-01 ${d1:0:8}")
-	    d1ms=$d1s${d1:9:2}
+	    if [ "$d1" != "N/A," ]
+	    then
+		d1s=$(date -u "+%s" -d "1970-01-01 ${d1:0:8}")
+		d1ms=$d1s${d1:9:2}
+	    else
+		d1ms=0
+	    fi
 	    d2=$(tail -n 1 $t2)
 	    d2=$(echo $d2|cut -d \  -f 2)
 	    d2s=$(date -u "+%s" -d "1970-01-01 ${d2:0:8}")
