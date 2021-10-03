@@ -166,7 +166,7 @@ help_Automation() {
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
-    echo " --lsdel            # deletes processed records, marked to delete, use on your own risk"
+    echo " --rmdel            # deletes processed records, marked to delete, use on your own risk"
 }
 
 help_Configuration() {
@@ -692,7 +692,7 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
-	"--lsdel")
+	"--rmdel"|"--lsdel")
 	    TODO=$1
 	    INPUT=none
 	    ;;
@@ -930,8 +930,8 @@ status() {
 	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
 	echo "fps=$fps time=$dur2 $prz% $speed $drop"
 	echo "Size: $oldsize -> $size2 $przs%"
-	#[ $restz -gt 0 ] && echo "Est: $exp"
-	[ -e $olddir/vt.lck ] && echo "Est: $exp"
+	[ $restz -gt 0 ] && echo "Est: $exp"
+	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
 	#date -u -d @$exptime
     fi
     #exit
@@ -1766,6 +1766,10 @@ set_video() {
 	av1)
 	    set_av1
 	    ;;
+	*)
+	    echo "-$ivcodec $1 wrong"
+	    exit 8
+	    ;;
     esac
 }
 
@@ -1812,9 +1816,11 @@ set_hevc() {
 	    ;;
 	"hevc_vaapi")
 	    #LIBVA_DRIVER_NAME=iHD
+	    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
+	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
 	    ;;
 	"libkvazaar")
 	    #parameter --nohw
@@ -2422,56 +2428,12 @@ analyze() {
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
+		[ "$fpso" != "" ] && h264=h264
 		decode_cuvid="-c:v h264_cuvid"
+		#decode_mmal="-c:v h264_mmal"
+		decode_mmal="-c:v "$codec"_mmal"
 		set_video $h264
-		case $h264 in
-		    "hevc")
-			#decode_cuvid="-c:v h264_cuvid"
-			#decode_mmal="-c:v h264_mmal"
-			decode_mmal="-c:v "$codec"_mmal"
-			set_hevc
-			#video="-c:v:0 $hevcenc $preset"
-			;;
-		    "h264")
-			#decode_cuvid="-c:v h264_cuvid"
-			#decode_mmal="-c:v h264_mmal"
-			decode_mmal="-c:v "$codec"_mmal"
-			set_h264
-			;;
-		    "copy")
-			if [ "$fpso" != "" ]
-			then
-			    #decode_cuvid="-c:v h264_cuvid"
-			    #decode_mmal="-c:v h264_mmal"
-			    decode_mmal="-c:v "$codec"_mmal"
-			    set_h264
-			fi
-			;;
-		    "vp8")
-			set_vp8
-			;;
-		    "vp9")
-			set_vp9
-			;;
-		    "av1")
-			set_av1
-			;;
-		    "mpeg2")
-			#decode_cuvid="-c:v h264_cuvid"
-			set_mpeg2
-			;;
-		    "mpeg4")
-			set_mpeg4
-			;;
-		    "xvid")
-			set_xvid
-			;;
-		    *)
-			echo "-h264 $h264 wrong"
-			exit 8
-			;;
-		esac
-		[ "$OUTPUT" == "webm" ] && set_video vp9
+		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		#exit
 		;;
 	    "hevc")
@@ -2482,33 +2444,7 @@ analyze() {
 		[ "$OUTPUT" == "mpg" ] && hevc=mpeg2
 		[ "$OUTPUT" == "webm" ] && hevc=vp9
 		decode_cuvid="-c:v hevc_cuvid"
-		case $hevc in
-		    "h264")
-			#decode_cuvid="-c:v hevc_cuvid"
-			set_h264
-			;;
-		    "hevc")
-			#decode_cuvid="-c:v hevc_cuvid"
-			set_hevc
-			;;
-		    "copy")
-			nix=
-			;;
-		    "av1")
-			set_av1
-			;;
-		    "vp9")
-			set_vp9
-			;;
-		    "mpeg2")
-			#decode_cuvid="-c:v hevc_cuvid"
-			set_mpeg2
-			;;
-		    *)
-			echo "-hevc $hevc wrong"
-			exit 8
-			;;
-		esac
+		set_video $hevc
 		;;
 	    "vc1")
 		video="-c:v copy"
@@ -3559,7 +3495,7 @@ case $TODO in
     "--aq")
 	auto_queue
 	;;
-    "--lsdel")
+    "--rmdel"|"--lsdel")
 	ls_del
 	;;
     "--lsdel_s")
