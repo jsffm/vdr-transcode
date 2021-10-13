@@ -483,6 +483,9 @@ parameter() {
 	"-mp3")
 	    mp3=$2
 	    ;;
+	"--upmix")
+	    upmix=1
+	    ;;
 	"-crf")
 	    crf=$2
 	    ;;
@@ -2073,8 +2076,20 @@ set_audio_plus() {
 
 set_audio() {
     #set -x
+    local upm
     codec1=$1
     [ ${codec1:0:1} == "+" ] && set_audio_plus
+    if [ "$upmix" != "" ]
+    then
+	if [ "$atyp" == "stereo" ]
+	then
+	    #upm="-af:$stro surround -ac:$stro 6"
+	    upm="-filter:$stro surround -ac:$stro 6"
+	    #upm="-filter:$stro surround=chl_in=downmix -ac:$stro 6"	# Unsupported upmix
+	    #upm="-filter:$stro surround=chl_in=DL+DR -ac:$stro 6"	# Unsupported upmix
+	    atyp="5.1"
+	fi
+    fi
     if [ "$codec" == "ac3" ]
     then
 	if [ "$atyp" == "stereo" ]
@@ -2120,6 +2135,7 @@ set_audio() {
 	    exit 8
 	    ;;
     esac
+    [ "$upm" != "" ] && audio_t="$audio_t $upm"
     #exit
     }
 
