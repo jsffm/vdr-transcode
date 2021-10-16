@@ -1819,6 +1819,7 @@ set_hevc() {
 	    ;;
 	"hevc_vaapi")
 	    #LIBVA_DRIVER_NAME=iHD
+	    export LIBVA_DRIVER_NAME=i965
 	    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
