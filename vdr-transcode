@@ -1747,8 +1747,9 @@ set_video() {
 	copy)
 	    video="-c:v:0 copy"
 	    deinterlace=
+	    vf=
 	    #echo $vf
-	    [ "$vf" == "yadif_cuda" -o "$vf" == "yadif" ] && vf=
+	    #[ "$vf" == "yadif_cuda" -o "$vf" == "yadif" ] && vf=
 	    #exit
 	    ;;
 	h264)
@@ -2566,12 +2567,12 @@ analyze() {
 		audio_t="-c:$stro copy"
 		[ "$acodec" != "" ] && ac3=$acodec
 		[ "$OUTPUT" == "webm" ] && ac3=opus
-		[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
-		if [ "$ac3" == "aac" ]
-		then
-		    set_aac
-		    ac3_aac=1
-		fi
+		#[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
+		#if [ "$ac3" == "aac" ]
+		#then
+		#    set_aac
+		#    ac3_aac=1
+		#fi
 		if [ "$atyp" == "stereo" ]
 		then
 		#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && set_aac
