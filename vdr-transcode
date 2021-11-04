@@ -2402,7 +2402,8 @@ analyze() {
 	    fi
 	    [ $vw -le 576 ] && h264_level=3.1
 	    [ $vw -ge 1080 ] && h264_level=4.2
-	    [ $vw -gt 2000 ] && hevc_level=5.1 && level_hevc="-level 5.1" && h264_level=5.2
+	    [ $vw -gt 2000 ] && hevc_level=5.1 && level_hevc="-level $hevc_level" && h264_level=5.2
+	    [ $vw -gt 2160 ] && hevc_level=6.0 && level_hevc="-level $hevc_level" && h264_level=5.2
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
@@ -2891,6 +2892,7 @@ info_create() {
 	[[ "$INPUT" == *rodlzdf* ]] && sender=ZDF
 	[[ "$INPUT" == *odmdr* ]] && sender=mdr
 	[[ "$INPUT" == *cdn-storage.br.de* ]] && sender=br
+	[[ "$INPUT" == *wdrmedien* ]] && sender=WDR
     fi
     echo "C M $sender" > $info
     echo "E 0 $rec_time $dauer" >> $info
