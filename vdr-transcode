@@ -184,7 +184,7 @@ help_Configuration() {
     echo " -server_pid <pid_file>      # default /var/run/vt_server.pid"
     echo "                             # for run as user use e.g. ~/vt_server.pid"
     echo "                             # deprecated, use -pid_dir"
-    echo " -pid_dir <pid_path>         # default /var/log"
+    echo " -pid_dir <pid_path>         # default /var/run"
     echo "                             # for run as user use e.g. ~"
     echo " -server_log <log_file>      # default /var/log/vdr-transcode.log"
     echo "                             # for run as user use e.g. ~/vdr-transcode.log"
