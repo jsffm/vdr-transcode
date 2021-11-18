@@ -1985,7 +1985,8 @@ set_aac() {
     if [ "$1" == "he" ]
     then
 	[ "$aaclib" != "libfdk_aac" ] && echo "works only with libfdk_aac" && exit 8
-	aac_profile="-profile:a aac_he -latm 1"
+	#aac_profile="-profile:a aac_he -latm 1"
+	aac_profile="-profile:$stro aac_he -latm 1"
 	#aac_profile="-profile:a aac_he"
 	[ "$aac_vbr" == "" ] && aac_vbr=3
 	[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -mpegts_flags latm -flags:a +global_header" && aac_opt=1
@@ -1993,7 +1994,8 @@ set_aac() {
     if [ "$1" == "he_v2" ]
     then
 	[ "$aaclib" != "libfdk_aac" ] && echo "works only with libfdk_aac" && exit 8
-	aac_profile="-profile:a aac_he_v2 -latm 1"
+	#aac_profile="-profile:a aac_he_v2 -latm 1"
+	aac_profile="-profile:$stro aac_he_v2 -latm 1"
 	[ "$aac_vbr" == "" ] && aac_vbr=1
 	[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -mpegts_flags latm -flags:a +global_header" && aac_opt=1
     fi
