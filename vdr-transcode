@@ -21,14 +21,14 @@
 # -strict experimental
 # echo $USER
 # id -g -n <user>
+# -vb
+# -ab
 #
 # Todo:
 #
 # local
-# -disposition disp= ?
+# -disposition -disp ?
 # info series detect
-# -vb
-# -ab
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -156,6 +156,7 @@ help_Audio() {
     echo " -lang <str>=<lang>[,<str>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
+    echo " -disp <str>=default|0[,...]       # -disposition <param>"
 }
 
 help_Automation() {
@@ -654,6 +655,9 @@ parameter() {
 	"-stro")
 	    set_streamo $2
 	    ;;
+	"-disp")
+	    set_disposition $2
+	    ;;
 	"--as")
 	    TODO=$1
 	    INPUT=none
@@ -789,6 +793,20 @@ set_streamo() {
     #exit
 }
 
+set_disposition() {
+    #set -x
+    local str
+    local disp
+    IFS=,
+    for s in $1
+    do
+	str=${s%=*}
+	disp=${s#*=}
+	OPT="$OPT -disposition:$str $disp"
+    done
+    unset IFS
+    #exit
+}
 
 #set -x
 [ "$conf" != "" ] && read_configuration $conf
