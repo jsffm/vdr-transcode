@@ -2751,7 +2751,18 @@ analyze() {
 		fi
 		stro1=$(($stro1+1))
 		;;
-	    "dvd_subtitle"|"subrip"|"ass")
+	    "dvd_subtitle")
+		map="$map -map $str0:$str"
+		if [ "$OUTPUT" == "vdr" ]
+		then
+		    subt="$subt -c:$stro dvb_subtitle"
+		else
+		    subt="$subt -c:$stro copy"
+		fi
+		stro1=$(($stro1+1))
+		;;
+	    "subrip"|"ass")
+	    #"dvd_subtitle"|"subrip"|"ass")
 	    #"dvd_subtitle"|"ass")
 		[ "$OUTPUT" == "vdr" ] && continue
 		[ "$OUTPUT" == "webm" ] && continue
