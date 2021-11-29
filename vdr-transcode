@@ -3612,9 +3612,10 @@ fi
 #[ "$OUTPUT" == "vdr" -a "$si" != "" ] && date -u -d @$si +"index %T" >> "$log_c"
 if [ $oldsize -gt 1 ]
 then
-    echo "Alt" $oldsize >> "$log_c"
+    echo "Alt " $oldsize >> "$log_c"
     prz=$(($newsize*100/$oldsize))
-    echo "Neu" $newsize $prz"%" >> "$log_c"
+    echo "Neu " $newsize $prz"%" >> "$log_c"
+    echo "Save" $(($oldsize-$newsize))  >> "$log_c"
 fi
 echo -n "Dauer: " >> "$log_c"
 date -u -d @$sek "+%T" >> "$log_c"
