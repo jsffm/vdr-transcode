@@ -157,6 +157,7 @@ help_Audio() {
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
     echo " -disp <str>=default|0[,...]       # -disposition <param>"
+    echo " -ch 2                             # 5.1 -> stereo"
 }
 
 help_Automation() {
@@ -555,6 +556,12 @@ parameter() {
 	    ;;
 	"-af")
 	    OPT="$OPT -af $2"
+	    ;;
+	"-ch")
+	    achannels=$2
+	    #[ "$2" == "2" ] && OPT="$OPT -af \"pan=stereo|c0=FL|c1=FR\""
+	    [ "$2" == "2" ] && OPT="$OPT -ac 2"
+	    [ "$2" != "2" ] && echo "only '-ch 2' implemented" && exit 8
 	    ;;
 	"-vol")
 	    #set -x
@@ -2107,6 +2114,7 @@ set_audio() {
     local upm
     codec1=$1
     [ ${codec1:0:1} == "+" ] && set_audio_plus
+    [ "$achannels" == "2" ] && atyp=stereo
     if [ "$upmix" != "" ]
     then
 	if [ "$atyp" == "stereo" ]
