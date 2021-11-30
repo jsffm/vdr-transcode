@@ -559,7 +559,8 @@ parameter() {
 	    ;;
 	"-ch")
 	    achannels=$2
-	    #[ "$2" == "2" ] && OPT="$OPT -af \"pan=stereo|c0=FL|c1=FR\""
+	    #[ "$2" == "2" ] && OPT="$OPT -af pan=stereo|c0=FL|c1=FR"
+	    #[ "$2" == "2" ] && OPT="$OPT -filter:a pan=stereo|c0=FL|c1=FR"
 	    [ "$2" == "2" ] && OPT="$OPT -ac 2"
 	    [ "$2" != "2" ] && echo "only '-ch 2' implemented" && exit 8
 	    ;;
@@ -2115,6 +2116,7 @@ set_audio() {
     codec1=$1
     [ ${codec1:0:1} == "+" ] && set_audio_plus
     [ "$achannels" == "2" ] && atyp=stereo
+    #[ "$achannels" == "2" ] && OPT="$OPT -filter:$stro pan=stereo|c0=FL|c1=FR"
     if [ "$upmix" != "" ]
     then
 	if [ "$atyp" == "stereo" ]
