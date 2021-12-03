@@ -190,6 +190,7 @@ help_Configuration() {
     echo "                             # for run as user use e.g. ~"
     echo " -server_log <log_file>      # default /var/log/vdr-transcode.log"
     echo "                             # for run as user use e.g. ~/vdr-transcode.log"
+    echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
 }
 
 help_Configuration_V() {
@@ -665,6 +666,9 @@ parameter() {
 	    ;;
 	"-disp")
 	    set_disposition $2
+	    ;;
+	"--dold")
+	    dold=1
 	    ;;
 	"--as")
 	    TODO=$1
@@ -3170,6 +3174,7 @@ copy_file() {
     newsize=$(($newsize/1024))
     #set -x
     [ "$fmt" == "ts" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
+    [ "$dold" == "1" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
     if [ "$ifmt" == "vdr" ]
     then
 	info=
