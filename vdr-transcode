@@ -2921,6 +2921,11 @@ header() {
 	xlog=/var/log/Xorg.0.log
 	[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> "$log_c"
     fi
+    wsln=/usr/lib/wsl/lib/nvidia-smi
+    if [ -e $wsln ]
+    then
+	echo $($wsln -L | cut -d '(' -f 1) >> "$log_c"
+    fi
     log_conf $conf
     log_conf $conf1
     echo -e -n "Parameter:\n" $parameter_log >> "$log_c"
