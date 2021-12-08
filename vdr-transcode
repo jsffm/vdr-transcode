@@ -562,8 +562,21 @@ parameter() {
 	    achannels=$2
 	    #[ "$2" == "2" ] && OPT="$OPT -af pan=stereo|c0=FL|c1=FR"
 	    #[ "$2" == "2" ] && OPT="$OPT -filter:a pan=stereo|c0=FL|c1=FR"
-	    [ "$2" == "2" ] && OPT="$OPT -ac 2"
-	    [ "$2" != "2" ] && echo "only '-ch 2' implemented" && exit 8
+	    #[ "$2" == "2" ] && OPT="$OPT -ac 2"
+	    #[ "$2" != "2" ] && echo "only '-ch 2' implemented" && exit 8
+	    case $2 in
+		"2")
+		    OPT="$OPT -ac 2"
+		    ;;
+		"dplii")
+		    # seems to be the same as -ac 2 only
+		    OPT="$OPT -af aresample=matrix_encoding=dplii:lfe_mix_level=2 -ac 2"
+		    ;;
+		*)
+		    echo "-ch $2, only '-ch 2|dplii' implemented"
+		    exit 8
+		    ;;
+	    esac
 	    ;;
 	"-vol")
 	    #set -x
@@ -1004,7 +1017,7 @@ diag() {
 	echo "mediainfo missing"
     fi
     echo
-    ffmpeg -hide_banner -hwaccels
+    $ffmpeg -hide_banner -hwaccels
     lspci | grep VGA
     if [ -e /proc/asound/NVidia ]
     then
@@ -1020,13 +1033,13 @@ diag() {
     echo
     if [ -e /dev/dri/renderD128 ]
     then
-	ffmpeg -hide_banner -encoders | grep vaapi
+	$ffmpeg -hide_banner -encoders | grep vaapi
     fi
     echo
-    ffmpeg -hide_banner -encoders | grep h264
-    ffmpeg -hide_banner -encoders | grep hevc
-    ffmpeg -hide_banner -encoders | grep aac
-    ffmpeg -hide_banner -encoders | grep opus
+    $ffmpeg -hide_banner -encoders | grep h264
+    $ffmpeg -hide_banner -encoders | grep hevc
+    $ffmpeg -hide_banner -encoders | grep aac
+    $ffmpeg -hide_banner -encoders | grep opus
     exit
 }
 
@@ -2119,7 +2132,7 @@ set_audio() {
     local upm
     codec1=$1
     [ ${codec1:0:1} == "+" ] && set_audio_plus
-    [ "$achannels" == "2" ] && atyp=stereo
+    [ "$achannels" != "" ] && atyp=stereo
     #[ "$achannels" == "2" ] && OPT="$OPT -filter:$stro pan=stereo|c0=FL|c1=FR"
     if [ "$upmix" != "" ]
     then
