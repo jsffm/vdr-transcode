@@ -997,7 +997,10 @@ diag() {
     vtp=$(which vdr-transcode)
     d=$(date "+%F" -r $vtp)
     echo "vdr-transcode $d ffmpeg Version $v"
-    uname -p
+    #uname -p
+    proc=$(uname -p)
+    [ "$proc" == "unknown" ] && proc=$(lscpu | grep "Model name:")
+    echo $proc
     echo
     if [ -e $conf ]
     then
