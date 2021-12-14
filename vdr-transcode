@@ -1000,6 +1000,7 @@ diag() {
     #uname -p
     proc=$(uname -p)
     [ "$proc" == "unknown" ] && proc=$(lscpu | grep "Model name:")
+    # grep -m 1 "model name" /proc/cpuinfo
     echo $proc
     echo
     if [ -e $conf ]
