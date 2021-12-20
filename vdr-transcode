@@ -27,8 +27,8 @@
 # Todo:
 #
 # local
-# -disposition -disp ?
 # info series detect
+# grep | tail -> grep -m
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -1098,7 +1098,7 @@ input_file() {
 	#chapt_mediainfo "$INPUT"
     else
 	#set -x
-	osr=$($ffprobe $INPUT 2>&1 | grep "Duration:")
+	osr=$($ffprobe -i $INPUT 2>&1 | grep "Duration:")
 	osd=$(echo $osr|cut -d \  -f 2)
 	oss=$(date -u +%s -d "1970-01-01 ${osd:0:8}")
 	osbr=$(echo $osr|cut -d \  -f 6)
@@ -1886,7 +1886,8 @@ set_hevc() {
 	    HWACC=
 	    deinterlace="yadif"
 	    decode_cuvid=
-	    preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    #preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
 	    ;;
 	*)
