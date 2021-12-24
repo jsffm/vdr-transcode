@@ -118,7 +118,7 @@ help_Input() {
 
 help_Output() {
     echo "Output"
-    echo " -o vdr|mp4|mkv|webm|ts|mp3 # default vdr"
+    echo " -o vdr|mp4|mkv|webm|ts|mp3|wav # default vdr"
     echo " -t <n>       # length in seconds"
     echo " -ss <position>"
     echo " -to <position>"
@@ -3239,6 +3239,30 @@ copy_mp3() {
     #exit
 }
 
+copy_wav() {
+    #set -x
+    fmt=wav
+    out=$name.wav
+    oldsize=1
+    i=1
+    while [ -e $out ]
+    do
+	i=$(($i+1))
+	out=$name-$i.wav
+    done
+    log_c=$out.log
+    echo $PWD/$log_c > $vtlog
+    header
+    #analyze $ffmpeg_i
+    video="-vn"
+    map="-map a:0"
+    [ "$select_str" != "" ] && map="-map $str0:$select_str"
+    audio=""
+    OPT_V=
+    transcode "$out"
+    #exit
+}
+
 copy_m4a() {
     #set -x
     fmt=m4a
@@ -3310,6 +3334,9 @@ copy() {
 	    ;;
 	"mp3")
 	    copy_mp3 $OUTPUT
+	    ;;
+	"wav")
+	    copy_wav $OUTPUT
 	    ;;
 	"m4a")
 	    copy_m4a $OUTPUT
