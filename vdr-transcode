@@ -3181,7 +3181,6 @@ copy_file() {
     echo $PWD/$log_c > $vtlog
     header
     analyze $ffmpeg_i
-    [ "$fmt" == "webm" ] && OPT="$OPT -map_chapters -1"
     #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata \"creation_time=$(date "+%FT%T" -d @$rec_time)\""
     OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
