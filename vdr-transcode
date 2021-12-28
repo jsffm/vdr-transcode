@@ -1630,7 +1630,7 @@ chapt_BD() {
 	done < $chap_list
 	#exit
     else
-	which tsMuxeR 2> /dev/null
+	which tsMuxeRx 2> /dev/null
 	if [ $? -eq 0 ]
 	then
 	    chapt_tsmuxer $mpls
