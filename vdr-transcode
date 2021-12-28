@@ -1562,6 +1562,7 @@ BD_size() {
     #set -x
     p=0
     declare -a size
+    size[$2]=1
     fn=0
     sum=0
     f=$(printf "$1/BDMV/STREAM/%05d.m2ts" $fn)
@@ -1669,6 +1670,7 @@ input_BD() {
     fi
     echo "playlist=$playlist" > $old
     oldsize=$(BD_size $bdir $playlist)
+    #oldsize=1
     oldsize=$(($oldsize/1024))
     echo "oldsize="$oldsize >> $old
     ffmpeg_i="-playlist $playlist -i bluray:$bdir"
