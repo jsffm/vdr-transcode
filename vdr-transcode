@@ -29,6 +29,10 @@
 # local
 # info series detect
 # grep | tail -> grep -m
+# -qscale
+# -aq q
+# -q
+
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -131,7 +135,7 @@ help_Output() {
 help_Video() {
     echo "Video"
     echo " -vc|-vcodec <codec> # Video Codec copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -r <n>           # fps"
+    echo " -r <n>           # fps, only when needed"
     echo " -vf <filter>     # video filter"
     echo " -maxr <fps>      # max bitrate"
     echo " -crop <w:h>"
@@ -232,7 +236,7 @@ help_Configuration_A() {
     echo " -opus copy|ac3|eac3|aac|aac_he|aac_he_v2"
     echo " -aac_stereo_br|-aac_br <br> # default 96k"
     echo " -aac_6ch_br <br>    # default 256k"
-    echo " -aac_vbr <1-5>"
+    echo " -aac_vbr <1-5>      # experimental"
     echo " -opus_br <kbit>     # 2ch br in kbit default 64"
     echo " -aaclib aac|libfdk_aac|libfaac # default aac"
 }
@@ -1324,6 +1328,10 @@ echo ";FFMETADATA1" > $meta
 echo ";mediainfo" >> $meta
 mi=mediainfo.txt
 mediainfo $1 > $mi
+# Duration                                 : 1 h 56 min
+# Duration                                 : 10 min 44 s
+#dur1=$(grep -m 1 Duration $mi|cut -d ':' -f 2)
+#exit
 found=0
 while read line
 do
