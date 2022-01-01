@@ -2786,6 +2786,7 @@ analyze() {
 		;;
 	    "dvb_subtitle")
 		map="$map -map $str0:$str"
+		# [mp4 @ 0x55c7d71871c0] Could not find tag for codec dvb_subtitle in stream #3, codec not currently supported in container
 		if [ "$fmt" == "mp4" ]
 		then
 		    subt="$subt -c:$stro dvd_subtitle"
