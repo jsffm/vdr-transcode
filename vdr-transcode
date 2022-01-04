@@ -32,6 +32,7 @@
 # -qscale
 # -aq q
 # -q
+# dvb_subtitle	-canvas_size ?
 
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
@@ -2978,6 +2979,7 @@ info_create() {
 	[[ "$INPUT" == *odmdr* ]] && sender=mdr
 	[[ "$INPUT" == *cdn-storage.br.de* ]] && sender=br
 	[[ "$INPUT" == *wdrmedien* ]] && sender=WDR
+	[[ "$INPUT" == *daserste* ]] && sender="Das Erste"
     fi
     echo "C M $sender" > $info
     echo "E 0 $rec_time $dauer" >> $info
