@@ -1876,11 +1876,12 @@ set_hevc() {
 	    #parameter --nohw
 	    HWACC=
 	    deinterlace="yadif"
+	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
 	    x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
 	    [ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
 	    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
 	    #preset="-preset veryfast $h265_level -crf $hevc_cq $maxr"
-	    preset="-preset ultrafast $x265_params -crf $hevc_cq $maxr"
+	    preset="-preset $hevc_preset $x265_params -crf $hevc_cq $maxr"
 	    ;;
 	"hevc_nvenc")
 	    [ "$hevc_preset" == "" ] && hevc_preset=hq
