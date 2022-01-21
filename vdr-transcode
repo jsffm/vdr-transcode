@@ -33,6 +33,7 @@
 # -aq q
 # -q
 # dvb_subtitle	-canvas_size ?
+# inf() and analyze(): skip first 3 seconds for better detection of audio codecs
 
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
@@ -1795,7 +1796,14 @@ inf() {
     #eval $sss
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
     [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i -i $INPUTA"
-    $x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    #$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    if [ "$ifmt" == "vdr" ]
+    then
+	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration"
+	$x $ffmpeg -ss 3 $OPT_G $ffmpeg_i -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
+    else
+	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
+    fi
     rm -f $t
     rm -f $old
     exit
@@ -2231,12 +2239,19 @@ analyze() {
 	#[ "${lang[2]}" != "" ] && OPT="$OPT -metadata:s:2 language=${lang[2]}"
 	$x $ffmpeg -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     else
-	$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+	#$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+	if [ "$ifmt" == "vdr" ]
+	then
+	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
+	else
+	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+	fi
     fi
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
     #cat $t
     #exit
     #set -x
+    echo "Analyze:" >> $log_c
     which mediainfo 2> /dev/null
     if [ $? -eq 0 ]
     then
@@ -2479,6 +2494,7 @@ analyze() {
 	if [ "$typ" == "Audio:" ]
 	then
 	    #set -x
+	    echo $line >> $log_c
 	    atyp1=${line2#*Hz*}
 	    atyp=$(echo $atyp1 | cut -d ' ' -f 1)
 	    atyp=${atyp//,/}
@@ -2913,6 +2929,7 @@ transcode() {
 	#eval $sss
     #else
 	eval $ffprobe -hide_banner -i $name 2>$t	# checkme
+	#eval $ffmpeg -hide_banner -ss 3 -i $name -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>$t	# checkme
 	#$ffprobe -hide_banner -i $name 2>$t
     #fi
     cat $t >> "$log_c"
