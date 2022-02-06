@@ -1040,9 +1040,11 @@ diag() {
 	[ -e $xlog ] && grep "NVIDIA GPU " $xlog
 	nvidia-smi | grep NVIDIA-SMI
 	echo
-	ffmpeg -hide_banner -encoders | grep nvenc
+	$ffmpeg -hide_banner -encoders | grep nvenc
 	echo
-	ffmpeg -hide_banner -decoders | grep cuvid
+	$ffmpeg -hide_banner -decoders | grep cuvid
+	echo
+	$ffmpeg -hide_banner -filters | grep cuda
     fi
     echo
     if [ -e /dev/dri/renderD128 ]
@@ -3346,6 +3348,7 @@ copy() {
     fi
     echo $$ > $runvt
     #exit
+    rm $t
     case $OUTPUT in
 	"vdr")
 	    copy_vdr
