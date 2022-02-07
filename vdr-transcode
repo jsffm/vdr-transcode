@@ -6,6 +6,12 @@
 
 # $Id$
 
+# Neu
+
+# take pid from input (vdr only)
+# rm /tmp/vt
+# -qv	testing
+
 # blancs in filename	Frank Kaiser <frank.kaiser@fuxbau.net>
 
 # ifmt	input extension
@@ -508,6 +514,9 @@ parameter() {
 	    ;;
 	"-gq")
 	    gq=$2	# VP8
+	    ;;
+	"-qv")
+	    OPT="$OPT -q:v $2"
 	    ;;
 	"-g")
 	    gop="-g $2"
@@ -2244,6 +2253,12 @@ analyze() {
 	#$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
 	if [ "$ifmt" == "vdr" ]
 	then
+	    v=$($ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Video:")
+	    IFS='[]'
+	    read pre pidx post <<< $v
+	    PID=$(($pidx))
+	    pids="-mpegts_start_pid $PID"
+	    unset IFS
 	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
 	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
@@ -2889,7 +2904,7 @@ transcode() {
     name="$1"
     [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
     OPT="$OPT -metadata service_name=vdr-transcode"
-    OPT="$OPT -metadata SOFTWARE=vdr-transcode"
+    #OPT="$OPT -metadata SOFTWARE=vdr-transcode"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
@@ -3060,6 +3075,7 @@ copy_vdr() {
     #OPT="$OPT -mpegts_flags latm"
     OPT="$OPT -map_chapters -1"
     #OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
+    OPT="$OPT $pids"
     transcode $dest/00001.ts
     #if [ -e info ]
     #then
@@ -3348,7 +3364,7 @@ copy() {
     fi
     echo $$ > $runvt
     #exit
-    rm $t
+    rm -f $t
     case $OUTPUT in
 	"vdr")
 	    copy_vdr
@@ -3734,3 +3750,4 @@ d=`date +"%F %T"`
 echo "Ende" $d >> "$log_c"
 rm -f $lck
 rm $runvt
+rm $t
