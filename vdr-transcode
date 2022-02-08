@@ -6,7 +6,7 @@
 
 # $Id$
 
-# Neu
+# 2022-02-07
 
 # take pid from input (vdr only)
 # rm /tmp/vt
@@ -2254,11 +2254,11 @@ analyze() {
 	if [ "$ifmt" == "vdr" ]
 	then
 	    v=$($ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Video:")
-	    IFS='[]'
-	    read pre pidx post <<< $v
+	    #IFS='[]'
+	    IFS='[]' read pre pidx post <<< $v
 	    PID=$(($pidx))
 	    pids="-mpegts_start_pid $PID"
-	    unset IFS
+	    #unset IFS
 	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
 	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
