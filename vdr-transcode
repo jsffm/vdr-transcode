@@ -2254,12 +2254,10 @@ analyze() {
 	if [ "$ifmt" == "vdr" ]
 	then
 	    v=$($ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Video:")
-	    #IFS='[]'
 	    IFS='[]' read pre pidx post <<< $v
 	    PID=$(($pidx))
 	    pids="-mpegts_start_pid $PID"
-	    #unset IFS
-	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
+	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
 	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
 	fi
@@ -2527,6 +2525,8 @@ analyze() {
 	    ar1=${line%Hz*}
 	    nw=$(echo $ar1|wc -w)
 	    ar1=$(echo $ar1|cut -d \  -f $nw)
+	    #IFS=, read _ ar2 atyp _ bra2 <<< $line
+	    #echo "[$ar2][$atyp][$bra2]"
 	    #set -x
 	    [ "${lang[$str]}" != "" ] && OPT="$OPT -metadata:s:$stro language=${lang[$str]}"
 	    [ "${streamo[$str]}" != "" ] && str=${streamo[$str]}
