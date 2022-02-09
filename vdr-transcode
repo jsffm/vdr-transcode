@@ -1810,8 +1810,9 @@ inf() {
     #$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     if [ "$ifmt" == "vdr" ]
     then
+	set_pid
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration"
-	$x $ffmpeg -ss 3 $OPT_G $ffmpeg_i -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
+	$x $ffmpeg -ss 3 $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
     else
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     fi
@@ -2236,6 +2237,13 @@ set_audio() {
     #exit
     }
 
+set_pid() {
+    v=$($ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Video:")
+    IFS='[]' read pre pidx post <<< $v
+    PID=$(($pidx))
+    pids="-mpegts_start_pid $PID"
+}
+
 analyze() {
     #set -x
     #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
@@ -2253,10 +2261,7 @@ analyze() {
 	#$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
 	if [ "$ifmt" == "vdr" ]
 	then
-	    v=$($ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Video:")
-	    IFS='[]' read pre pidx post <<< $v
-	    PID=$(($pidx))
-	    pids="-mpegts_start_pid $PID"
+	    set_pid
 	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
 	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
