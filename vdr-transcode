@@ -1812,7 +1812,7 @@ inf() {
     then
 	set_pid
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration"
-	$x $ffmpeg -ss 3 $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
+	$x $ffmpeg -ss 10 $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
     else
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     fi
@@ -2262,7 +2262,7 @@ analyze() {
 	if [ "$ifmt" == "vdr" ]
 	then
 	    set_pid
-	    $x $ffmpeg -hide_banner -ss 3 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
+	    $x $ffmpeg -hide_banner -ss 10 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
 	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
 	fi
