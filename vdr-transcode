@@ -2188,15 +2188,16 @@ set_audio() {
 	    atyp="5.1"
 	fi
     fi
-    #if [ "$codec" == "ac3" ]
-    #then
-	#if [ "$atyp" == "stereo" ]
-	#then
+    if [ "$codec" == "ac3" ]
+    then
+	if [ "$atyp" == "stereo" ]
+	then
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && codec1=aac
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && codec1=aac_he
 	#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$s
-	#fi
-    #fi
+	    [ $bra -gt 192 -a "$ac3_stereo" != "" ] && codec1=$ac3_stereo
+	fi
+    fi
     [ "$acodec" != "" ] && codec1=$acodec
     [ "${acodeca[$str]}" != "" ] && codec1=${acodeca[$str]}
     #exit
@@ -2682,13 +2683,13 @@ analyze() {
 		#    set_aac
 		#    ac3_aac=1
 		#fi
-		if [ "$atyp" == "stereo" ]
-		then
+		#if [ "$atyp" == "stereo" ]
+		#then
 		#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && set_aac
 		#    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && set_aac he
-		    [ $bra -gt 192 -a "$ac3_stereo" != "" ] && ac3=$ac3_stereo
+		#    [ $bra -gt 192 -a "$ac3_stereo" != "" ] && ac3=$ac3_stereo
 		#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:$stro volume=$ac3v"
-		fi
+		#fi
 		#if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
 		#then
 		#    audio_t="-c:$stro $aaclib -b:$stro 48k"
