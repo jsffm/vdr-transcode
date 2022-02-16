@@ -2272,7 +2272,7 @@ analyze() {
     #cat $t
     #exit
     #set -x
-    echo "Analyze:" >> $log_c
+    echo "Analyze:" >> "$log_c"
     which mediainfo 2> /dev/null
     if [ $? -eq 0 ]
     then
@@ -2515,7 +2515,7 @@ analyze() {
 	if [ "$typ" == "Audio:" ]
 	then
 	    #set -x
-	    echo $line >> $log_c
+	    echo $line >> "$log_c"
 	    atyp1=${line2#*Hz*}
 	    atyp=$(echo $atyp1 | cut -d ' ' -f 1)
 	    atyp=${atyp//,/}
