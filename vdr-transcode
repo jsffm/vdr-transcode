@@ -2075,6 +2075,7 @@ set_aac() {
 	aac_profile="-profile:$stro aac_he -latm:$stro 1"
 	#aac_profile="-profile:a aac_he"
 	[ "$aac_vbr" == "" ] && aac_vbr=3
+	#[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -strict 2 -mpegts_flags latm -flags:a +global_header" && aac_opt=1
 	[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -mpegts_flags latm -flags:a +global_header" && aac_opt=1
     fi
     if [ "$1" == "he_v2" ]
@@ -2131,6 +2132,7 @@ set_opus() {
     [ "$atyp" == "mono" ] && abr=$(($abr/2))
     ch=
     [ "${atyp:0:3}" == "5.0" ] && ch="-ac:$stro 6"
+    [ "${atyp:0:3}" == "6.1" ] && ch="-ac:$stro 6"
     [ "${atyp:0:3}" == "7.1" ] && ch="-ac:$stro 6"
     audio_t="-c:$stro libopus -vbr on -b:$stro $abr $ch"
     [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -ac:$stro 6"
