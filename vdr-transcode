@@ -1880,6 +1880,7 @@ set_h264() {
     then
 	[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
+	[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
     fi
     [ $h264enc == "h264_omx" ] && preset="-profile:v high"
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
@@ -1917,7 +1918,7 @@ set_hevc() {
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
 	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
-	    [ "$hwaccel" == "" ] && OPT_G="-vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
 	    ;;
 	"libkvazaar")
 	    #parameter --nohw
@@ -1987,8 +1988,8 @@ set_vp9() {
 		echo "gq= changed to $gq" >> "$log_c"
 	    fi
 	    video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $aspect"
-	    [ "$hwaccel" == "" ] && OPT_G="-vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
 	    #video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
 	    ;;
 	"libvpx-vp9")
 	    #crf=33
