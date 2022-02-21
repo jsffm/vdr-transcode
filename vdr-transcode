@@ -2187,7 +2187,8 @@ set_audio() {
 	if [ "$atyp" == "stereo" ]
 	then
 	    #upm="-af:$stro surround -ac:$stro 6"
-	    upm="-filter:$stro surround -ac:$stro 6"
+	    #upm="-filter:$stro surround -ac:$stro 6"
+	    upm="-filter:$stro surround=win_func=dolph -ac:$stro 6"
 	    #upm="-filter:$stro surround=chl_in=downmix -ac:$stro 6"	# Unsupported upmix
 	    #upm="-filter:$stro surround=chl_in=DL+DR -ac:$stro 6"	# Unsupported upmix
 	    atyp="5.1"
