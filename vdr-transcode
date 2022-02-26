@@ -93,6 +93,7 @@ deinterlace="yadif"
 aac_stereo_br=96k
 aac_6ch_br=256k
 opus_br=64 # 2ch kbit
+skip=10
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
@@ -699,6 +700,9 @@ parameter() {
 	"-disp")
 	    set_disposition $2
 	    ;;
+	"-skip")
+	    skip=$2
+	    ;;
 	"--dold")
 	    dold=1
 	    ;;
@@ -841,6 +845,7 @@ set_disposition() {
     #set -x
     local str
     local disp
+    IFS_save=$IFS
     IFS=,
     for s in $1
     do
@@ -848,7 +853,8 @@ set_disposition() {
 	disp=${s#*=}
 	OPT="$OPT -disposition:$str $disp"
     done
-    unset IFS
+    #unset IFS
+    IFS=$IFS_save
     #exit
 }
 
@@ -1808,11 +1814,11 @@ inf() {
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
     [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i -i $INPUTA"
     #$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
-    if [ "$ifmt" == "vdr" ]
+    if [ "$ifmt" == "vdr" -a $skip -gt 0 ]
     then
 	set_pid
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration"
-	$x $ffmpeg -ss 10 $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
+	$x $ffmpeg -ss $skip $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
     else
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     fi
@@ -2266,10 +2272,10 @@ analyze() {
 	$x $ffmpeg -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     else
 	#$x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
-	if [ "$ifmt" == "vdr" ]
+	if [ "$ifmt" == "vdr" -a $skip -gt 0 ]
 	then
 	    set_pid
-	    $x $ffmpeg -hide_banner -ss 10 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
+	    $x $ffmpeg -hide_banner -ss $skip $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
 	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
 	fi
