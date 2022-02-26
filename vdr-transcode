@@ -3281,6 +3281,32 @@ copy_file() {
     #set +x
 }
 
+copy_audio() {
+    #set -x
+    fmt=$1
+    out=$name.$fmt
+    oldsize=1
+    i=1
+    while [ -e $out ]
+    do
+	i=$(($i+1))
+	out=$name-$i.$fmt
+    done
+    log_c=$out.log
+    echo $PWD/$log_c > $vtlog
+    header
+    #analyze $ffmpeg_i
+    video="-vn"
+    map="-map a:0"
+    [ "$select_str" != "" ] && map="-map $str0:$select_str"
+    audio="-c copy $mp3_b"
+    [ "$fmt" == "mp3" ] && audio="-c mp3 $mp3_b"
+    [ "$fmt" == "wav" ] && audio=""
+    OPT_V=
+    transcode "$out"
+    #exit
+}
+
 copy_mp3() {
     #set -x
     fmt=mp3
@@ -3400,13 +3426,18 @@ copy() {
 	    copy_file $OUTPUT
 	    ;;
 	"mp3")
-	    copy_mp3 $OUTPUT
+	    # copy_mp3 $OUTPUT
+	    copy_audio $OUTPUT
 	    ;;
 	"wav")
-	    copy_wav $OUTPUT
+	    # copy_wav $OUTPUT
+	    copy_audio $OUTPUT
 	    ;;
 	"m4a")
 	    copy_m4a $OUTPUT
+	    ;;
+	"m2t"|"mka")
+	    copy_audio $OUTPUT
 	    ;;
 	#"jpg")
 	#    copy_file $OUTPUT
