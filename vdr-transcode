@@ -84,7 +84,8 @@ h264enc=libx264
 #h264enc="h264_nvenc"
 #hevcenc=libx265
 hevcenc="hevc_nvenc"
-av1enc=librav1e		# libaom-av1
+av1enc=libsvtav1		# librav1e libaom-av1
+qav1=50
 #deinterlace="-filter:v yadif"
 deinterlace="yadif"
 #deinterlace="-vf yadif_cuda"
@@ -519,6 +520,9 @@ parameter() {
 	    ;;
 	"-qv")
 	    OPT="$OPT -q:v $2"
+	    ;;
+	"-qav1")
+	    qav1=$2
 	    ;;
 	"-g")
 	    gop="-g $2"
@@ -2012,30 +2016,28 @@ set_vp9() {
 }
 
 set_av1() {
-    #if [ "$hwaccel" == "cuvid" ]
     if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
     then
 	hwdownload
 	OPT_I="$decode_cuvid"
     fi
-    if [ "$av1enc" == "libaom-av1" ]
-    then
-	aopt="-row-mt 1"
-	#aopt="$aopt -tiles 4x1"
-	aopt="$aopt -tiles 2x2"
-	aopt="$aopt -threads "$(nproc)
-	video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
-    fi
-    if [ "$av1enc" == "librav1e" ]
-    then
-	video="-c:v librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
-	#[ "$h264_br" != "" ] && video="$video "
-    fi
-    if [ "$av1enc" == "libsvtav1" ]
-    then
-	video="-c:v $av1enc"
-	#[ "$h264_br" != "" ] && video="$video "
-    fi
+    case "$av1enc" in
+	"libaom-av1")
+	    aopt="-row-mt 1"
+	    #aopt="$aopt -tiles 4x1"
+	    aopt="$aopt -tiles 2x2"
+	    aopt="$aopt -threads "$(nproc)
+	    video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
+	    ;;
+	"librav1e")
+	    video="-c:v librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
+	    #[ "$h264_br" != "" ] && video="$video "
+	    ;;
+	"libsvtav1")
+	    video="-c:v $av1enc -qp $qav1 -sc_detection 1"
+	    #[ "$h264_br" != "" ] && video="$video "
+	    ;;
+    esac
     video="$video $gop $aspect"
 }
 
