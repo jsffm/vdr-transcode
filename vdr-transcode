@@ -2031,6 +2031,11 @@ set_av1() {
 	video="-c:v librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
 	#[ "$h264_br" != "" ] && video="$video "
     fi
+    if [ "$av1enc" == "libsvtav1" ]
+    then
+	video="-c:v $av1enc"
+	#[ "$h264_br" != "" ] && video="$video "
+    fi
     video="$video $gop $aspect"
 }
 
@@ -3306,7 +3311,7 @@ copy_audio() {
     video="-vn"
     map="-map a:0"
     [ "$select_str" != "" ] && map="-map $str0:$select_str"
-    audio="-c copy $mp3_b"
+    audio="-c copy"
     [ "$fmt" == "mp3" ] && audio="-c mp3 $mp3_b"
     [ "$fmt" == "wav" ] && audio=""
     OPT_V=
