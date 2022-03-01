@@ -2034,7 +2034,7 @@ set_av1() {
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
 	"libsvtav1")
-	    video="-c:v $av1enc -preset 8 -qp $qav1 -sc_detection 1"
+	    video="-c:v $av1enc -preset 8 -qp $qav1 -sc_detection 0"
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
     esac
