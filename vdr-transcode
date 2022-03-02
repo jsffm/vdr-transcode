@@ -57,6 +57,7 @@ mpeg4=copy
 mpeg4_b=1200k
 vp8=copy
 vp9=copy
+av1=copy
 ac3=copy
 #ac3_stereo=aac
 eac3=copy
@@ -1834,7 +1835,7 @@ inf() {
 
 set_video() {
     c=$1
-    [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" -a "$ivcodec" != "vp8" ] && c=vp9
+    [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" -a "$ivcodec" != "vp8" -a "$ivcodec" != "av1" ] && c=vp9
     [ "$vcodec" != "" ] && c=$vcodec
     case $c in
 	copy)
