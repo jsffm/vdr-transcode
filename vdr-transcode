@@ -1887,7 +1887,7 @@ set_h264() {
 	#parameter --nohw
 	preset="-preset fast -tune film -profile:v $h264_profile $level -crf $crf $maxr"
     fi
-    [ $h264enc == "h264_nvenc" ] && preset="-preset hq -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
+    [ $h264enc == "h264_nvenc" ] && preset="-preset medium -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
     if [ $h264enc == "h264_vaapi" ]
     then
 	[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
@@ -1917,7 +1917,7 @@ set_hevc() {
 	    preset="-preset $hevc_preset $x265_params -crf $hevc_cq $maxr"
 	    ;;
 	"hevc_nvenc")
-	    [ "$hevc_preset" == "" ] && hevc_preset=hq
+	    [ "$hevc_preset" == "" ] && hevc_preset=medium
 	    #hevc_preset=slow
 	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc vbr -cq $hevc_cq $opt_r"
 	    #preset="$preset -init_qpB 25"
