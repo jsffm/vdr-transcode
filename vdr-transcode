@@ -2873,7 +2873,8 @@ analyze() {
 		fi
 		stro1=$(($stro1+1))
 		;;
-	    "subrip"|"ass")
+	    #"subrip"|"ass")
+	    "ass")
 	    #"dvd_subtitle"|"subrip"|"ass")
 	    #"dvd_subtitle"|"ass")
 		[ "$OUTPUT" == "vdr" ] && continue
@@ -2883,12 +2884,16 @@ analyze() {
 		subt="$subt -c:$stro copy"
 		stro1=$(($stro1+1))
 		;;
-	    #"subrip")
-		#map="$map -map 0:$str"
-		#subt="$subt -c:$stro mov_text"
+	    "subrip")
+		[ "$OUTPUT" == "vdr" ] && continue
+		[ "$OUTPUT" == "webm" ] && continue
+		map="$map -map 0:$str"
+		subt1="-c:$stro copy"
+		[ "$fmt" == "mp4" ] && subt1="-c:$stro mov_text" # checkme
 		#subt="$subt -c:$stro dvd_subtitle"
-		#stro1=$(($stro1+1))
-		#;;
+		subt="$subt $subt1"
+		stro1=$(($stro1+1))
+		;;
 	    "hdmv_pgs_subtitle")
 		[ "$fmt" == "mp4" ] && continue
 		[ "$OUTPUT" == "webm" ] && continue
