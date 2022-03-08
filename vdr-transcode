@@ -1100,6 +1100,11 @@ ls_iso() {
 
 input_file() {
     #set -x
+    if [ ! -e "$INPUT" ]
+    then
+	echo "\"$INPUT\" not found."
+	exit 8
+    fi
     #ls -l --time-style long-iso $INPUT > $old
     ifmt=${INPUT##*.}
     if [ "$ifmt" == "rec" ]
