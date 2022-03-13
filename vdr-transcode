@@ -294,11 +294,21 @@ add_vf() {
 
 hwdownload() {
     [ "$deinterlace" == "yadif" ] && return
-    if [ "$hwaccel" == "cuvid" ]
+    #if [ "$hwaccel" == "cuvid" ]
+    if [ "$hwaccel" != "" ]
     then
 	add_vf hwdownload
-	add_vf format=nv12
-	deinterlace="yadif"
+	#set -x
+	new_vtyp=nv12
+	#echo $vtyp
+	[ "$vtyp" == "yuv420p10le" ] && new_vtyp=p010le
+	add_vf format=$new_vtyp
+	#set +x
+	#add_vf format=nv12
+	#add_vf format=yuv420p10le
+	#add_vf format=p010le
+	#add_vf format=yuv420p
+	[ "$deinterlace" != "" ] && deinterlace="yadif"
 	#hwaccel=
     fi
 }
@@ -530,6 +540,9 @@ parameter() {
 	    ;;
 	"-vf")
 	    add_vf $2
+	    ;;
+	"--8bit")
+	    s8bit=1
 	    ;;
 	"-maxr")
 	    OPT="$OPT -maxrate $2 -bufsize 1835k"
@@ -1767,6 +1780,7 @@ set_hwacc() {
 	"cuvid")
 	    HWACC="-hwaccel cuvid -hwaccel_output_format cuda"
 	    #HWACC="-hwaccel cuvid -hwaccel_output_format nv12"
+	    #HWACC="-hwaccel cuvid -hwaccel_output_format yuv420p"
 	    #deinterlace="-vf yadif_cuda"
 	    deinterlace="yadif_cuda"
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
@@ -1909,6 +1923,7 @@ set_h264() {
 }
 
 set_hevc() {
+    [ "$s8bit" != "" ] && hwdownload && add_vf format=yuv420p
     case "$hevcenc" in
 	"libx265")
 	    #parameter --nohw
@@ -1996,6 +2011,7 @@ set_vp9() {
 	#add_vf format=nv12
 	OPT_I="$decode_cuvid"
     fi
+    #[ "$s8bit" != "" ] && add_vf format=yuv420p
     case "$vp9enc" in
 	"vp9_vaapi")
 	    export LIBVA_DRIVER_NAME=i965
@@ -2003,6 +2019,13 @@ set_vp9() {
 	    then
 		gq=120
 		echo "gq= changed to $gq" >> "$log_c"
+	    fi
+	    #[ "$s8bit" != "" ] && hwdownload && add_vf format=yuv420p && add_vf hwupload
+	    if [ "$s8bit" != "" ]
+	    then
+		hwdownload
+		add_vf format=yuv420p
+		add_vf hwupload
 	    fi
 	    video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $aspect"
 	    #video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
@@ -2027,6 +2050,7 @@ set_av1() {
 	hwdownload
 	OPT_I="$decode_cuvid"
     fi
+    [ "$s8bit" != "" ] && add_vf format=yuv420p
     case "$av1enc" in
 	"libaom-av1")
 	    aopt="-row-mt 1"
@@ -2486,6 +2510,14 @@ analyze() {
 	    #set -x
 	    [ $str0 -gt 0 ] && continue
 	    #[ "$ivcodec" != "" ] && continue
+	    IFS=, read _ vtyp _ <<< $line
+	    vtyp=$(echo $vtyp)
+	    if [[ "$vtyp" == *\(* ]]
+	    then
+		IFS="(" read vtyp _ <<< $vtyp
+	    fi
+	    #echo "[$vtyp]"
+	    #exit
 	    fps1=${line%fps*}
 	    nw=$(echo $fps1|wc -w)
 	    fps=$(echo $fps1|cut -d \  -f $nw)
@@ -2680,6 +2712,7 @@ analyze() {
 		set_video $vp9
 		;;
 	    "av1")
+		#decode_cuvid="-c:v av1_cuvid"
 		video="-c:v copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$av1" == "copy" ] && av1=h264
