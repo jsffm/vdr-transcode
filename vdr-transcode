@@ -646,6 +646,9 @@ parameter() {
 	"-hevc_preset")
 	    hevc_preset=$2
 	    ;;
+	"-nvenc_preset")
+	    nvenc_preset=$2
+	    ;;
 	"-pix_fmt")
 	    OPT="$OPT -pix_fmt $2"
 	    ;;
