@@ -221,10 +221,12 @@ help_Configuration_V() {
     echo " -vp8 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -vp9 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -g <n>           # goplength default 50"
-    echo " -crf <n>         # quality h264 default 21, < = better"
+    echo " -crf <n>         # quality h264 default 21, < better, > smaller"
+    echo "                    for h264_nvenc try 32"
     echo " -quality <n>     # vaapi h264 quality"
-    echo " -cq <n>          # quality hevc default 28, < = better"
-    echo " -gq <n>          # quality vp8 default 30, < = better"
+    echo " -cq <n>          # quality hevc default 28, < better, > smaller"
+    echo "                    for hevc_nvenc try 36"
+    echo " -gq <n>          # quality vp8/9 default 30, < better, > smaller"
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_omx"
     echo " -h264_level <level> # default 4.1"
@@ -233,8 +235,9 @@ help_Configuration_V() {
     echo " -hevc_level <level>"
     echo " -hevc_profile <profile>     # main|main10"
     echo " -hevc_preset <preset>       # if you know, what you are doing"
+    echo " -nvenc_preset <preset>      # if you know, what you are doing"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
-    echo " -hwaccel cuvid|vaapi|vdpau"
+    echo " -hwaccel cuvid|vaapi|vdpau|-"
     echo " -libva i965|iHD"
     echo " -m4_b                       # mpeg4 bitrate"
 }
@@ -242,7 +245,7 @@ help_Configuration_V() {
 help_Configuration_A() {
     echo " audio configuration"
     echo " -ac3 copy|eac3|aac|aac_he|aac_he_v2|opus"
-    echo " -ac3_stereo aac|aac_he"
+    echo " -ac3_stereo aac|aac_he|-"
     echo " -eac3 copy|aac|aac_he|aac_he_v2|opus"
     echo " -dts copy|ac3|eac3|aac|opus"
     echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
@@ -315,6 +318,8 @@ hwdownload() {
 }
 
 parameter() {
+    w2=$2
+    [ "w2" == "-" ] && w2=
     case $1 in
 	"-h")
 	    TODO=$1
@@ -483,7 +488,7 @@ parameter() {
 	    ac3v=$2
 	    ;;
 	"-ac3_stereo")
-	    ac3_stereo=$2
+	    ac3_stereo=w2
 	    ;;
 	"-eac3")
 	    eac3=$2
@@ -662,7 +667,7 @@ parameter() {
 	    aaclib=$2
 	    ;;
 	"-hwaccel")
-	    hwaccel=$2
+	    hwaccel=w2
 	    ;;
 	"-libva")
 	    libva=$2
