@@ -1910,30 +1910,22 @@ set_h264() {
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     level="-level $h264_level"
-    #if [ $h264enc == "libx264" ]
-    #then
     case $h264enc in
 	"libx264")
 	    #parameter --nohw
 	    [ "$crf" == "" ] && crf=21
 	    preset="-preset fast -tune film -profile:v $h264_profile $level -crf $crf $maxr"
 	    ;;
-    #fi
-    #[ $h264enc == "h264_nvenc" ] && preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
 	"h264_nvenc")
 	    [ "$crf" == "" ] && crf=32
 	    preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
 	    ;;
-    #if [ $h264enc == "h264_vaapi" ]
-    #then
 	"h264_vaapi")
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    [ "$crf" == "" ] && crf=21
 	    preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
 	    ;;
-    #fi
-    #[ $h264enc == "h264_omx" ] && preset="-profile:v high"
 	"h264_omx")
 	    preset="-profile:v high"
 	    ;;
