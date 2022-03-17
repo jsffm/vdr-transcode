@@ -319,7 +319,7 @@ hwdownload() {
 
 parameter() {
     w2=$2
-    [ "w2" == "-" ] && w2=
+    [ "$w2" == "-" ] && w2=
     case $1 in
 	"-h")
 	    TODO=$1
@@ -488,7 +488,7 @@ parameter() {
 	    ac3v=$2
 	    ;;
 	"-ac3_stereo")
-	    ac3_stereo=w2
+	    ac3_stereo=$w2
 	    ;;
 	"-eac3")
 	    eac3=$2
@@ -667,7 +667,7 @@ parameter() {
 	    aaclib=$2
 	    ;;
 	"-hwaccel")
-	    hwaccel=w2
+	    hwaccel=$w2
 	    ;;
 	"-libva")
 	    libva=$2
