@@ -69,8 +69,8 @@ mp3=copy
 mp3_b="-b:a 128k"
 dts=copy
 opus=copy
-crf=21
-hevc_cq=28
+#crf=21
+#hevc_cq=28
 gq=30		# VP8
 #[ -e /dev/dri/renderD128 ] && gq=120
 gop="-g 50"
@@ -222,10 +222,10 @@ help_Configuration_V() {
     echo " -vp9 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -g <n>           # goplength default 50"
     echo " -crf <n>         # quality h264 default 21, < better, > smaller"
-    echo "                    for h264_nvenc try 32"
+    echo "                    for h264_nvenc default 32"
     echo " -quality <n>     # vaapi h264 quality"
     echo " -cq <n>          # quality hevc default 28, < better, > smaller"
-    echo "                    for hevc_nvenc try 36"
+    echo "                    for hevc_nvenc default 36"
     echo " -gq <n>          # quality vp8/9 default 30, < better, > smaller"
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_omx"
@@ -1910,19 +1910,34 @@ set_h264() {
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     level="-level $h264_level"
-    if [ $h264enc == "libx264" ]
-    then
-	#parameter --nohw
-	preset="-preset fast -tune film -profile:v $h264_profile $level -crf $crf $maxr"
-    fi
-    [ $h264enc == "h264_nvenc" ] && preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
-    if [ $h264enc == "h264_vaapi" ]
-    then
-	[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
-	preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
-	[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
-    fi
-    [ $h264enc == "h264_omx" ] && preset="-profile:v high"
+    #if [ $h264enc == "libx264" ]
+    #then
+    case $h264enc in
+	"libx264")
+	    #parameter --nohw
+	    [ "$crf" == "" ] && crf=21
+	    preset="-preset fast -tune film -profile:v $h264_profile $level -crf $crf $maxr"
+	    ;;
+    #fi
+    #[ $h264enc == "h264_nvenc" ] && preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
+	"h264_nvenc")
+	    [ "$crf" == "" ] && crf=32
+	    preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
+	    ;;
+    #if [ $h264enc == "h264_vaapi" ]
+    #then
+	"h264_vaapi")
+	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
+	    [ "$crf" == "" ] && crf=21
+	    preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
+	    ;;
+    #fi
+    #[ $h264enc == "h264_omx" ] && preset="-profile:v high"
+	"h264_omx")
+	    preset="-profile:v high"
+	    ;;
+    esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="-c:v:0 $h264enc $preset $gop $aspect $h264_br"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
@@ -1939,6 +1954,7 @@ set_hevc() {
 	    HWACC=
 	    deinterlace="yadif"
 	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
+	    [ "$hevc_cq" == "" ] && hevc_cq=28
 	    x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
 	    [ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
 	    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
@@ -1947,6 +1963,7 @@ set_hevc() {
 	    ;;
 	"hevc_nvenc")
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
+	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
 	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc vbr -cq $hevc_cq $opt_r"
 	    #preset="$preset -init_qpB 25"
@@ -1957,6 +1974,7 @@ set_hevc() {
 	    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
+	    [ "$hevc_cq" == "" ] && hevc_cq=28
 	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
 	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
@@ -1968,6 +1986,7 @@ set_hevc() {
 	    deinterlace="yadif"
 	    decode_cuvid=
 	    #preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    [ "$hevc_cq" == "" ] && hevc_cq=28
 	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
 	    ;;
