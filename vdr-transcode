@@ -1935,6 +1935,11 @@ set_h264() {
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$vcodec" == "" ] && vcodec="h264"
+    [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$h264enc"
+    #[ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata comment=vdr-transcode_$h264enc"
+    [ "$OUTPUT" == "vdr" ] && vencoder=$h264enc
+    #OPT="$OPT -metadata comment=vdr-transcode_$h264enc"
+    #OPT="$OPT -metadata:s:v:0 encoder=$h264enc"
     #exit
 }
 
@@ -1991,6 +1996,8 @@ set_hevc() {
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$vcodec" == "" ] && vcodec="hevc"
+    [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$hevcenc"
+    [ "$OUTPUT" == "vdr" ] && vencoder=$hevcenc
 }
 
 set_vp8() {
@@ -2089,6 +2096,7 @@ set_av1() {
 	    ;;
     esac
     video="$video $gop $aspect"
+    [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$av1enc"
 }
 
 set_mpeg2() {
@@ -2182,6 +2190,7 @@ set_aac() {
 	[ "$brv" != "" ] && br=$brv
 	audio_t="-c:$stro $aaclib $aac_profile $br $ar"
     fi
+    [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:$stro handler_name=$aaclib"
 }
 
 set_opus() {
@@ -2993,7 +3002,13 @@ transcode() {
     #set -x
     name="$1"
     [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
-    OPT="$OPT -metadata service_name=vdr-transcode"
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
+    else
+	OPT="$OPT -metadata service_name=vdr-transcode"
+    fi
+    [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata comment=vdr-transcode"
     #OPT="$OPT -metadata SOFTWARE=vdr-transcode"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 $video $audio $subt $OPT $name"
