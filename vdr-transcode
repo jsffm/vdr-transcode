@@ -1183,6 +1183,8 @@ input_file() {
 	rec_time=$(date "+%s" -d "$c_t")
 	#exit
     fi
+    vencoder=$(grep -i encoder $t|sed -n '2p'|cut -d ':' -f 2-)
+    aencoder=$(grep -i encoder $t|sed -n '3p'|cut -d ':' -f 2-)
     [ "$odir" != "" ] && dp=$odir/$name/
     dest=$dp$(date "+%F.%H.%M" -d @$rec_time)".3-0.rec"
     d32=0
@@ -1870,6 +1872,7 @@ set_video() {
 	    video="-c:v:0 copy"
 	    deinterlace=
 	    vf=
+	    [ "$OUTPUT" == "mp4" -a "$vencoder" != "" ] && OPT="$OPT -metadata:s:v:0 handler_name=\"$vencoder\""
 	    #echo $vf
 	    #[ "$vf" == "yadif_cuda" -o "$vf" == "yadif" ] && vf=
 	    #exit
