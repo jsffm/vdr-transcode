@@ -1122,11 +1122,6 @@ ls_iso() {
 
 input_file() {
     #set -x
-    if [ ! -e "$INPUT" ]
-    then
-	echo "\"$INPUT\" not found."
-	exit 8
-    fi
     #ls -l --time-style long-iso $INPUT > $old
     ifmt=${INPUT##*.}
     if [ "$ifmt" == "rec" ]
@@ -1150,6 +1145,11 @@ input_file() {
     rm -f $old
     if [ "${INPUT:0:4}" != "http" ]
     then
+	if [ ! -e "$INPUT" ]
+	then
+	    echo "\"$INPUT\" not found."
+	    exit 8
+	fi
 	ls_iso "$INPUT" > $old
 	# -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
 	oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
@@ -3005,7 +3005,7 @@ transcode() {
     #set -x
     name="$1"
     [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
-    if [ "$OUTPUT" == "vdr" ]
+    if [ "$OUTPUT" == "vdr" -a "$vencoder" != "" ]
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
     else
@@ -3053,6 +3053,7 @@ transcode() {
 	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
 	#eval $sss
     #else
+	#eval $ffprobe -hide_banner -i \"$name\" 2>$t	# checkme
 	eval $ffprobe -hide_banner -i $name 2>$t	# checkme
 	#eval $ffmpeg -hide_banner -ss 3 -i $name -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>$t	# checkme
 	#$ffprobe -hide_banner -i $name 2>$t
