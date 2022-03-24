@@ -600,6 +600,9 @@ parameter() {
 	"-af")
 	    OPT="$OPT -af $2"
 	    ;;
+	"-dsur")
+	    OPT="$OPT -dsur_mode $2"
+	    ;;
 	"-ch")
 	    achannels=$2
 	    #[ "$2" == "2" ] && OPT="$OPT -af pan=stereo|c0=FL|c1=FR"
