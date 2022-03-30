@@ -2097,8 +2097,7 @@ set_av1() {
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
 	"libsvtav1")
-	    video="-c:v $av1enc -preset 8 -qp $qav1 -sc_detection 0"
-	    #[ "$h264_br" != "" ] && video="$video "
+	    video="-c:v $av1enc -preset 8 -rc cqp -qp $qav1 -sc_detection 0"
 	    ;;
     esac
     video="$video $gop $aspect"
@@ -2227,6 +2226,7 @@ set_ac3() {
     else
 	audio_t="-c:$stro ac3 -b:$stro 192k"
     fi
+    audio_t="$audio_t -dialnorm -21"
 }
 
 set_eac3() {
@@ -2236,6 +2236,7 @@ set_eac3() {
     else
 	audio_t="-c:$stro eac3 -b:$stro 128k"
     fi
+    audio_t="$audio_t -dialnorm -21"
 }
 
 set_mp2() {
