@@ -93,6 +93,7 @@ deinterlace="yadif"
 #deinterlace="-vf yadif_cuda"
 #hwaccel=cuvid
 #OPT_G="-hwaccel cuvid"
+dnorm="-21"
 aac_stereo_br=96k
 aac_6ch_br=256k
 opus_br=64 # 2ch kbit
@@ -251,6 +252,7 @@ help_Configuration_A() {
     echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
     echo " -mp3 copy|aac|aac_he|aac_he_v2|opus"
     echo " -opus copy|ac3|eac3|aac|aac_he|aac_he_v2"
+    echo " -dnorm <-31 .. -1>  # ac3, eac3 -dialnorm"
     echo " -aac_stereo_br|-aac_br <br> # default 96k"
     echo " -aac_6ch_br <br>    # default 256k"
     echo " -aac_vbr <1-5>      # experimental"
@@ -486,6 +488,9 @@ parameter() {
 	    ;;
 	"-ac3v")
 	    ac3v=$2
+	    ;;
+	"-dnorm")
+	    dnorm=$2
 	    ;;
 	"-ac3_stereo")
 	    ac3_stereo=$w2
@@ -2226,7 +2231,7 @@ set_ac3() {
     else
 	audio_t="-c:$stro ac3 -b:$stro 192k"
     fi
-    audio_t="$audio_t -dialnorm -21"
+    audio_t="$audio_t -dialnorm $dnorm"
 }
 
 set_eac3() {
@@ -2236,7 +2241,7 @@ set_eac3() {
     else
 	audio_t="-c:$stro eac3 -b:$stro 128k"
     fi
-    audio_t="$audio_t -dialnorm -21"
+    audio_t="$audio_t -dialnorm $dnorm"
 }
 
 set_mp2() {
