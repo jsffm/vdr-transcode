@@ -3345,6 +3345,7 @@ copy_file() {
     #set -x
     fmt=$1
     out=$name.$fmt
+    [ "$vcodec" != "" ] && out=$name-$vcodec.$fmt # with '-vc' codec in name
     i=1
     while [ -e "$out" ]
     do
