@@ -2822,15 +2822,16 @@ analyze() {
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=aac
 		[ "$OUTPUT" == "webm" ] && dts=opus
-		[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
-		[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
-		[ "$dts" == "aac" ] && set_aac
+		#[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
+		#[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
+		#[ "$dts" == "aac" ] && set_aac
 		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 2"
-		if [ "$atyp" == "stereo" ]
-		then
-		    audio_t="-c:$stro $aaclib -b:$stro 128k"
-		fi
-		[ "$dts" == "opus" ] && set_opus
+		#if [ "$atyp" == "stereo" ]
+		#then
+		#    audio_t="-c:$stro $aaclib -b:$stro 128k"
+		#fi
+		#[ "$dts" == "opus" ] && set_opus
+		set_audio $dts
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
