@@ -412,6 +412,9 @@ parameter() {
 	"-bsf")
 	    OPT="$OPT -bsf:v $2"
 	    ;;
+	"-bsfa")
+	    OPT="$OPT -bsf:a $2"
+	    ;;
 	"-fflags")
 	    OPT_G="$OPT_G -fflags $2"
 	    ;;
