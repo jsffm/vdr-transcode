@@ -2282,7 +2282,7 @@ set_audio() {
 	    atyp="5.1"
 	fi
     fi
-    if [ "$codec" == "ac3" ]
+    if [ "$codec" == "ac3" -a "$codec1" == "copy" ]
     then
 	if [ "$atyp" == "stereo" ]
 	then
