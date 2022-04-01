@@ -609,7 +609,15 @@ parameter() {
 	    OPT="$OPT -af $2"
 	    ;;
 	"-dsur")
-	    OPT="$OPT -dsur_mode $2"
+	    #OPT="$OPT -dsur_mode $2"
+	    str=${2%=*}
+	    dsur=${2#*=}
+	    if [ "$str" == "$dsur" ]
+	    then
+		OPT="$OPT -dsur_mode $dsur"
+	    else
+		OPT="$OPT -dsur_mode:$str $dsur"
+	    fi
 	    ;;
 	"-ch")
 	    achannels=$2
@@ -2234,7 +2242,7 @@ set_ac3() {
     else
 	audio_t="-c:$stro ac3 -b:$stro 192k"
     fi
-    audio_t="$audio_t -dialnorm $dnorm"
+    audio_t="$audio_t -dialnorm:$stro $dnorm"
 }
 
 set_eac3() {
@@ -2244,7 +2252,7 @@ set_eac3() {
     else
 	audio_t="-c:$stro eac3 -b:$stro 128k"
     fi
-    audio_t="$audio_t -dialnorm $dnorm"
+    audio_t="$audio_t -dialnorm:$stro $dnorm"
 }
 
 set_mp2() {
