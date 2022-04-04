@@ -2381,13 +2381,13 @@ analyze() {
 	scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
 	if [ "$ifofile" != "" ]
 	then
-	    echo -n "Duration: " >> $log_c
-	    mediainfo --Inform="General;%Duration/String3%" $ifofile >> $log_c
+	    echo -n "Duration: " >> "$log_c"
+	    mediainfo --Inform="General;%Duration/String3%" $ifofile >> "$log_c"
 	fi
 	hw=$(mediainfo --Inform="Video;%Width%" "$input")
 	vw=$(mediainfo --Inform="Video;%Height%" "$input")
     else
-	echo "mediainfo missing, trying ffmpeg" >> $log_c
+	echo "mediainfo missing, trying ffmpeg" >> "$log_c"
 	# ffprobe -hide_banner -show_streams <input> | grep field_order=
 	s1=$(grep "Video:" $t)
 	# Stream #0:0[0x96a]: Video: hevc (Main)
@@ -3189,7 +3189,7 @@ copy_vdr() {
 	#set -x
 	d1=$($ffmpeg -hide_banner $ffmpeg_i 2>&1 | grep "Duration:")
 	# Duration: 00:07:53.36, start: 0.000000, bitrate: 948 kb/s
-	echo "$d1" >> $log_c
+	echo "$d1" >> "$log_c"
 	d2=$(echo $d1|cut -d \  -f 2)
 	d3=${d2:0:8}
 	ds=$(date -u -d "1970-01-01 $d3" "+%s")
