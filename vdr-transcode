@@ -2393,13 +2393,15 @@ analyze() {
 	# Stream #0:0[0x96a]: Video: hevc (Main)
 	codec=$(echo $s1|cut -d \  -f 4)
 	codec=${codec//,/}
-	if [[ "$s1" == *progressive* ]]
+	# top first
+	#if [[ "$s1" == *progressive* ]]
+	if [[ "$s1" == *"top first"* ]]
 	then
-	    scantype="Progressive"
-	else
 	    scantype="not progr"
+	else
+	    scantype="Progressive"
 	fi
-	[ "$codec" == "hevc" ] && scantype="Progressive"
+	#[ "$codec" == "hevc" ] && scantype="Progressive"
 	#echo "ivcodec=$ivcodec"
     fi
     echo "scantype=$scantype" >> "$log_c"
