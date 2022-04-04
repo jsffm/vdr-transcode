@@ -175,6 +175,7 @@ help_Audio() {
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
     echo " -disp <str>=default|0[,...]       # -disposition <param>"
     echo " -ch 2                             # 5.1 -> stereo"
+    echo " -dsur [<str>=]2                   # mark as Dolby Surround Encoded ac3, eac3"
     echo " -skip <n> # default 10, inf() and analyze(): skip first <n> seconds"
 }
 
