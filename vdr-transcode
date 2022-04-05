@@ -2605,6 +2605,8 @@ analyze() {
 	    if [ "$vw" == "" ]
 	    then
 		# ffprobe -hide_banner -show_streams
+		# Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709), 1920x1080 [SAR 1:1 DAR 16:9], 7296 kb/s, 50 fps, 50 tbr, 12800 tbn, 100 tbc (default)
+		# Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709), 1920x1080, 5531 kb/s, 50 fps, 50 tbr, 12800 tbn, 100 tbc (default)
 		hw=${line%%[SAR*}	# checkme
 		nw=$(echo $hw|wc -w)
 		hw=$(echo $hw|cut -d \  -f $nw)
@@ -2619,10 +2621,13 @@ analyze() {
 		#vw=$(echo $scale|cut -d ':' -f 2)
 		IFS=: read hw vw <<< $scale
 	    fi
-	    [ $vw -le 576 ] && h264_level=3.1
-	    [ $vw -ge 1080 ] && h264_level=4.2
-	    [ $vw -gt 2000 ] && hevc_level=5.1 && level_hevc="-level $hevc_level" && h264_level=5.2
-	    [ $vw -gt 2160 ] && hevc_level=6.0 && level_hevc="-level $hevc_level" && h264_level=5.2
+	    if [ "$vw" != "" ]
+	    then
+		[ $vw -le 576 ] && h264_level=3.1
+		[ $vw -ge 1080 ] && h264_level=4.2
+		[ $vw -gt 2000 ] && hevc_level=5.1 && level_hevc="-level $hevc_level" && h264_level=5.2
+		[ $vw -gt 2160 ] && hevc_level=6.0 && level_hevc="-level $hevc_level" && h264_level=5.2
+	    fi
 	    #exit
 	fi
 	if [ "$typ" == "Audio:" ]
