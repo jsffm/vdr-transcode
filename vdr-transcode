@@ -1379,6 +1379,10 @@ input_vdr() {
     #d31=$(echo $d30|cut -d '-' -f 1)
     #d32=$(echo $d30|cut -d '-' -f 2)
     IFS=- read d31 d32 <<< $d30
+    #set -x
+    s=$($ffprobe $ffmpeg_i 2>&1 | grep service_name | cut -d ':' -f 2)
+    service_name=$(echo $s)
+    #exit
     d32=$(($d32+1))
     dest=$dp/$dd.$d31-$d32.rec
     while [ -e $dest ]
@@ -3038,8 +3042,14 @@ transcode() {
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
     else
-	OPT="$OPT -metadata service_name=vdr-transcode"
+	if [ "${service_name:0:13}" == "vdr-transcode" ]
+	then
+	    OPT="$OPT -metadata service_name=$service_name"
+	else
+	    OPT="$OPT -metadata service_name=vdr-transcode"
+	fi
     fi
+    #exit
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata comment=vdr-transcode"
     #OPT="$OPT -metadata SOFTWARE=vdr-transcode"
     #opt="-hide_banner $OPT_G $ffmpeg_i -map 0 -c copy $OPT $name.$fmt"
