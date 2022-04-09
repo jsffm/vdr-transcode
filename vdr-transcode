@@ -247,7 +247,7 @@ help_Configuration_V() {
 help_Configuration_A() {
     echo " audio configuration"
     echo " -ac3 copy|eac3|aac|aac_he|aac_he_v2|opus"
-    echo " -ac3_stereo aac|aac_he|-"
+    echo " -ac3_stereo aac|aac_he|eac3|-"
     echo " -eac3 copy|aac|aac_he|aac_he_v2|opus"
     echo " -dts copy|ac3|eac3|aac|opus"
     echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
