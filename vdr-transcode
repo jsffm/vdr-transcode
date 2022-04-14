@@ -3390,7 +3390,11 @@ copy_file() {
     OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata title=\"$(basename $name)\""
     nameb=$(basename "$name")
-    if [[ "$nameb" == *" "* ]]
+    #if [[ "$nameb" == *" "* -o "$nameb" == *"("* ]]
+    sw=0
+    [[ "$nameb" == *" "* ]] && sw=1
+    [[ "$nameb" == *"("* ]] && sw=1
+    if [ $sw -eq 1 ]
     then
 	OPT="$OPT -metadata title=\"$nameb\""
     else
