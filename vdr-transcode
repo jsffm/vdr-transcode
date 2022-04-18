@@ -2138,7 +2138,7 @@ set_mpeg2() {
 	#add_vf format=nv12
 	OPT_I="$decode_cuvid"
     fi
-    add_vf tinterlace=5
+    add_vf tinterlace=4
     video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $aspect"
     #HWACC=
     #[ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
