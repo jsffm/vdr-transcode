@@ -3220,7 +3220,7 @@ copy_vdr() {
 	OPT_G="$OPT_G -t $d"
 	#exit
     fi
-    OPT="$OPT -mpegts_flags system_b"
+    [[ ! "$OPT" == *mpegts_flags* ]] && OPT="$OPT -mpegts_flags system_b"
     #OPT="$OPT -mpegts_flags latm"
     OPT="$OPT -map_chapters -1"
     #OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
