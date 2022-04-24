@@ -835,6 +835,7 @@ parameter() {
 	    ;;
 	*)
 	    echo $1 wrong
+	    [ "$2" == "" -a "${1:1:1}" != "-" ] && echo "try -"$1
 	    exit 8
 	    ;;
     esac
