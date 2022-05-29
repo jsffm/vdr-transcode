@@ -815,10 +815,10 @@ parameter() {
 	    apply_codec=1
 	    ;;
 	"-ffmpeg")
-	    ffmpeg=$2
+	    ffmpeg="$2"
 	    ;;
 	"-ffprobe")
-	    ffprobe=$2
+	    ffprobe="$2"
 	    ;;
 	"-odir")
 	    odir=$2
