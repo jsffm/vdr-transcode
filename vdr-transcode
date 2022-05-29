@@ -103,22 +103,31 @@ skip=10
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
 aaclib=aac
 
-log=vdr-transcode.log
-logs=/var/log/vdr-transcode.log
 t=/tmp/vt
 old=/tmp/vt-old
 vtlog=/tmp/vt-log
 conf1=$(realpath $0)".conf"
 conf=/etc/vdr-transcode.conf
 confs=/etc/vdr-transcode-s.conf
-runs=/var/run/vt_server.pid
-runvt=/var/run/vt.pid
 vtc=vt.conf
 lck=vt.lck
 ffmpeg=ffmpeg
 ffprobe=ffprobe
 declare -a lang
 declare -a langa
+
+log=vdr-transcode.log
+logs=/var/log/vdr-transcode.log
+runs=/var/run/vt_server.pid
+runvt=/var/run/vt.pid
+if [ "$USER" != "root" ]
+then
+    mkdir -p ~/vdr-transcode
+    logs=~/vdr-transcode/vdr-transcode.log
+    runs=~/vdr-transcode/vt_server.pid
+    runvt=~/vdr-transcode/vt.pid
+fi
+
 
 #exit
 
@@ -202,6 +211,8 @@ help_Configuration() {
     echo " -mark <mark>     # mark at the end of transcoded recordings"
     echo " -odir <path>     # output directory"
     echo " -probesize <n>   # probesize"
+    echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
+    echo "No longer needed:" 
     echo " -server_pid <pid_file>      # default /var/run/vt_server.pid"
     echo "                             # for run as user use e.g. ~/vt_server.pid"
     echo "                             # deprecated, use -pid_dir"
@@ -209,7 +220,6 @@ help_Configuration() {
     echo "                             # for run as user use e.g. ~"
     echo " -server_log <log_file>      # default /var/log/vdr-transcode.log"
     echo "                             # for run as user use e.g. ~/vdr-transcode.log"
-    echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
 }
 
 help_Configuration_V() {
