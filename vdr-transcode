@@ -44,6 +44,7 @@
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
+#exec > trace.log 2>&1
 #set -x
 
 OUTPUT=vdr
