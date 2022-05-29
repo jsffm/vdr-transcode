@@ -1081,6 +1081,14 @@ diag() {
     vtp=$(which vdr-transcode)
     d=$(date "+%F" -r $vtp)
     echo "vdr-transcode $d ffmpeg Version $v"
+    #set -x
+    os=$(grep PRETTY_NAME /etc/*-release)
+    os=$(echo $os | cut -d ':' -f 2)
+    eval $os
+    echo $PRETTY_NAME
+    #os=$(echo $os | cut -d '=' -f 2)
+    #echo $os
+    #exit
     #uname -p
     proc=$(uname -p)
     [ "$proc" == "unknown" ] && proc=$(lscpu | grep "Model name:")
