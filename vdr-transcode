@@ -844,6 +844,18 @@ parameter() {
 	"--sim")
 	    sim=1
 	    ;;
+	"--trace")
+	    exec > trace.log 2>&1
+	    set -x
+	    ;;
+	"-trace")
+	    exec > $2 2>&1
+	    set -x
+	    ;;
+	"--trace2")
+	    exec 2> trace.log
+	    set -x
+	    ;;
 	*)
 	    echo $1 wrong
 	    [ "$2" == "" -a "${1:1:1}" != "-" ] && echo "try -"$1
