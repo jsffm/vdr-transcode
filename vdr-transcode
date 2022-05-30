@@ -3968,3 +3968,4 @@ echo "Ende" $d >> "$log_c"
 rm -f $lck
 rm $runvt
 rm $t
+rm -f $old
