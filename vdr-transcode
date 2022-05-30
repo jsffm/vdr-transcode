@@ -3155,7 +3155,8 @@ log_conf() {
 }
 
 header() {
-    chmod 666 $vtlog
+    read _ _ fuser _ <<< $(ls -l $vtlog)
+    [ "$fuser" == "$USER" ] && chmod 666 $vtlog
     d=`date +"%F %T"`
     v=$($ffmpeg -version)
     v=$(echo $v | cut -d \  -f 3)
