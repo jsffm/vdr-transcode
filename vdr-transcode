@@ -3161,8 +3161,9 @@ header() {
     echo "Start $d vdr-transcode ffmpeg Version $v" > "$log_c"
     sd=$(date +"%F %T" -r $0)
     echo "script date" $sd >> "$log_c"
-    uname -n >> "$log_c"
+    #uname -n >> "$log_c"
     #uname -p >> "$log_c"
+    echo $(uname -n) $USER >> "$log_c"
     proc=$(uname -p)
     [ "$proc" == "unknown" ] && proc=$(lscpu | grep "Model name:")
     echo $proc >> "$log_c"
