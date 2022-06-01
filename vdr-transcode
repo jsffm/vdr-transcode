@@ -2387,6 +2387,7 @@ set_pid() {
 
 analyze() {
     #set -x
+    [ "$trace" != "" ] && >&2 ls -l $t
     #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
     #eval $sss
