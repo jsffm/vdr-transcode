@@ -847,6 +847,7 @@ parameter() {
 	"--trace")
 	    exec > trace.log 2>&1
 	    set -x
+	    trace=1
 	    ;;
 	"-trace")
 	    exec > $2 2>&1
@@ -2410,6 +2411,7 @@ analyze() {
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
     #cat $t
     #exit
+    [ "$trace" != "" ] && >&2 cat $t
     #set -x
     echo "Analyze:" >> "$log_c"
     which mediainfo 2> /dev/null
@@ -2542,6 +2544,7 @@ analyze() {
 	echo "select_str2="$sel
     fi
     #exit
+    [ "$trace" != "" ] && >&2 cat $t
     map="-map 0:v:0"
     stro1=1
     bras=0
