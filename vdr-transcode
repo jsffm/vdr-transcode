@@ -2587,7 +2587,7 @@ analyze() {
 	#exit
 
 	#if [ "$select_str2" != "" -a "$typ" != "Video:" ]
-	if [ "$select_str2" != "" -a "$select_str0" == "$str0" ]
+	if [ "$select_str2" != "" -a "$select_str0" == "$str0" -a "$typ" != "Video:" ]
 	then
 	    IFS=,
 	    ok=0
