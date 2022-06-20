@@ -2132,7 +2132,7 @@ set_vp9() {
 }
 
 set_av1() {
-    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" -a "$crop" == "" ]
     then
 	hwdownload
 	OPT_I="$decode_cuvid"
@@ -2460,7 +2460,12 @@ analyze() {
     then
 	[ "$deinterlace" != "" ] && add_vf $deinterlace
     fi
-    [ "$crop" != "" ] && hwdownload && add_vf $crop
+    #[ "$crop" != "" ] && hwdownload && add_vf $crop
+    if [ "$crop" != "" ]
+    then
+	hwdownload
+	add_vf $crop
+    fi
     #[ "$vf" != "" ] && vf="-vf $vf"
     #exit
     # vdr
