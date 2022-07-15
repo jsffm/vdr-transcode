@@ -2293,6 +2293,11 @@ set_eac3() {
     audio_t="$audio_t -dialnorm:$stro $dnorm"
 }
 
+set_dts() {
+    br="768k"
+    audio_t="-strict -2 -c:$stro dca -b:$stro $br"
+}
+
 set_mp2() {
     audio_t="-c:$stro libtwolame -b:$stro 192k"
 }
@@ -2362,6 +2367,9 @@ set_audio() {
 	    ;;
 	"opus")
 	    set_opus
+	    ;;
+	"dts")
+	    set_dts
 	    ;;
 	"mp2")
 	    set_mp2
