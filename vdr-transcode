@@ -394,6 +394,7 @@ parameter() {
 	    mp3_b="-b:a $2"
 	    aac_stereo_br=$2
 	    opus_br=$2
+	    dts_br=$2
 	    [ "${opus_br:${#opus_br}-1:1}" == "k" ] && opus_br=${opus_br:0:${#opus_br}-1}
 	    ;;
 	"-vb")
@@ -2295,6 +2296,7 @@ set_eac3() {
 
 set_dts() {
     br="768k"
+    [ "$dts_br" != "" ] && br=$dts_br
     audio_t="-strict -2 -c:$stro dca -b:$stro $br"
 }
 
