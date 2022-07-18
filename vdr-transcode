@@ -3088,7 +3088,7 @@ analyze() {
 transcode() {
     #set -x
     name="$1"
-    [ "$auto" == "1" ] && echo $(cat $vtlog) > dest
+    [ "$auto" == "1" ] && echo $(<$vtlog) > dest
     if [ "$OUTPUT" == "vdr" -a "$vencoder" != "" ]
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
@@ -3357,7 +3357,7 @@ copy_vdr() {
 	#set -x
 	if [ -e info.txt ]
 	then
-	    i=$(cat info.txt)
+	    i=$(<info.txt)
 	    echo "$i $vcodec" > $dest/info.txt
 	else
 	    echo $vcodec > $dest/info.txt
@@ -3382,7 +3382,8 @@ copy_vdr() {
         nice $vdr --genindex=$dest
         #set +x
         [ "$fpso" == "" ] && fpso=$fps
-        li=$(ls -l $dest/index|cut -d ' ' -f 5)
+        #li=$(ls -l $dest/index|cut -d ' ' -f 5)
+        li=$(stat $dest/index -c "%s")
         fpso=$(grep ^F $dest/info|cut -d \  -f 2)
         [ "$fpso" == "" ] && fpso=25
         #set -x
@@ -3398,15 +3399,18 @@ copy_vdr() {
     echo "===========================================================" >> $log_c
     if [ "$ifmt" == "vdr" ]
     then
-	[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
-	[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
+	#[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
+	#[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
+	[ -e index ] && is1=$(stat index -c "%s")
+	[ -e index.vdr ] && is1=$(stat index.vdr -c "%s")
 	[ -e info ] && fpsi=$(grep ^F info|cut -d \  -f 2)
 	[ "$fpsi" == "" ] && fpsi=25
 	#si1=$(($is1/8/$fpsi))
 	sic1=$(($is1*100/8/$fpsi))
         si1=$(($sic1/100))
         sic1=$(($sic1-($si1*100)))
-	is2=$(ls -l $dest/index|cut -d \  -f 5)
+	#is2=$(ls -l $dest/index|cut -d \  -f 5)
+	is2=$(stat $dest/index -c "%s")
 	#echo "===========================================================" >> $log_c
 	echo -n "index=$is1" >> $log_c
 	sic1=$(printf "%02d" $sic1)
@@ -3456,7 +3460,8 @@ copy_file() {
     fi
     [ "$fmt" == "mp4" ] && OPT="$OPT -movflags faststart"
     transcode "$out"
-    newsize=$(ls -l "$out"|cut -d \  -f 5)
+    #newsize=$(ls -l "$out"|cut -d \  -f 5)
+    newsize=$(stat "$out" -c "%s")
     newsize=$(($newsize/1024))
     #set -x
     [ "$fmt" == "ts" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
@@ -3588,7 +3593,7 @@ copy() {
     #set -x
     if [ -e $runvt ]
     then
-	oldpid=$(cat $runvt)
+	oldpid=$(<$runvt)
 	if [ -e /proc/$oldpid ]
 	then
 	    echo "already running"
@@ -3648,7 +3653,7 @@ server() {
     #set -x
     if [ -e $runs ]
     then
-        oldpid=$(cat $runs)
+        oldpid=$(<$runs)
         if [ -e /proc/$oldpid ]
         then
             echo "already running"
@@ -3696,7 +3701,7 @@ server() {
 server_kill() {
     if [ -e $runs ]
     then
-        pid=$(cat $runs)
+        pid=$(<$runs)
         if [ -e /proc/$pid ]
         then
             kill -15 $pid
@@ -3804,7 +3809,7 @@ auto_check() {
 	if [ "$ext" == "rec" ]
 	then
 	    [ ! -e $c/dest ] && continue
-	    c2=$(cat $c/dest)
+	    c2=$(<$c/dest)
 	    [ ! -e $c2 ] && continue
 	    status $c2
 	    c2=$(dirname $c2)
@@ -3903,7 +3908,7 @@ case $TODO in
 	inf
 	;;
     "--stat")
-	status $(cat "$vtlog")
+	status $(<"$vtlog")
 	exit
 	;;
     "--as")
