@@ -858,6 +858,9 @@ parameter() {
 	    exec 2> trace.log
 	    set -x
 	    ;;
+	"-postproc")
+	    postproc=$2
+	    ;;
 	*)
 	    echo $1 wrong
 	    [ "$2" == "" -a "${1:1:1}" != "-" ] && echo "try -"$1
@@ -3986,6 +3989,10 @@ then
     prz=$(($newsize*100/$oldsize))
     echo "Neu " $newsize $prz"%" >> "$log_c"
     echo "Save" $(($oldsize-$newsize))  >> "$log_c"
+fi
+if [ "$postproc" != "" ]
+then
+	$postproc $(realpath $dest) $vcodec
 fi
 echo -n "Dauer: " >> "$log_c"
 date -u -d @$sek "+%T" >> "$log_c"
