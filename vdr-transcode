@@ -2739,7 +2739,7 @@ analyze() {
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
-		[ "$fpso" != "" ] && h264=h264
+		[ "$fpso" != "" -a "$h264" == "copy" ] && h264=h264
 		decode_cuvid="-c:v h264_cuvid"
 		#decode_mmal="-c:v h264_mmal"
 		decode_mmal="-c:v "$codec"_mmal"
