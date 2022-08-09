@@ -2156,6 +2156,7 @@ set_av1() {
 	    ;;
 	"libsvtav1")
 	    video="-c:v $av1enc -preset 8 -rc cqp -qp $qav1 -sc_detection 0"
+	    #video="$video -svtav1-params fast-decode=2"
 	    ;;
     esac
     video="$video $aspect"
@@ -3442,6 +3443,7 @@ copy_file() {
 	i=$(($i+1))
 	out=$name-$i.$fmt
     done
+    dest=$out
     log_c=$out.log
     echo $PWD/$log_c > $vtlog
     header
