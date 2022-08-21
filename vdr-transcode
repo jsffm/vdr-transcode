@@ -40,7 +40,7 @@
 # -q
 # dvb_subtitle	-canvas_size ?
 # inf() and analyze(): skip first 3 seconds for better detection of audio codecs
-
+# delogo
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -860,6 +860,17 @@ parameter() {
 	    ;;
 	"-postproc")
 	    postproc=$2
+	    ;;
+	"-delogo")
+	    #set -x
+	    IFS=: read x y w h show <<< $2
+	    #p="\"[0:v]delogo=x=$x:y=$y:w=$w:h=$h"
+	    #[ "$show" != "" ] && p=$p":show=$show"
+	    #p=$p"[v]\""
+	    p="delogo=$2"
+	    add_vf $p
+	    #OPT="$OPT -filter_complex $p"
+	    #exit
 	    ;;
 	*)
 	    echo $1 wrong
