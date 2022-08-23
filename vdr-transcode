@@ -1251,8 +1251,12 @@ input_file() {
 	rec_time=$(date "+%s" -d "$c_t")
 	#exit
     fi
-    vencoder=$(grep -i encoder $t|sed -n '2p'|cut -d ':' -f 2-)
-    aencoder=$(grep -i encoder $t|sed -n '3p'|cut -d ':' -f 2-)
+    #set -x
+    #vencoder=$(grep -i encoder $t|sed -n '2p'|cut -d ':' -f 2-|tr -s ' ' '_')
+    #vencoder=$(grep -i encoder $t|sed -n '2p'|cut -d ':' -f 2-)
+    #aencoder=$(grep -i encoder $t|sed -n '3p'|cut -d ':' -f 2-|tr -s ' ' '_')
+    #[ "${vencoder:1:3}" == "Lav" ] && vencoder=$(echo $vencoder | cut -d \  -f 2)
+    #exit
     [ "$odir" != "" ] && dp=$odir/$name/
     dest=$dp$(date "+%F.%H.%M" -d @$rec_time)".3-0.rec"
     d32=0
@@ -1271,7 +1275,16 @@ input_file() {
     #OPT_G="$OPT_G -fflags +igndts+genpts"
     #OPT_G="$OPT_G -fflags +genpts"
     #OPT_G="$OPT_G -use_wallclock_as_timestamps 1"
-    info_name=$(basename "$PWD")
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	info_name=$(basename "$PWD")
+	n2=$(basename $(dirname "$PWD"))
+	if [ "$n2" != "video" ]
+	then
+	    info_subt=$info_name
+	    info_name=$n2
+	fi
+    fi
     #exit
 }
 
@@ -3241,7 +3254,13 @@ info_create() {
     fi
     echo "C M $sender" > $info
     echo "E 0 $rec_time $dauer" >> $info
-    [ "$info_name" != "" ] && echo "T" $(echo $info_name|tr '_' ' ') >> $info	# checkme
+    if [ "$info_subt" != "" ]
+    then
+	echo "T" $(echo $info_name|tr '_' ' ') >> $info
+	echo "S" $(echo $info_subt|tr '_' ' ') >> $info
+    else
+	[ "$info_name" != "" ] && echo "T" $(echo $info_name|tr '_' ' ') >> $info	# checkme
+    fi
     [ "$fpso" == "" ] && fpso=$fps
     echo "F $fpso" >> $info
     echo "P 50" >> $info
