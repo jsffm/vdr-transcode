@@ -3403,7 +3403,7 @@ copy_vdr() {
     then
 	vdr=$(which vdr)
     fi
-    if [ -e $VDRDIR/vdr ]
+    if [ -x $VDRDIR/vdr ]
     then
 	vdr=$VDRDIR/vdr
     fi
