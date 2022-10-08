@@ -2392,7 +2392,7 @@ set_audio() {
 	"aac_he")
 	    set_aac he
 	    ;;
-	"aac_he_v2")
+	"aac_he_v2"|"aac_v2")
 	    set_aac he_v2
 	    ;;
 	"opus")
