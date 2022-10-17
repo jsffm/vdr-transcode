@@ -3172,7 +3172,7 @@ transcode() {
 	#eval $sss
     #else
 	#eval $ffprobe -hide_banner -i \"$name\" 2>$t	# checkme
-	eval $ffprobe -hide_banner -i $name 2>$t	# checkme
+	eval $ffprobe -hide_banner -i "$name" 2>$t	# checkme
 	#eval $ffmpeg -hide_banner -ss 3 -i $name -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>$t	# checkme
 	#$ffprobe -hide_banner -i $name 2>$t
     #fi
