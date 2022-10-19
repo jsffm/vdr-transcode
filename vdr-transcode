@@ -632,6 +632,10 @@ parameter() {
 		OPT="$OPT -dsur_mode:$str $dsur"
 	    fi
 	    ;;
+	"--dpl")
+	    acodec=eac3
+	    OPT="$OPT -dsur_mode 2"
+	    ;;
 	"-ch")
 	    achannels=$2
 	    #[ "$2" == "2" ] && OPT="$OPT -af pan=stereo|c0=FL|c1=FR"
