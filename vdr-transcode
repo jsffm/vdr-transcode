@@ -2005,6 +2005,7 @@ set_h264() {
     case $h264enc in
 	"libx264")
 	    #parameter --nohw
+	    hwdownload
 	    [ "$crf" == "" ] && crf=21
 	    preset="-preset fast -tune film -profile:v $h264_profile $level -crf $crf $maxr"
 	    ;;
