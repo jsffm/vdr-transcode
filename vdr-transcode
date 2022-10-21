@@ -2021,6 +2021,17 @@ set_h264() {
 	"h264_omx")
 	    preset="-profile:v high"
 	    ;;
+	"openh264")
+	    h264enc=libopenh264
+	    [ "$crf" == "" ] && crf=40
+	    #coder="-coder vlc"
+	    #coder="-coder cavlc"
+	    #coder="-coder cabac"
+	    preset="-profile:v $h264_profile -allow_skip_frames 1 -rc_mode quality $coder"
+	    preset="$preset -global_quality:v $crf"
+	    #preset="$preset -crf $crf"
+	    #preset="$preset -qp $crf"
+	    ;;
     esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="-c:v:0 $h264enc $preset $gop $aspect $h264_br"
