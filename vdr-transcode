@@ -581,6 +581,9 @@ parameter() {
 	    #add_vf "crop=$2"
 	    crop="crop=$2"
 	    ;;
+	"-croph")
+	    crop="crop=h=in_h-$2:y=$2"
+	    ;;
 	"--LB")
 	    #hwdownload
 	    #[ "$hwaccel" == "cuvid" ] && add_vf hwdownload && add_vf format=nv12
