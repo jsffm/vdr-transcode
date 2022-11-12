@@ -3103,8 +3103,14 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    #"dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext"|"none"|"mjpeg")
-	    "dvd_nav_packet"|"dvb_teletext"|"none"|"mjpeg")
+	    "dvd_nav_packet"|"dvb_teletext"|"none")
 		continue
+		;;
+	    "mjpeg")
+		[ "$OUTPUT" == "vdr" ] && continue
+		map="$map -map $str0:$str"
+		subt="$subt -c:$stro copy"
+		stro1=$(($stro1+1))
 		;;
 	    "bin_data"|"png")
 		#set -x
