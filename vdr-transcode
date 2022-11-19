@@ -244,7 +244,7 @@ help_Configuration_V() {
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_omx"
     #echo " -h264_level <level> # default 4.1"
-    echo " -x264_preset     # default fast"
+    echo " -x264_preset <preset> # default fast"
     echo " -h264_br         # bitrate for h264_omx, -b works too"
     echo " -hevcenc hevc_nvenc|hevc_vaapi|libx265|libkvazaar"
     echo " -hevc_level <level>"
