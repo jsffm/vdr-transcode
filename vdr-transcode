@@ -2026,6 +2026,7 @@ set_h264() {
 	    [ "$crf" == "" ] && crf=32
 	    preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
 	    preset="$preset -rc constqp"
+	    #preset="$preset -spatial-aq 1"
 	    #preset="$preset -coder 2"
 	    #preset="$preset -b_adapt 0"
 	    ;;
