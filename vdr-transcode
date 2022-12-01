@@ -2025,7 +2025,9 @@ set_h264() {
 	"h264_nvenc")
 	    [ "$crf" == "" ] && crf=32
 	    preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
+	    preset="$preset -rc constqp"
 	    #preset="$preset -coder 2"
+	    #preset="$preset -b_adapt 0"
 	    ;;
 	"h264_vaapi")
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
@@ -2080,7 +2082,7 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
-	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc vbr -cq $hevc_cq $opt_r"
+	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc constqp -cq $hevc_cq $opt_r"
 	    #preset="$preset -init_qpB 25"
 	    ;;
 	"hevc_vaapi")
