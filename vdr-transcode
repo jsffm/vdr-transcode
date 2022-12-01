@@ -2489,6 +2489,8 @@ analyze() {
     if [ $? -eq 0 ]
     then
 	scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
+	scanorder=$(mediainfo --Inform="Video;%ScanOrder/String%" "$input")
+	[ "$scanorder" != "" ] && scantype=$scanorder
 	if [ "$ifofile" != "" ]
 	then
 	    echo -n "Duration: " >> "$log_c"
