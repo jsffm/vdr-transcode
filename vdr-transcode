@@ -88,6 +88,7 @@ h264enc=libx264
 #hevcenc=libx265
 hevcenc="hevc_nvenc"
 nvenc_preset=medium
+nvenc_rc=constqp
 av1enc=libsvtav1		# librav1e libaom-av1
 qav1=50
 #deinterlace="-filter:v yadif"
@@ -251,6 +252,7 @@ help_Configuration_V() {
     echo " -hevc_profile <profile>     # main|main10"
     echo " -hevc_preset <preset>       # if you know, what you are doing"
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
+    echo " -nvenc_rc constqp|vbr       # default constqp"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|vaapi|vdpau|-"
     echo " -libva i965|iHD"
@@ -697,6 +699,9 @@ parameter() {
 	    ;;
 	"-nvenc_preset")
 	    nvenc_preset=$2
+	    ;;
+	"-nvenc_rc")
+	    nvenc_rc=$2
 	    ;;
 	"-pix_fmt")
 	    OPT="$OPT -pix_fmt $2"
@@ -2025,7 +2030,7 @@ set_h264() {
 	"h264_nvenc")
 	    [ "$crf" == "" ] && crf=32
 	    preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
-	    preset="$preset -rc constqp"
+	    preset="$preset -rc $nvenc_rc"
 	    #preset="$preset -spatial-aq 1"
 	    #preset="$preset -coder 2"
 	    #preset="$preset -b_adapt 0"
@@ -2083,7 +2088,7 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
-	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc constqp -cq $hevc_cq $opt_r"
+	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc $nvenc_rc -cq $hevc_cq $opt_r"
 	    #preset="$preset -init_qpB 25"
 	    ;;
 	"hevc_vaapi")
