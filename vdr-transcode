@@ -88,7 +88,8 @@ h264enc=libx264
 #hevcenc=libx265
 hevcenc="hevc_nvenc"
 nvenc_preset=medium
-nvenc_rc=constqp
+#nvenc_rc=constqp
+nvenc_rc=vbr
 av1enc=libsvtav1		# librav1e libaom-av1
 qav1=50
 #deinterlace="-filter:v yadif"
@@ -252,7 +253,7 @@ help_Configuration_V() {
     echo " -hevc_profile <profile>     # main|main10"
     echo " -hevc_preset <preset>       # if you know, what you are doing"
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
-    echo " -nvenc_rc constqp|vbr       # default constqp"
+    echo " -nvenc_rc vbr|constqp       # default vbr"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|vaapi|vdpau|-"
     echo " -libva i965|iHD"
