@@ -3460,7 +3460,11 @@ copy_vdr() {
         #nice $vdr --genindex="./$dest"
         #set -x
         [[ "$dest" != */* ]] && dest="./"$dest
-        nice $vdr --genindex=$dest
+        nice $vdr --genindex=$dest &
+        PID=$!
+        wait $PID
+        #echo $PID
+        grep "\[$PID\]" /var/log/messages | grep "H."
         #set +x
         [ "$fpso" == "" ] && fpso=$fps
         #li=$(ls -l $dest/index|cut -d ' ' -f 5)
