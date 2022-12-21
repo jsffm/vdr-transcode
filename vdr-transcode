@@ -92,6 +92,7 @@ nvenc_preset=medium
 nvenc_rc=vbr
 av1enc=libsvtav1		# librav1e libaom-av1
 qav1=50
+av1preset=8
 #deinterlace="-filter:v yadif"
 deinterlace="yadif"
 #deinterlace="-vf yadif_cuda"
@@ -566,6 +567,9 @@ parameter() {
 	    ;;
 	"-qav1")
 	    qav1=$2
+	    ;;
+	"-av1preset")
+	    av1preset=$2
 	    ;;
 	"-g")
 	    gop="-g $2"
@@ -2218,7 +2222,7 @@ set_av1() {
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
 	"libsvtav1")
-	    video="-c:v $av1enc -preset 8 -rc cqp -qp $qav1 -sc_detection 0"
+	    video="-c:v $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
 	    #video="$video -svtav1-params fast-decode=2"
 	    ;;
     esac
