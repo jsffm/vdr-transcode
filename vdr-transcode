@@ -103,6 +103,7 @@ aac_stereo_br=96k
 aac_6ch_br=256k
 opus_br=64 # 2ch kbit
 skip=10
+marks_mkv=0
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
@@ -217,6 +218,7 @@ help_Configuration() {
     echo " -odir <path>     # output directory"
     echo " -probesize <n>   # probesize"
     echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
+    echo " -marks_mkv 0|1   # marks -> chapter"
     echo "No longer needed:" 
     echo " -server_pid <pid_file>      # default /var/run/vt_server.pid"
     echo "                             # for run as user use e.g. ~/vt_server.pid"
@@ -772,6 +774,9 @@ parameter() {
 	    ;;
 	"--nochapt")
 	    nochapt=1
+	    ;;
+	"-marks_mkv")
+	    marks_mkv=$2
 	    ;;
 	"-DP")
 	    OPT="$OPT -dsur_mode $2"	# 2 on
@@ -1811,6 +1816,51 @@ chapt_BD() {
 	    which mediainfo 2> /dev/null
 	    [ $? -eq 0 ] && chapt_mediainfo $mpls
 	fi
+    fi
+}
+
+chapt_marks() {
+    # Chapter
+    [[ "$marks_mkv" == "0" ]] && return
+    if [ -e marks ]
+    then
+	#set -x
+	meta=ffmetadata
+	echo ";FFMETADATA1" > $meta
+	s1=0
+	ca=0
+	tag=$(date -u +"%s" -d 0:00:00)
+	# 0:10:03.48
+	while read line
+	do
+	    #echo $line
+	    c=$(date -u +"%s" -d $line)
+	    cs=$(echo $line|cut -d '.' -f 2)
+	    ms=$(($cs*10))
+	    c=$(($c-$tag))
+	    c=$(($c*1000))
+	    c=$(($c+$ms))
+	    if [ $c -gt $ca ]
+	    then
+		echo "[CHAPTER]" >> $meta
+		#echo "TIMEBASE=1" >> $meta
+		echo "TIMEBASE=1/1000" >> $meta
+		echo "START=$ca" >> $meta
+		echo "#chapter ends at $line" >> $meta
+		echo "END=$(($c-1))" >> $meta
+		if [ $s1 -eq 0 ]
+		then
+		    echo "title=Werbung $line" >> $meta
+		    s1=1
+		else
+		    echo "title=Film $line" >> $meta
+		    s1=0
+		fi
+	    fi
+	    ca=$c
+	done < marks
+	#metaf="-i ffmetadata"
+	#exit
     fi
 }
 
@@ -3549,6 +3599,7 @@ copy_file() {
 	OPT="$OPT -metadata title=$nameb"
     fi
     [ "$fmt" == "mp4" ] && OPT="$OPT -movflags faststart"
+    [ "$ifmt" == "vdr" ] && chapt_marks
     transcode "$out"
     #newsize=$(ls -l "$out"|cut -d \  -f 5)
     newsize=$(stat "$out" -c "%s")
