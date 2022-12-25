@@ -1831,7 +1831,7 @@ chapt_marks() {
 	ca=0
 	tag=$(date -u +"%s" -d 0:00:00)
 	# 0:10:03.48
-	while read line
+	while read line _
 	do
 	    #echo $line
 	    c=$(date -u +"%s" -d $line)
