@@ -2324,6 +2324,16 @@ set_xvid() {
 }
 
 set_aac() {
+    if [ "$aaclib" != "libfdk_aac" ]
+    then
+	chk=$($ffmpeg -hide_banner -encoders | grep fdk)
+	if [ "$chk" != "" ]
+	then
+	    text="=== libfdk_aac installed, but not used ==="
+	    echo $text
+	    echo $text >> $log_c
+	fi
+    fi
     if [ "$1" == "he" ]
     then
 	[ "$aaclib" != "libfdk_aac" ] && echo "works only with libfdk_aac" && exit 8
