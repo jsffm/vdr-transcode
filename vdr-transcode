@@ -534,6 +534,9 @@ parameter() {
 	"-aac_vbr")
 	    aac_vbr=$2
 	    ;;
+	"-aac_decode")
+	    aac_decode=$2
+	    ;;
 	"-opus")
 	    opus=$2
 	    ;;
@@ -3049,6 +3052,7 @@ analyze() {
 		#[ "$OUTPUT" == "webm" ] && set_opus
 		[ "$OUTPUT" == "webm" ] && aac=opus
 		[ "$OUTPUT" == "mpg" ] && aac=mp2
+		[ "$aac_decode" != "" ] && OPT_I="$OPT_I -c:$str $aac_decode"
 		set_audio $aac
 		if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
 		then
