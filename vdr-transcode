@@ -59,6 +59,7 @@ mpeg4_b=1200k
 vp8=copy
 vp9=copy
 av1=copy
+vc1=copy
 ac3=copy
 #ac3_stereo=aac
 eac3=copy
