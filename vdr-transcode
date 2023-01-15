@@ -70,6 +70,7 @@ mp3=copy
 mp3_b="-b:a 128k"
 dts=copy
 opus=copy
+pcm=aac
 #crf=21
 #hevc_cq=28
 gq=30		# VP8
@@ -552,6 +553,9 @@ parameter() {
 	    ;;
 	"-mp3")
 	    mp3=$2
+	    ;;
+	"-pcm")
+	    pcm=$2
 	    ;;
 	"--upmix")
 	    upmix=1
@@ -3127,10 +3131,11 @@ analyze() {
 	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
 		map="$map -map $str0:$str"
 		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
-		audio_t="$audio -c:$stro $aaclib -b:$stro 128k"
+		#audio_t="$audio -c:$stro $aaclib -b:$stro 128k"
 		#audio="$audio -c:$stro $aaclib -vdr 2"
 		[ "$acodec" != "" ] && set_audio $acodec
 		[ "$OUTPUT" == "webm" ] && set_opus
+		set_audio $pcm
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
