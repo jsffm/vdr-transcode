@@ -187,7 +187,7 @@ help_Audio() {
     echo " -vol [<str>=]<factor> # Volume"
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
     echo " -ab <n>          # constant bitrate for mp3, aac_stereo"
-    echo " -lang <str>=<lang>[,<str>=<lang>]"
+    echo " -lang <str[-str]>=<lang>[,<str[-str]>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
     echo " -disp <str>=default|0[,...]       # -disposition <param>"
@@ -940,9 +940,19 @@ set_lang() {
     IFS=,
     for la in $1
     do
-	str=${la%=*}
 	l=${la#*=}
-	lang[$str]=$l
+	str=${la%=*}
+	if [[ "$str" == *-* ]]
+	then
+	    s1=${str%-*}
+	    s2=${str#*-}
+	    for (( i=$s1 ; i<=$s2 ; i++ ))
+	    do
+		lang[$i]=$l
+	    done
+	else
+	    lang[$str]=$l
+	fi
     done
     unset IFS
     #exit
