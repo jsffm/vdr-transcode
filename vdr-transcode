@@ -180,7 +180,7 @@ help_Video() {
 
 help_Audio() {
     echo "Audio"
-    echo " -ac|-acodec [<str>=]<codec> # Audio Codec copy|eac3|aac|aac_he|aac_he_v2|opus"
+    echo " -ac|-acodec [<str>=]<codec> # Audio Codec copy|ac3|eac3|aac|aac_he|aac_he_v2|opus"
     echo " -sel [<file>:]<n[-n][,n]>   # audio, subtitle stream select"
     echo " --selb           # select best audio track"
     echo " --sel_eac3       # select eac3"
@@ -267,13 +267,14 @@ help_Configuration_V() {
 
 help_Configuration_A() {
     echo " audio configuration"
-    echo " -ac3 copy|eac3|aac|aac_he|aac_he_v2|opus"
+    echo " -ac3 <acodec>"
     echo " -ac3_stereo aac|aac_he|eac3|-"
-    echo " -eac3 copy|aac|aac_he|aac_he_v2|opus"
-    echo " -dts copy|ac3|eac3|aac|opus"
-    echo " -mp2 copy|aac|aac_he|aac_he_v2|opus"
-    echo " -mp3 copy|aac|aac_he|aac_he_v2|opus"
-    echo " -opus copy|ac3|eac3|aac|aac_he|aac_he_v2"
+    echo " -eac3 <acodec>"
+    echo " -dts <acodec>"
+    echo " -mp2 <acodec>"
+    echo " -mp3 <acodec>"
+    echo " -opus <acodec>"
+    echo " -pcm <acodec>"
     echo " -dnorm <-31 .. -1>  # ac3, eac3 -dialnorm"
     echo " -aac_stereo_br|-aac_br <br> # default 96k"
     echo " -aac_6ch_br <br>    # default 256k"
