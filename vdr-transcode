@@ -191,6 +191,7 @@ help_Audio() {
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
     echo " -disp <str>=default|0[,...]       # -disposition <param>"
+    echo " -def <lang>                       # -disposition defaut @ <lang>"
     echo " -ch 2                             # 5.1 -> stereo"
     echo " -dsur [<str>=]2                   # mark as Dolby Surround Encoded ac3, eac3"
     echo " -skip <n> # default 10, inf() and analyze(): skip first <n> seconds"
@@ -796,6 +797,9 @@ parameter() {
 	    ;;
 	"-disp")
 	    set_disposition $2
+	    ;;
+	"-def")
+	    default=$2
 	    ;;
 	"-skip")
 	    skip=$2
@@ -2863,6 +2867,19 @@ analyze() {
 	    [ "${lang[$str]}" != "" ] && OPT="$OPT -metadata:s:$stro language=${lang[$str]}"
 	    [ "${streamo[$str]}" != "" ] && str=${streamo[$str]}
 	    #exit
+	    if [ "$default" != "" ]
+	    then
+		#set -x
+		IFS='()' read _ lang _ <<< $line
+		echo $lang
+		if [ "$lang" == "$default" ]
+		then
+		    OPT="$OPT -disposition:$stro default"
+		else
+		    OPT="$OPT -disposition:$stro 0"
+		fi
+		#exit
+	    fi
 	fi
 	case $codec in
 	    "mpeg2video"|"mpeg1video")
