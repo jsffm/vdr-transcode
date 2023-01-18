@@ -1339,6 +1339,18 @@ input_file() {
     #exit
 }
 
+chk_skip() {
+    #set -x
+    if [ $oldsize -lt 10000 -a $skip -gt 0 ]
+    then
+	osr=$($ffprobe $ffmpeg_i 2>&1 | grep "Duration:")
+	osd=$(echo $osr|cut -d \  -f 2)
+	oss=$(date -u +%s -d "1970-01-01 ${osd:0:8}")
+	[ $oss -lt $skip ] && skip=$(($oss/2))
+    fi
+    #exit
+}
+
 input_vdra() {
     #set -x
     if [ ! -e 001.vdr ]
@@ -1386,6 +1398,7 @@ input_vdra() {
     [ "$name" == "_" ] && name=video
     OPT="$OPT -copyts -start_at_zero"
     name=../$name
+    chk_skip
     ifmt="vdr"
     #exit
 }
@@ -1508,6 +1521,7 @@ input_vdr() {
     [ "$name" == "_" ] && name=video
     [ "$odir" != "" ] && dp=$odir
     name=$dp/$name
+    chk_skip
     ifmt="vdr"
     #exit
 }
