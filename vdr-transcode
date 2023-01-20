@@ -2909,13 +2909,8 @@ analyze() {
 		#parameter "--nohw"
 		[ "$vcodec" != "" ] && mpeg2=$vcodec
 		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="$VAAPI"
-		#[ "$mpeg2" == "h264" ] &&  set_h264
-		#[ "$mpeg2" == "hevc" ] && set_hevc
-		#[ "$mpeg2" == "vp8" ] && set_vp8
-		#[ "$mpeg2" == "vp9" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && mpeg2=copy && deinterlace=
 		set_video $mpeg2
-		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		;;
 	    "h264")
 		#set -x
@@ -2946,20 +2941,6 @@ analyze() {
 		[ "$OUTPUT" == "vdr" -a "$vc1" == "copy" ] && vc1=h264
 		decode_cuvid="-c:v vc1_cuvid"
 		decode_mmal="-c:v "$codec"_mmal"
-		#if [ "$vc1" == "h264" ]
-		#then
-		#    decode_cuvid="-c:v vc1_cuvid"
-		#    decode_mmal="-c:v "$codec"_mmal"
-		#    set_h264
-		    #video="-c:v:0 h264_nvenc $preset"
-		#fi
-		#if [ "$vc1" == "hevc" ]
-		#then
-		#    decode_cuvid="-c:v vc1_cuvid"
-		#    decode_mmal="-c:v "$codec"_mmal"
-		#    set_hevc
-		    #video="-c:v:0 $hevcenc $preset"
-		#fi
 		set_video $vc1
 		;;
 	    "msmpeg4v3"|"msmpeg4v2"|"mpeg4")
@@ -2972,21 +2953,8 @@ analyze() {
 		video="-c:v $mpeg4"
 		[ "$OUTPUT" == "vdr" -a "$mpeg4" == "copy" ] && mpeg4=h264
 		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
-		#[ $codec == "mpeg4" ] && decode_mmal="-c:v "$codec"_mmal"
 		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="$VAAPI"
-		#if [ "$mpeg4" == "h264" ]
-		#then
-		#    [ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
-		#    set_h264
-		    #video="-c:v:0 h264_nvenc $preset"
-		#fi
-		#[ "$mpeg4" == "hevc" ] && set_hevc
-		#[ "$mpeg4" == "vp8" ] && set_vp8
-		#[ "$mpeg4" == "vp9" ] && set_vp9
 		set_video $mpeg4
-		#[ "$OUTPUT" == "webm" ] && set_video vp9
-		#[ "$vcodec" != "" ] && set_video $vcodec
-		#OPT_G="$OPT_G -bsf mpeg4_unpack_bframes"
 		;;
 	    "vp6f"|"flv1")
 		parameter --nohw
@@ -3039,27 +3007,6 @@ analyze() {
 		audio_t="-c:$stro copy"
 		[ "$acodec" != "" ] && ac3=$acodec
 		[ "$OUTPUT" == "webm" ] && ac3=opus
-		#[ "$ac3" == "eac3" ] && audio_t="-c:$stro $ac3 -b:$stro 256k"
-		#if [ "$ac3" == "aac" ]
-		#then
-		#    set_aac
-		#    ac3_aac=1
-		#fi
-		#if [ "$atyp" == "stereo" ]
-		#then
-		#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && set_aac
-		#    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && set_aac he
-		#    [ $bra -gt 192 -a "$ac3_stereo" != "" ] && ac3=$ac3_stereo
-		#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br -filter:$stro volume=$ac3v"
-		#fi
-		#if [ "$atyp" == "mono" -a "$ac3_stereo" == "aac" ]
-		#then
-		#    audio_t="-c:$stro $aaclib -b:$stro 48k"
-		#fi
-		#[ "$ac3" == "aac" ] && set_aac
-		#[ "$ac3" == "aac_he" ] && set_aac he
-		#[ "$ac3" == "aac_he_v2" ] && set_aac he_v2
-		#[ "$ac3" == "opus" ] && set_opus
 		set_audio $ac3
 		[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="$audio_t -filter:$stro volume=$ac3v"
 		audio="$audio $audio_t"
@@ -3071,11 +3018,6 @@ analyze() {
 		[ "$OUTPUT" == "mpg" ] && eac3=mp2
 		[ "$OUTPUT" == "webm" ] && eac3=opus
 		set_audio $eac3
-		#audio_t="-c:$stro copy"
-		#[ "$eac3" == "aac" ] && set_aac
-		#[ "$eac3" == "aac_he" ] && set_aac he
-		#[ "$eac3" == "aac_he_v2" ] && set_aac he_v2
-		#[ "$eac3" == "opus" ] && set_opus
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
@@ -3084,15 +3026,6 @@ analyze() {
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=aac
 		[ "$OUTPUT" == "webm" ] && dts=opus
-		#[ "$dts" == "ac3" ] && audio_t="-c:$stro $dts -b:$stro 448k"
-		#[ "$dts" == "eac3" ] && audio_t="-c:$stro $dts -b:$stro $aac_6ch_br"
-		#[ "$dts" == "aac" ] && set_aac
-		#[ "$dts" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 2"
-		#if [ "$atyp" == "stereo" ]
-		#then
-		#    audio_t="-c:$stro $aaclib -b:$stro 128k"
-		#fi
-		#[ "$dts" == "opus" ] && set_opus
 		set_audio $dts
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
@@ -3100,42 +3033,23 @@ analyze() {
 	    "aac")
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
-		#[ "$OUTPUT" == "webm" ] && audio_t="-c:$stro libopus"
-		#[ "$OUTPUT" == "webm" ] && set_opus
 		[ "$OUTPUT" == "webm" ] && aac=opus
 		[ "$OUTPUT" == "mpg" ] && aac=mp2
 		[ "$aac_decode" != "" ] && OPT_I="$OPT_I -c:$str $aac_decode"
 		set_audio $aac
 		if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
 		then
-		    #ar="-ar:$stro 48000"
-		    #audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
 		    set_aac
 		fi
-		#[ "$aac" == "opus" ] && audio_t="-c:$stro opus -strict -2"
-		#[ "$aac" == "opus" ] && audio_t="-c:$stro libopus"
-		#[ "$aac" == "opus" ] && set_opus
-		#[ "$aac" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
-		#[ "$aac" == "aac" ] && set_aac
-		#[ "$aac" == "aac_he" ] && set_aac he
-		#[ "$aac" == "aac_he_v2" ] && set_aac he_v2
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
 	    "aac_latm")
 		map="$map -map 0:$str"
 		audio_t="-c:$stro copy"
-		#if [ "$OUTPUT" == "mp4" ]
-		#then
-		#    br=
-		#    [ "$atyp" == "stereo" ] && br="-b:$stro $aac_stereo_br"
-		#    audio_t="-c:$stro $aaclib $br"
-		#fi
 		[ "$OUTPUT" == "mp4" ] && aac=aac
 		[ "$OUTPUT" == "mpg" ] && aac=mp2
 		[ "$OUTPUT" == "webm" ] && aac=opus
-		#[ "$aac" == "opus" ] && set_opus
-		#[ "$aac" == "aac_he" ] && set_aac he
 		set_audio $aac
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
@@ -3144,42 +3058,23 @@ analyze() {
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "webm" ] && mp2=opus
-		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br"
 		[ "$OUTPUT" == "mpg" ] && mp2=copy
 		set_audio $mp2
-		#[ "$mp2" == "aac" ] && set_aac
-		#[ "$mp2" == "aac_he" ] && set_aac he
-		#[ "$mp2" == "aac_he_v2" ] && set_aac he_v2
-		#[ "$mp2" == "aac" ] && audio_t="-c:$stro $aaclib -vbr 3"
-		#[ "$mp2" == "opus" ] && set_opus
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
 	    "mp3")
 		#set -x
 		map="$map -map $str0:$str"
-		#audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$mp3" == "copy" ] && mp3=aac
 		[ "$OUTPUT" == "webm" ] && mp3=opus
 		set_audio $mp3
-		#if [ "$mp3" == "aac" ]
-		#then
-		#    if [ $ar1 -ne 48000 ]
-		#    then
-		#        ar="-ar:$stro 48000"
-		#    fi
-		#    audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
-		#fi
-		#[ "$mp3" == "opus" ] && set_opus
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		#exit
 		;;
 	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
 		map="$map -map $str0:$str"
-		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
-		#audio_t="$audio -c:$stro $aaclib -b:$stro 128k"
-		#audio="$audio -c:$stro $aaclib -vdr 2"
 		[ "$acodec" != "" ] && set_audio $acodec
 		[ "$OUTPUT" == "webm" ] && set_opus
 		set_audio $pcm
@@ -3188,9 +3083,6 @@ analyze() {
 		;;
 	    "opus")
 		map="$map -map $str0:$str"
-		#audio_t="-c:$stro copy"
-		#audio="$audio -c:$stro $aaclib -b:$stro $aac_stereo_br"
-		#[ "$OUTPUT" == "vdr" ] && set_aac
 		[ "$OUTPUT" == "vdr" ] && opus=aac
 		set_audio $opus
 		audio="$audio $audio_t"
