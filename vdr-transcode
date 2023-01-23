@@ -860,6 +860,10 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
+	"--ardy")
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"--auto")
 	    auto=1
 	    #quiet=1
@@ -3888,6 +3892,21 @@ ls_del() {
     exit
 }
 
+auto_rdy() {
+    # seek .rdy
+    #set -x
+    sum=0
+    while read line
+    do
+	if [ -e $line ]
+	then
+	    #for rh in $(find $line -type f -name "*.rdy")
+	    find $line -type f -name "*.rdy"
+	fi
+    done < $confs
+    exit
+}
+
 auto_check() {
     #set -x
     t=/tmp/vtc
@@ -4031,6 +4050,9 @@ case $TODO in
 	;;
     "--ac")
 	auto_check
+	;;
+    "--ardy")
+	auto_rdy
 	;;
     "--conf")
 	auto_conf
