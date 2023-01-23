@@ -3820,6 +3820,7 @@ server_kill() {
 
 auto_queue() {
     #set -x
+    n=0
     while read line
     do
 	if [ -e $line ]
@@ -3827,9 +3828,11 @@ auto_queue() {
 	    for rh in $(find $line -name $vtc)
 	    do
 		echo $rh
+		n=$(($n+1))
 	    done
 	fi
     done < $confs
+    echo "Anzahl: "$n
     exit
 }
 
