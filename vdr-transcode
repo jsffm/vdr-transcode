@@ -2020,6 +2020,7 @@ set_hwacc() {
 	    vp9enc=vp9_vaapi
 	    ;;
 	"qsv")
+	    #[ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
 	    HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
 	    deinterlace="deinterlace_qsv"
 	    h264enc=h264_qsv
@@ -2166,7 +2167,7 @@ set_h264() {
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"h264_qsv")
-	    LIBVA_DRIVER_NAME=iHD
+	    #LIBVA_DRIVER_NAME=iHD
 	    [ "$crf" == "" ] && crf=21
 	    preset="-profile:v $hevc_profile $level -global_quality $crf $opt_r"
 	    ;;
@@ -2233,7 +2234,7 @@ set_hevc() {
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"hevc_qsv")
-	    LIBVA_DRIVER_NAME=iHD
+	    #LIBVA_DRIVER_NAME=iHD
 	    [ "$hevc_cq" == "" ] && hevc_cq=35
 	    preset="-profile:v $hevc_profile $level_hevc -global_quality $hevc_cq $opt_r"
 	    ;;
