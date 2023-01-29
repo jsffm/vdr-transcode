@@ -1998,6 +1998,8 @@ set_hwacc() {
 	    #deinterlace="-vf yadif_cuda"
 	    deinterlace="yadif_cuda"
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
+	    h264enc=h264_nvenc
+	    hevcenc=hevc_nvenc
 	    ;;
 	"vdpau")
 	    export DISPLAY=:0.0
@@ -2013,10 +2015,15 @@ set_hwacc() {
 	    #deinterlace="-vf deinterlace_vaapi"
 	    deinterlace="deinterlace_vaapi"
 	    [ "$scale" != "" ] && add_vf scale_vaapi=$scale
+	    h264enc=h264_vaapi
+	    hevcenc=hevc_vaapi
+	    vp9enc=vp9_vaapi
 	    ;;
 	"qsv")
 	    HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
 	    deinterlace="deinterlace_qsv"
+	    h264enc=h264_qsv
+	    hevcenc=hevc_qsv
 	    ;;
 	"vulkan")
 	    #export DISPLAY=:0.0
