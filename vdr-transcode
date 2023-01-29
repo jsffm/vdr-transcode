@@ -2023,6 +2023,7 @@ set_hwacc() {
 	    #[ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
 	    HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
 	    deinterlace="deinterlace_qsv"
+	    [ "$scale" != "" ] && add_vf scale_qsv=$scale
 	    h264enc=h264_qsv
 	    hevcenc=hevc_qsv
 	    ;;
