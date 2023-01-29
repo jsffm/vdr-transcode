@@ -95,6 +95,7 @@ nvenc_rc=vbr
 av1enc=libsvtav1		# librav1e libaom-av1
 qav1=50
 av1preset=8
+gpu=0
 #deinterlace="-filter:v yadif"
 deinterlace="yadif"
 #deinterlace="-vf yadif_cuda"
@@ -738,6 +739,9 @@ parameter() {
 	    ;;
 	"-libva")
 	    libva=$2
+	    ;;
+	"-gpu")
+	    gpu=$2
 	    ;;
 	"--nohw")
 	    #deinterlace="-filter:v yadif"
@@ -2003,7 +2007,7 @@ set_hwacc() {
 	"vaapi")
 	    #export LIBVA_DRIVER_NAME=i965
 	    [ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
-	    VAAPI="-vaapi_device /dev/dri/renderD128 -hwaccel_output_format vaapi"
+	    VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
 	    HWACC="-hwaccel vaapi $VAAPI"
 	    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
 	    #deinterlace="-vf deinterlace_vaapi"
@@ -2011,7 +2015,7 @@ set_hwacc() {
 	    [ "$scale" != "" ] && add_vf scale_vaapi=$scale
 	    ;;
 	"qsv")
-	    HWACC="-hwaccel qsv -hwaccel_output_format qsv"
+	    HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
 	    deinterlace="deinterlace_qsv"
 	    ;;
 	"vulkan")
@@ -2152,7 +2156,7 @@ set_h264() {
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    [ "$crf" == "" ] && crf=21
 	    preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"h264_qsv")
 	    LIBVA_DRIVER_NAME=iHD
@@ -2219,7 +2223,7 @@ set_hevc() {
 	    [ "$hevc_cq" == "" ] && hevc_cq=28
 	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
 	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"hevc_qsv")
 	    LIBVA_DRIVER_NAME=iHD
@@ -2307,7 +2311,7 @@ set_vp9() {
 	    fi
 	    video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $aspect"
 	    #video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD128" && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"libvpx-vp9")
 	    #crf=33
