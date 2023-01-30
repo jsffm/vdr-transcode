@@ -2236,7 +2236,7 @@ set_hevc() {
 	    ;;
 	"hevc_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
-	    [ "$hevc_cq" == "" ] && hevc_cq=35
+	    [ "$hevc_cq" == "" ] && hevc_cq=31
 	    preset="-profile:v $hevc_profile $level_hevc -global_quality $hevc_cq $opt_r"
 	    ;;
 	"libkvazaar")
