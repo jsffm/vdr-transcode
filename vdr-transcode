@@ -268,6 +268,7 @@ help_Configuration_V() {
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|vaapi|qsv|vdpau|-"
     echo " -libva i965|iHD"
+    echo " -gpu <n>                    # vaapi qsv"
     echo " -m4_b                       # mpeg4 bitrate"
 }
 
