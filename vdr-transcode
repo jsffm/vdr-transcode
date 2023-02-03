@@ -94,7 +94,7 @@ nvenc_preset=medium
 nvenc_rc=vbr
 av1enc=libsvtav1		# librav1e libaom-av1
 qav1=50
-av1preset=8
+#av1preset=8
 gpu=0
 #deinterlace="-filter:v yadif"
 deinterlace="yadif"
@@ -264,7 +264,7 @@ help_Configuration_V() {
     echo " -nvenc_rc vbr|constqp       # default vbr"
     echo " -av1enc libsvtav1|librav1e|libaom-av1 # default libsvtav1"
     echo " -av1_q <n>                  # default 50"
-    echo " -av1preset <n>              # default 8"
+    echo " -av1_preset <n>             # default 8"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|vaapi|qsv|vdpau|-"
     echo " -libva i965|iHD"
@@ -587,7 +587,7 @@ parameter() {
 	"-av1_q"|"-qav1")
 	    qav1=$2
 	    ;;
-	"-av1preset")
+	"-av1_preset")
 	    av1preset=$2
 	    ;;
 	"-g")
@@ -2175,7 +2175,8 @@ set_h264() {
 	"h264_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
 	    [ "$crf" == "" ] && crf=21
-	    preset="-profile:v $hevc_profile $level -global_quality $crf $opt_r"
+	    #preset="-profile:v $hevc_profile $level -global_quality $crf $opt_r"
+	    preset="-profile:v $hevc_profile $level -q:v $crf $opt_r"
 	    ;;
 	"h264_omx")
 	    preset="-profile:v high"
@@ -2242,7 +2243,9 @@ set_hevc() {
 	"hevc_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
 	    [ "$hevc_cq" == "" ] && hevc_cq=31
-	    preset="-profile:v $hevc_profile $level_hevc -global_quality $hevc_cq $opt_r"
+	    [ "$hevc_preset" == "" ] && hevc_preset=medium
+	    load_plugin="-load_plugin hevc_hw"
+	    preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
 	    ;;
 	"libkvazaar")
 	    #parameter --nohw
@@ -2310,7 +2313,7 @@ set_vp9() {
     #[ "$s8bit" != "" ] && add_vf format=yuv420p
     case "$vp9enc" in
 	"vp9_vaapi")
-	    export LIBVA_DRIVER_NAME=i965
+	    #export LIBVA_DRIVER_NAME=i965
 	    if [ $gq -lt 50 ]
 	    then
 		gq=120
@@ -2326,6 +2329,23 @@ set_vp9() {
 	    video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $aspect"
 	    #video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    ;;
+	"vp9_qsv")
+	    #export LIBVA_DRIVER_NAME=iHD
+	    if [ $gq -lt 50 ]
+	    then
+		gq=120
+		echo "gq= changed to $gq" >> "$log_c"
+	    fi
+	    #[ "$s8bit" != "" ] && hwdownload && add_vf format=yuv420p && add_vf hwupload
+	    if [ "$s8bit" != "" ]
+	    then
+		hwdownload
+		add_vf format=yuv420p
+		add_vf hwupload
+	    fi
+	    video="-c:v vp9_qsv -profile profile0 -preset medium -q:v $gq $aspect"
+	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"libvpx-vp9")
 	    #crf=33
@@ -2360,8 +2380,20 @@ set_av1() {
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
 	"libsvtav1")
+	    [ "$av1preset" == "" ] && av1preset=8
 	    video="-c:v $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
 	    #video="$video -svtav1-params fast-decode=2"
+	    ;;
+	"av1_qsv")
+	    #export LIBVA_DRIVER_NAME=iHD
+	    preset="-preset fast"
+	    [ "$av1preset" != "" ] && preset="-preset" $av1preset
+	    video="-c:v av1_qsv -profile main $preset -q:v $qav1 $aspect"
+	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    ;;
+	*)
+	    echo "-av1enc=$av1enc wrong"
+	    exit 8
 	    ;;
     esac
     video="$video $aspect"
