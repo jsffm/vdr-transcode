@@ -2386,6 +2386,11 @@ set_av1() {
 	    ;;
 	"av1_qsv")
 	    #export LIBVA_DRIVER_NAME=iHD
+	    if [ $qav1 -lt 60 ]
+	    then
+		qav1=120
+		echo "gq= changed to $qav1" >> "$log_c"
+	    fi
 	    preset="-preset fast"
 	    [ "$av1preset" != "" ] && preset="-preset" $av1preset
 	    video="-c:v av1_qsv -profile main $preset -q:v $qav1 $aspect"
