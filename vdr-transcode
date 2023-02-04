@@ -2361,7 +2361,7 @@ set_vp9() {
 		add_vf format=yuv420p
 		add_vf hwupload
 	    fi
-	    video="-c:v vp9_qsv -profile profile0 -preset medium -q:v $gq $aspect"
+	    video="-c:v vp9_qsv -profile:v profile0 -preset medium -q:v $gq $aspect"
 	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"libvpx-vp9")
@@ -2410,7 +2410,7 @@ set_av1() {
 	    fi
 	    preset="-preset fast"
 	    [ "$av1preset" != "" ] && preset="-preset" $av1preset
-	    video="-c:v av1_qsv -profile main $preset -q:v $qav1 $aspect"
+	    video="-c:v av1_qsv -profile:v main $preset -q:v $qav1 $aspect"
 	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	*)
