@@ -37,10 +37,9 @@
 # grep | tail -> grep -m
 # -qscale
 # -aq q
-# -q
 # dvb_subtitle	-canvas_size ?
-# inf() and analyze(): skip first 3 seconds for better detection of audio codecs
 # delogo
+# -ar
 
 # [mp4 @ 0x7fffce613640] opus in MP4 support is experimental, add '-strict -2' if you want to use it.
 
@@ -741,7 +740,7 @@ parameter() {
 	    ;;
 	"-hwaccel")
 	    hwaccel=$w2
-	    case "$hwaccel" in
+	    case "$2" in
 		"cuvid")
 		    h264enc=h264_nvenc
 		    hevcenc=hevc_nvenc
@@ -756,6 +755,12 @@ parameter() {
 		    hevcenc=hevc_qsv
 		    vp9enc=vp9_qsv
 		    av1enc=av1_qsv
+		    ;;
+		"vdpau"|"-")
+		    ;;
+		*)
+		    echo "-hwaccel" $2 "wrong"
+		    exit 8
 		    ;;
 	    esac
 	    ;;
@@ -2049,6 +2054,15 @@ set_hwacc() {
 	    #h264enc=h264_qsv
 	    #hevcenc=hevc_qsv
 	    ;;
+	"qsvh")
+	    VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
+	    HWACC="-hwaccel vaapi $VAAPI"
+	    deinterlace="deinterlace_vaapi"
+	    [ "$scale" != "" ] && add_vf scale_vaapi=$scale
+	    h264enc=h264_qsv
+	    hevcenc=hevc_qsv
+	    preenc="-vf hwmap=derive_device=qsv,format=qsv"
+	    ;;
 	"vulkan")
 	    #export DISPLAY=:0.0
 	    HWACC="-hwaccel vulkan"
@@ -2211,7 +2225,7 @@ set_h264() {
 	    ;;
     esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
-    video="-c:v:0 $h264enc $preset $gop $aspect $h264_br"
+    video="$preenc -c:v:0 $h264enc $preset $gop $aspect $h264_br"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
@@ -2280,7 +2294,7 @@ set_hevc() {
 	    exit 8
 	    ;;
     esac
-    video="-c:v:0 $hevcenc $preset $gop $aspect $OPT_V"
+    video="$preenc -c:v:0 $hevcenc $preset $gop $aspect $OPT_V"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
@@ -2362,7 +2376,8 @@ set_vp9() {
 		add_vf hwupload
 	    fi
 	    video="-c:v vp9_qsv -profile:v profile0 -preset medium -q:v $gq $aspect"
-	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    #[ "$hwaccel" == "qsv" ] && add_vf 'hwdownload,format=nv12,hwupload'
+	    [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
 	    ;;
 	"libvpx-vp9")
 	    #crf=33
@@ -2405,7 +2420,7 @@ set_av1() {
 	    #export LIBVA_DRIVER_NAME=iHD
 	    if [ $qav1 -lt 60 ]
 	    then
-		qav1=120
+		qav1=135
 		echo "gq= changed to $qav1" >> "$log_c"
 	    fi
 	    preset="-preset fast"
