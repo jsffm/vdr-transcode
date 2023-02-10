@@ -2225,7 +2225,8 @@ set_h264() {
 	    ;;
     esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
-    video="$preenc -c:v:0 $h264enc $preset $gop $aspect $h264_br"
+    video="$preenc -c:v:0 $h264enc $preset $aspect $h264_br"
+    [ "$OUTPUT" == "vdr" ] && video="$video $gop"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
@@ -2294,7 +2295,8 @@ set_hevc() {
 	    exit 8
 	    ;;
     esac
-    video="$preenc -c:v:0 $hevcenc $preset $gop $aspect $OPT_V"
+    video="$preenc -c:v:0 $hevcenc $preset $aspect $OPT_V"
+    [ "$OUTPUT" == "vdr" ] && video="$video $gop"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
@@ -2311,12 +2313,12 @@ set_vp8() {
     fi
     #vp8flags="-vp8flags --cq-level=$gq"
     opt_vp8="-quality good -speed 1 -cpu-used -5"
-    video="-c:v libvpx $vp8flags -crf $gq $gop $opt_vp8 $aspect"
+    video="-c:v libvpx $vp8flags -crf $gq $opt_vp8 $aspect"
     if [ "$hwaccel" == "vaapi" ]
     then
 	#LIBVA_DRIVER_NAME=i965
 	#[ "$codec" == "mpeg4" ] && parameter --nohw
-	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $gop $aspect"
+	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
