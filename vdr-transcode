@@ -2426,7 +2426,7 @@ set_av1() {
 		echo "gq= changed to $qav1" >> "$log_c"
 	    fi
 	    preset="-preset fast"
-	    [ "$av1preset" != "" ] && preset="-preset" $av1preset
+	    [ "$av1preset" != "" ] && preset="-preset $av1preset"
 	    video="-c:v av1_qsv -profile:v main $preset -q:v $qav1 $aspect"
 	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
