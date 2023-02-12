@@ -2598,6 +2598,22 @@ set_mp3() {
     audio_t="-c:$stro mp3 $mp3_b"
 }
 
+core(){
+    case $codec in
+	"dts")
+	    core="dca_core"
+	    ;;
+	"truehd")
+	    core="truehd_core"
+	    #audio_t="-c:$stro truehd -bsf:$stro truehd_core -strict -2"
+	    ;;
+	"eac3")
+	    core="eac3_core"
+	    ;;
+    esac
+    [ "$core" != "" ] && audio_t="-c:$stro copy -bsf:$stro $core"
+}
+
 set_audio_plus() {
     map="$map -map $str0:$str"
     audio="$audio -c:$stro copy"
@@ -2641,6 +2657,9 @@ set_audio() {
     case $codec1 in
 	"copy")
 	    audio_t="-c:$stro copy"
+	    ;;
+	"core")
+	    core
 	    ;;
 	"ac3")
 	    set_ac3
@@ -3130,7 +3149,7 @@ analyze() {
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
-	    "ac3")
+	    "ac3"|"truehd")
 		#set -x
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
@@ -3150,11 +3169,20 @@ analyze() {
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
-	    "dts"|"truehd")
+	    "dts")
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "vdr" -a "$dts" == "copy" ] && dts=aac
 		[ "$OUTPUT" == "webm" ] && dts=opus
+		#echo $line
+		#set -x
+		IFS='()' read _ _ _ codec_e _ <<< $line
+		#echo "[$codec_e]"
+		#if [[ "$codec_e" == *DTS-HD* ]]
+		#then
+		#    OPT="$OPT -bsf:$stro dca_core"
+		#fi
+		#exit
 		set_audio $dts
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
