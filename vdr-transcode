@@ -934,6 +934,9 @@ parameter() {
 	    exec 2> trace.log
 	    set -x
 	    ;;
+	"--v")
+	    OPT_G="$OPT_G -v verbose"
+	    ;;
 	"-postproc")
 	    postproc=$2
 	    ;;
