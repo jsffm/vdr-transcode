@@ -1250,6 +1250,11 @@ diag() {
     if [ -e /dev/dri/renderD128 ]
     then
 	$ffmpeg -hide_banner -encoders | grep vaapi
+	$ffmpeg -hide_banner -encoders | grep qsv
+	echo "Decoders"
+	$ffmpeg -hide_banner -decoders | grep qsv
+	$ffmpeg -hide_banner -filters | grep qsv
+	echo "Encoders"
     fi
     echo
     $ffmpeg -hide_banner -encoders | grep h264
