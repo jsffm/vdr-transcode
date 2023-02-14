@@ -409,6 +409,7 @@ parameter() {
 	    hevc_cq=0
 	    ;;
 	"-ab")
+	    ab=$2
 	    mp3_b="-b:a $2"
 	    aac_stereo_br=$2
 	    opus_br=$2
@@ -2572,6 +2573,11 @@ set_opus() {
     [ "$atyp" == "5.1(side)" ] && audio_t="$audio_t -ac:$stro 6"
 }
 
+set_vorbis() {
+    audio_t="-c:$stro libvorbis"
+    [ "$ab" != "" ] && audio_t="$audio_t -b:$stro $ab"
+}
+
 set_ac3() {
     if [ "$atyp" != "stereo" -a "$atyp" != "2" ]
     then
@@ -2695,6 +2701,9 @@ set_audio() {
 	    ;;
 	"mp3")
 	    set_mp3
+	    ;;
+	"vorbis")
+	    set_vorbis
 	    ;;
 	*)
 	    echo $codec1 wrong
