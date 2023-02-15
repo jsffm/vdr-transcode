@@ -3333,6 +3333,21 @@ analyze() {
 		#set +x
 		#exit
 		;;
+	    "text")
+		#set -x
+		if [ "$fmt" == "vdr" ]
+		then
+		    OPT_G="-dump_attachment:t $dest/info $OPT_G"
+		fi
+		if [ "$fmt" == "mkv" ]
+		then
+		    map="$map -map $str0:$str"
+		    audio_t="-c:$stro copy"
+		    audio="$audio $audio_t"
+		    stro1=$(($stro1+1))
+		fi
+		#exit
+		;;
 	    *)
 		echo "Codec $codec unknown"
 		exit 8
@@ -3472,6 +3487,7 @@ header() {
 
 info_create() {
     info=$dest/info
+    [ -e $dest/info ] && return
     #cat $t
     dauer1=$(grep "Duration:" $t)
     dauer2=$(echo $dauer1 | cut -d \  -f 2)
@@ -3513,6 +3529,7 @@ to_utf8() {
 
 copy_vdr() {
     #set -x
+    fmt=vdr
     log_c=$dest/logfile
     mkdir -p $dest
     if [ "$ifmt" == "vdr" ]
@@ -3733,6 +3750,14 @@ copy_file() {
     fi
     [ "$fmt" == "mp4" ] && OPT="$OPT -movflags faststart"
     [ "$ifmt" == "vdr" ] && chapt_marks
+    if [ "$ifmt" == "vdr" -a "$fmt" == "mkv" ]
+    then
+	info=
+	[ -e info ] && info=info
+	[ -e info.vdr ] && info=info.vdr
+	attach="-attach $info -metadata:s:"$(($stro+1))" mimetype=text/plain"
+	[ "$info" != "" ] && map="$map $attach"
+    fi
     transcode "$out"
     #newsize=$(ls -l "$out"|cut -d \  -f 5)
     newsize=$(stat "$out" -c "%s")
@@ -3747,9 +3772,10 @@ copy_file() {
 	[ -e info.vdr ] && info=info.vdr
 	if [ "$info" != "" ]
 	then
-	    grep "^T" $info > $name.inf
-	    grep "^S" $info >> $name.inf
-	    grep "^D" $info >> $name.inf
+	    out=$name.info
+	    grep "^T" $info > $out
+	    grep "^S" $info >> $out
+	    grep "^D" $info >> $out
 	fi
     fi
     #set +x
