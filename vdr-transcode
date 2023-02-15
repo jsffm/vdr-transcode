@@ -1262,6 +1262,7 @@ diag() {
     $ffmpeg -hide_banner -encoders | grep hevc
     $ffmpeg -hide_banner -encoders | grep aac
     $ffmpeg -hide_banner -encoders | grep opus
+    $ffmpeg -hide_banner -encoders | grep vorbis
     exit
 }
 
