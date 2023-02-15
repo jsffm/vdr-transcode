@@ -380,6 +380,9 @@ parameter() {
 	"-tr")
 	    track=$2
 	    ;;
+	"-attach")
+	    attach_file=$2
+	    ;;
 	"--streams")
 	    TODO=$1
 	    ;;
@@ -3758,6 +3761,16 @@ copy_file() {
 	[ -e info.vdr ] && info=info.vdr
 	attach="-attach $info -metadata:s:"$(($stro+1))" mimetype=text/plain"
 	[ "$info" != "" ] && map="$map $attach"
+    fi
+    if [ "$attach_file" != "" ]
+    then
+	if [ "$fmt" == "mkv" ]
+	then
+	    map="$map -attach $attach_file -metadata:s:"$(($stro+1))" mimetype=text/plain"
+	else
+	    echo "-attach mkv only"
+	    exit 8
+	fi
     fi
     transcode "$out"
     #newsize=$(ls -l "$out"|cut -d \  -f 5)
