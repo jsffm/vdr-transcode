@@ -2710,7 +2710,9 @@ set_audio() {
 	    set_vorbis
 	    ;;
 	*)
-	    echo $codec1 wrong
+	    msg="$codec1 wrong"
+	    echo $msg
+	    echo $msg >> $log_c
 	    exit 8
 	    ;;
     esac
@@ -3353,8 +3355,34 @@ analyze() {
 		#exit
 		;;
 	    *)
-		echo "Codec $codec unknown"
-		exit 8
+		#set -x
+		case $typ in
+		    "Video:")
+			if [ "$fmt" == vdr ]
+			then
+			    set_video "h264"
+			else
+			    set_video "copy"
+			fi
+			;;
+		    "Audio:")
+			map="$map -map $str0:$str"
+			if [ "$fmt" == vdr ]
+			then
+			    set_audio "aac"
+			else
+			    set_audio "copy"
+			fi
+			audio="$audio $audio_t"
+			stro1=$(($stro1+1))
+			;;
+		    *)
+			msg="Codec $codec unknown"
+			echo $msg
+			echo $msg >> $log_c
+			exit 8
+			;;
+		esac
 		;;
 	esac
     done < $t
