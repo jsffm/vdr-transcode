@@ -585,7 +585,12 @@ parameter() {
 	    gq=$2	# VP8
 	    ;;
 	"-qv")
-	    OPT="$OPT -q:v $2"
+	    #OPT="$OPT -q:v $2"
+	    qv=$2
+	    crf=$2
+	    hevc_cq=$2
+	    gq=$2	# VP9
+	    qav1=$2
 	    ;;
 	"-av1_q"|"-qav1")
 	    qav1=$2
@@ -2177,6 +2182,9 @@ set_video() {
 	av1)
 	    set_av1
 	    ;;
+	avs3)
+	    set_avs3
+	    ;;
 	*)
 	    echo "-$ivcodec $1 wrong"
 	    exit 8
@@ -2452,6 +2460,16 @@ set_av1() {
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$av1enc"
 }
 
+set_avs3() {
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" -a "$crop" == "" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    video="-c:v libuavs3e -thds_frm $(nproc) $aspect"
+    [ "$qv" != "" ] && video="$video -qp $qv"
+}
+
 set_mpeg2() {
     br="-b:v 4000k"
     [ "$h264_br" != "" ] && br=$h264_br
@@ -2723,6 +2741,7 @@ set_audio() {
 set_pid() {
     v=$($ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Video:")
     IFS='[]' read pre pidx post <<< $v
+    [ "${pidx:0:2}" != "0x" ] && return
     PID=$(($pidx))
     pids="-mpegts_start_pid $PID"
 }
