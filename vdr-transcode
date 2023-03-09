@@ -1317,16 +1317,37 @@ input_file() {
     rm -f $old
     if [ "${INPUT:0:4}" != "http" ]
     then
-	if [ ! -e "$INPUT" ]
+	#set -x
+	if [[ "$INPUT" == *+* ]]
 	then
-	    echo "\"$INPUT\" not found."
-	    exit 8
+	    ffmpeg_i="-i concat:"
+	    oldsize=0
+	    d=
+	    IFS="+"
+	    read I1 _ <<< $INPUT
+	    for r in $INPUT
+	    do
+		ffmpeg_i=$ffmpeg_i$d$r
+		d="|"
+		oldsize=$(($oldsize+$(stat $r -c "%s")))
+	    done
+	    unset IFS
+	    oldsize=$(($oldsize/1024))
+	    INPUT=$I1
+	else
+	    if [ ! -e "$INPUT" ]
+	    then
+		echo "\"$INPUT\" not found."
+		exit 8
+	    fi
+	    ffmpeg_i="-i \"$INPUT\""
+	    ls_iso "$INPUT" > $old
+	    # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
+	    oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
+	    oldsize=$(($oldsize/1024))
+	    rec_time=$(date "+%s" -r "$INPUT")
 	fi
-	ls_iso "$INPUT" > $old
-	# -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
-	oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
-	oldsize=$(($oldsize/1024))
-	rec_time=$(date "+%s" -r "$INPUT")
+	#exit
 	#chapt_mediainfo "$INPUT"
     else
 	#set -x
@@ -1339,7 +1360,6 @@ input_file() {
 	#exit
     fi
     echo "oldsize="$oldsize >> $old
-    ffmpeg_i="-i \"$INPUT\""
     input="$INPUT"
     name=${INPUT%.*}
     name=$(basename "$name")
