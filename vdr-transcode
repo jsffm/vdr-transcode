@@ -141,7 +141,7 @@ fi
 
 help_Input() {
     echo "Input"
-    echo " -i <file>|vdr|dvd[:<track>]|<http> # default vdr"
+    echo " -i <file[+file2]>|vdr|dvd[:<track>]|<http> # default vdr"
     echo " -dvd <path>"
     echo " -BD <path>    # AVCHD"
     echo " -tr <track>   # DVD or AVCHD track"
