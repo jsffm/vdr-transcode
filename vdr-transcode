@@ -92,7 +92,7 @@ nvenc_preset=medium
 #nvenc_rc=constqp
 nvenc_rc=vbr
 av1enc=libsvtav1		# librav1e libaom-av1
-qav1=50
+#qav1=50
 #av1preset=8
 gpu=0
 #deinterlace="-filter:v yadif"
@@ -2467,15 +2467,22 @@ set_av1() {
 	    ;;
 	"libsvtav1")
 	    [ "$av1preset" == "" ] && av1preset=8
-	    video="-c:v $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
+	    if [ ${ffmpeg_v:0:1} -lt 5 ]
+	    then
+		[ "$qav1" == "" ] && qav1=50
+		video="-c:v $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
+	    else
+		[ "$qav1" == "" ] && qav1=55
+		video="-c:v $av1enc -preset $av1preset -crf $qav1 -sc_detection 0"
+	    fi
 	    #video="$video -svtav1-params fast-decode=2"
 	    ;;
 	"av1_qsv")
 	    #export LIBVA_DRIVER_NAME=iHD
-	    if [ $qav1 -lt 60 ]
+	    if [ "$qav1" == "" ]
 	    then
 		qav1=135
-		echo "gq= changed to $qav1" >> "$log_c"
+		echo "av1_q set to $qav1" >> "$log_c"
 	    fi
 	    preset="-preset fast"
 	    [ "$av1preset" != "" ] && preset="-preset $av1preset"
@@ -3538,6 +3545,12 @@ header() {
     d=`date +"%F %T"`
     v=$($ffmpeg -version)
     v=$(echo $v | cut -d \  -f 3)
+    if [ "${v:0:1}" == "N" ]
+    then
+	ffmpeg_v=5
+    else
+	ffmpeg_v=$v
+    fi
     echo "Start $d vdr-transcode ffmpeg Version $v" > "$log_c"
     sd=$(date +"%F %T" -r $0)
     echo "script date" $sd >> "$log_c"
