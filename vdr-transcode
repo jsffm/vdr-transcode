@@ -766,6 +766,12 @@ parameter() {
 		    vp9enc=vp9_qsv
 		    av1enc=av1_qsv
 		    ;;
+		"qsvh")
+		    h264enc=h264_qsv
+		    hevcenc=hevc_qsv
+		    vp9enc=vp9_qsv
+		    av1enc=av1_qsv
+		    ;;
 		"vdpau"|"-")
 		    ;;
 		*)
@@ -2087,20 +2093,24 @@ set_hwacc() {
 	    ;;
 	"qsv")
 	    #[ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
-	    HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
+	    #HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
+	    HWACC="-hwaccel qsv -hwaccel_output_format qsv"
 	    deinterlace="deinterlace_qsv"
 	    [ "$scale" != "" ] && add_vf scale_qsv=$scale
 	    #h264enc=h264_qsv
 	    #hevcenc=hevc_qsv
 	    ;;
 	"qsvh")
-	    VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
-	    HWACC="-hwaccel vaapi $VAAPI"
+	    #VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
+	    #HWACC="-hwaccel vaapi $VAAPI"
+	    #HWACC="-init_hw_device qsv=hw -filter_hw_device hw -f rawvideo -pix_fmt yuv420p"
+	    HWACC="-init_hw_device qsv=hw"
 	    deinterlace="deinterlace_vaapi"
 	    [ "$scale" != "" ] && add_vf scale_vaapi=$scale
 	    h264enc=h264_qsv
 	    hevcenc=hevc_qsv
-	    preenc="-vf hwmap=derive_device=qsv,format=qsv"
+	    #preenc="-vf hwmap=derive_device=qsv,format=qsv"
+	    preenc="-vf hwupload=extra_hw_frames=64,format=qsv"
 	    ;;
 	"vulkan")
 	    #export DISPLAY=:0.0
@@ -2316,7 +2326,7 @@ set_hevc() {
 	    ;;
 	"hevc_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
-	    [ "$hevc_cq" == "" ] && hevc_cq=31
+	    [ "$hevc_cq" == "" ] && hevc_cq=26
 	    [ "$hevc_preset" == "" ] && hevc_preset=medium
 	    load_plugin="-load_plugin hevc_hw"
 	    preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
