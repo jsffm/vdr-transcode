@@ -2170,8 +2170,8 @@ inf() {
     else
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     fi
-    rm -f $t
-    rm -f $old
+    #rm -f $t
+    #rm -f $old
     exit
 }
 
