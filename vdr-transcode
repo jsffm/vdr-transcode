@@ -3201,7 +3201,7 @@ analyze() {
 		;;
 	    "vp9")
 		decode_cuvid="-c:v vp9_cuvid"
-		decode_cuvid="-c:v vp9_qsv"
+		decode_qsv="-c:v vp9_qsv"
 		video="-c:v copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$vp9" == "copy" ] && vp9=h264
