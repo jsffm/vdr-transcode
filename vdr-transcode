@@ -262,6 +262,7 @@ help_Configuration_V() {
     echo " -hevc_preset <preset>       # if you know, what you are doing"
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
     echo " -nvenc_rc vbr|constqp       # default vbr"
+    echo " -vp9enc libvpx-vp9|vp9_vaapi|vp9_qsv"
     echo " -av1enc libsvtav1|librav1e|libaom-av1 # default libsvtav1"
     echo " -av1_q <n>                  # default 50"
     echo " -av1_preset <n>             # default 8"
