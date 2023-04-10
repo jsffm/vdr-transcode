@@ -3637,8 +3637,13 @@ to_utf8() {
 copy_vdr() {
     #set -x
     fmt=vdr
-    log_c=$dest/logfile
-    mkdir -p $dest
+    if [ "$sim" != "" ]
+    then
+	log_c=logfile-sim
+    else
+	log_c=$dest/logfile
+	mkdir -p $dest
+    fi
     if [ "$ifmt" == "vdr" ]
     then
 	echo $(dirname $PWD)"/"${log_c:3} > $vtlog
