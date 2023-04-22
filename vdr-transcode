@@ -1359,6 +1359,7 @@ input_file() {
 	#chapt_mediainfo "$INPUT"
     else
 	#set -x
+	ffmpeg_i="-i \"$INPUT\""
 	osr=$($ffprobe -i $INPUT 2>&1 | grep "Duration:")
 	osd=$(echo $osr|cut -d \  -f 2)
 	oss=$(date -u +%s -d "1970-01-01 ${osd:0:8}")
@@ -1371,7 +1372,7 @@ input_file() {
     input="$INPUT"
     name=${INPUT%.*}
     name=$(basename "$name")
-    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    [ "${ffmpeg_i:${#ffmpeg_i}-1:1}" == \" ] && x=eval
     $x $ffmpeg $ffmpeg_i 2> $t
     c_t=$(grep -i creation_time $t|head -n 1|cut -d ':' -f 2-)
     if [ "$c_t" != "" ]
@@ -2163,7 +2164,7 @@ inf() {
     #$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     #sss="$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E \"Duration|Stream|Chapter\""
     #eval $sss
-    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    [ "${ffmpeg_i:${#ffmpeg_i}-1:1}" == \" ] && x=eval
     [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i -i $INPUTA"
     #$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     if [ "$ifmt" == "vdr" -a $skip -gt 0 ]
@@ -2797,7 +2798,7 @@ analyze() {
     #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
     #eval $sss
-    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+    [ "${ffmpeg_i:${#ffmpeg_i}-1:1}" == \" ] && x=eval
     if [ "$INPUTA" != "" ]
     then
 	ffmpeg_i="$ffmpeg_i -i \"$INPUTA\""
