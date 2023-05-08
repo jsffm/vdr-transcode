@@ -75,6 +75,7 @@ pcm=aac
 #hevc_cq=28
 gq=30		# VP8
 #[ -e /dev/dri/renderD128 ] && gq=120
+mjpeg=0
 gop="-g 50"
 
 #h264_level=3.0  # 720x576i
@@ -408,8 +409,8 @@ parameter() {
 	    fpso=$2
 	    ;;
 	"-b")
-	    OPT_V="$OPT_V -b:v $2"
-	    h264_br="-b:v $2"
+	    OPT_V="$OPT_V -b:v:0 $2"
+	    h264_br="-b:v:0 $2"
 	    mp3_b="-b:a $2"
 	    hevc_cq=0
 	    ;;
@@ -422,8 +423,8 @@ parameter() {
 	    [ "${opus_br:${#opus_br}-1:1}" == "k" ] && opus_br=${opus_br:0:${#opus_br}-1}
 	    ;;
 	"-vb")
-	    OPT_V="$OPT_V -b:v $2"
-	    h264_br="-b:v $2"
+	    OPT_V="$OPT_V -b:v:0 $2"
+	    h264_br="-b:v:0 $2"
 	    hevc_cq=0
 	    mpeg4_b=$2
 	    ;;
@@ -447,7 +448,7 @@ parameter() {
 	    OPT="$OPT -copytb $2"
 	    ;;
 	"-bsf")
-	    OPT="$OPT -bsf:v $2"
+	    OPT="$OPT -bsf:v:0 $2"
 	    ;;
 	"-bsfa")
 	    OPT="$OPT -bsf:a $2"
@@ -485,7 +486,7 @@ parameter() {
 	    h264=$2
 	    ;;
 	"-h264_br")
-	    h264_br="-b:v $2"
+	    h264_br="-b:v:0 $2"
 	    ;;
 	"-hevc")
 	    hevc=$2
@@ -854,6 +855,9 @@ parameter() {
 	    ;;
 	"--dold")
 	    dold=1
+	    ;;
+	"-mjpeg")
+	    mjpeg=$2
 	    ;;
 	"--as")
 	    TODO=$1
@@ -2243,11 +2247,11 @@ set_h264() {
 	    #preset="veryfast"
 	    #preset="superfast"
 	    #preset="ultrafast"
-	    preset="-preset $x264_preset -tune film -profile:v $h264_profile $level -crf $crf $maxr"
+	    preset="-preset $x264_preset -tune film -profile:v:0 $h264_profile $level -crf $crf $maxr"
 	    ;;
 	"h264_nvenc")
 	    [ "$crf" == "" ] && crf=32
-	    preset="-preset $nvenc_preset -profile:v $h264_profile $level -cq $crf $nvenc_b $maxr"
+	    preset="-preset $nvenc_preset -profile:v:0 $h264_profile $level -cq $crf $nvenc_b $maxr"
 	    preset="$preset -rc $nvenc_rc"
 	    #preset="$preset -spatial-aq 1"
 	    #preset="$preset -coder 2"
@@ -2257,17 +2261,17 @@ set_h264() {
 	    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    [ "$crf" == "" ] && crf=21
-	    preset="-profile:v $h264_profile $level $rc_mode -qp $crf $quality $maxr"
+	    preset="-profile:v:0 $h264_profile $level $rc_mode -qp $crf $quality $maxr"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"h264_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
 	    [ "$crf" == "" ] && crf=21
 	    #preset="-profile:v $hevc_profile $level -global_quality $crf $opt_r"
-	    preset="-profile:v $hevc_profile $level -q:v $crf $opt_r"
+	    preset="-profile:v:0 $hevc_profile $level -q:v:0 $crf $opt_r"
 	    ;;
 	"h264_omx")
-	    preset="-profile:v high"
+	    preset="-profile:v:0 high"
 	    ;;
 	"openh264")
 	    h264enc=libopenh264
@@ -2275,8 +2279,8 @@ set_h264() {
 	    #coder="-coder vlc"
 	    #coder="-coder cavlc"
 	    #coder="-coder cabac"
-	    preset="-profile:v $h264_profile -allow_skip_frames 1 -rc_mode quality $coder"
-	    preset="$preset -global_quality:v $crf"
+	    preset="-profile:v:0 $h264_profile -allow_skip_frames 1 -rc_mode quality $coder"
+	    preset="$preset -global_quality:v:0 $crf"
 	    #preset="$preset -crf $crf"
 	    #preset="$preset -qp $crf"
 	    ;;
@@ -2315,7 +2319,7 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
-	    preset="-preset $hevc_preset -profile:v $hevc_profile $level_hevc -rc $nvenc_rc -cq $hevc_cq $opt_r"
+	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level_hevc -rc $nvenc_rc -cq $hevc_cq $opt_r"
 	    #preset="$preset -init_qpB 25"
 	    ;;
 	"hevc_vaapi")
@@ -2326,7 +2330,7 @@ set_hevc() {
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    [ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
 	    [ "$hevc_cq" == "" ] && hevc_cq=32
-	    preset="-profile:v $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
+	    preset="-profile:v:0 $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
 	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
@@ -2336,7 +2340,7 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=medium
 	    load_plugin="-load_plugin hevc_hw"
 	    #preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
-	    preset="-profile:v $hevc_profile -preset $hevc_preset -q:v $hevc_cq $load_plugin $opt_r"
+	    preset="-profile:v:0 $hevc_profile -preset $hevc_preset -q:v:0 $hevc_cq $load_plugin $opt_r"
 	    #preset="$preset -adaptive_i 1 -adaptive_b 1"
 	    ;;
 	"libkvazaar")
@@ -2373,12 +2377,12 @@ set_vp8() {
     fi
     #vp8flags="-vp8flags --cq-level=$gq"
     opt_vp8="-quality good -speed 1 -cpu-used -5"
-    video="-c:v libvpx $vp8flags -crf $gq $opt_vp8 $aspect"
+    video="-c:v:0 libvpx $vp8flags -crf $gq $opt_vp8 $aspect"
     if [ "$hwaccel" == "vaapi" ]
     then
 	#LIBVA_DRIVER_NAME=i965
 	#[ "$codec" == "mpeg4" ] && parameter --nohw
-	video="-c:v vp8_vaapi -rc_mode:v CQP -global_quality:v $gq $aspect"
+	video="-c:v:0 vp8_vaapi -rc_mode:v:0 CQP -global_quality:v:0 $gq $aspect"
     #else
 	#echo "Only vaapi"
 	#exit 8
@@ -2419,7 +2423,7 @@ set_vp9() {
 		add_vf format=yuv420p
 		add_vf hwupload
 	    fi
-	    video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq $aspect"
+	    video="-c:v:0 vp9_vaapi -rc_mode:v:0 CQP -global_quality:v:0 $gq $aspect"
 	    #video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
@@ -2437,7 +2441,7 @@ set_vp9() {
 		add_vf format=yuv420p
 		add_vf hwupload
 	    fi
-	    video="-c:v vp9_qsv -profile:v profile0 -preset medium -q:v $gq $aspect"
+	    video="-c:v:0 vp9_qsv -profile:v:0 profile0 -preset medium -q:v:0 $gq $aspect"
 	    #[ "$hwaccel" == "qsv" ] && add_vf 'hwdownload,format=nv12,hwupload'
 	    [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
 	    ;;
@@ -2445,7 +2449,7 @@ set_vp9() {
 	    #crf=33
 	    crf=40
 	    #video="-c:v libvpx-vp9 $gop -b:v 0 -crf $crf -threads 16 -tile-columns 6 -tile-rows 2 -frame-parallel 1 -cpu-used -5 -row-mt 1 $vf"
-	    video="-c:v libvpx-vp9 -b:v 0 -crf $crf -threads 16 -speed 4 -frame-parallel 1 -cpu-used -5 -row-mt 1"
+	    video="-c:v:0 libvpx-vp9 -b:v:0 0 -crf $crf -threads 16 -speed 4 -frame-parallel 1 -cpu-used -5 -row-mt 1"
 	    ;;
 	*)
 	    echo "-vp9enc=$vp9enc wrong"
@@ -2467,10 +2471,10 @@ set_av1() {
 	    #aopt="$aopt -tiles 4x1"
 	    aopt="$aopt -tiles 2x2"
 	    aopt="$aopt -threads "$(nproc)
-	    video="-c:v libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
+	    video="-c:v:0 libaom-av1 -cpu-used 8 -crf $crf $aopt -strict experimental"
 	    ;;
 	"librav1e")
-	    video="-c:v librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
+	    video="-c:v:0 librav1e -rav1e-params speed=9:low_latency=false -threads "$(nproc)" $h264_br"
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
 	"libsvtav1")
@@ -2478,10 +2482,10 @@ set_av1() {
 	    if [ ${ffmpeg_v:0:1} -lt 5 ]
 	    then
 		[ "$qav1" == "" ] && qav1=50
-		video="-c:v $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
+		video="-c:v:0 $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
 	    else
 		[ "$qav1" == "" ] && qav1=55
-		video="-c:v $av1enc -preset $av1preset -crf $qav1 -sc_detection 0"
+		video="-c:v:0 $av1enc -preset $av1preset -crf $qav1 -sc_detection 0"
 	    fi
 	    #video="$video -svtav1-params fast-decode=2"
 	    ;;
@@ -2494,7 +2498,7 @@ set_av1() {
 	    fi
 	    preset="-preset fast"
 	    [ "$av1preset" != "" ] && preset="-preset $av1preset"
-	    video="-c:v av1_qsv -profile:v main $preset -q:v $qav1 $aspect"
+	    video="-c:v:0 av1_qsv -profile:v:0 main $preset -q:v:0 $qav1 $aspect"
 	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	*)
@@ -2512,12 +2516,12 @@ set_avs3() {
 	hwdownload
 	OPT_I="$decode_cuvid"
     fi
-    video="-c:v libuavs3e -thds_frm $(nproc) $aspect"
+    video="-c:v:0 libuavs3e -thds_frm $(nproc) $aspect"
     [ "$qv" != "" ] && video="$video -qp $qv"
 }
 
 set_mpeg2() {
-    br="-b:v 4000k"
+    br="-b:v:0 4000k"
     [ "$h264_br" != "" ] && br=$h264_br
     #add_vf hwupload
     #if [ "$hwaccel" == "cuvid" ]
@@ -2530,7 +2534,7 @@ set_mpeg2() {
 	OPT_I="$decode_cuvid"
     fi
     add_vf tinterlace=4
-    video="-c:v mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $aspect"
+    video="-c:v:0 mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $aspect"
     #HWACC=
     #[ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
     [ "$aac" == "copy" ] && aac=mp2
@@ -2544,8 +2548,8 @@ set_mpeg4() {
 	hwdownload
 	OPT_I="$decode_cuvid"
     fi
-    video="-c:v mpeg4"
-    [ "$mpeg4_b" != "" ] && video="$video -b:v $mpeg4_b"
+    video="-c:v:0 mpeg4"
+    [ "$mpeg4_b" != "" ] && video="$video -b:v:0 $mpeg4_b"
 }
 
 set_xvid() {
@@ -2555,8 +2559,8 @@ set_xvid() {
 	OPT_I="$decode_cuvid"
     fi
     #video="-c:v libxvid -flags aic -ssim_acc 0"
-    video="-c:v libxvid -flags aic"
-    [ "$mpeg4_b" != "" ] && video="$video -b:v $mpeg4_b"
+    video="-c:v:0 libxvid -flags aic"
+    [ "$mpeg4_b" != "" ] && video="$video -b:v:0 $mpeg4_b"
 }
 
 set_aac() {
@@ -3132,8 +3136,8 @@ analyze() {
 		#set -x
 		video="-c:v:0 copy"
 		#decode_cuvid="-c:v mpeg2_cuvid"
-		decode_cuvid="-c:v ${codec:0:5}_cuvid"
-		decode_qsv="-c:v mpeg2_qsv"
+		decode_cuvid="-c:v:0 ${codec:0:5}_cuvid"
+		decode_qsv="-c:v:0 mpeg2_qsv"
 		#decode_mmal="-c:v ${codec:0:5}_mmal"
 		#parameter "--nohw"
 		[ "$vcodec" != "" ] && mpeg2=$vcodec
@@ -3143,36 +3147,36 @@ analyze() {
 		;;
 	    "h264")
 		#set -x
-		video="-c:v copy"
+		video="-c:v:0 copy"
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
 		[ "$fpso" != "" -a "$h264" == "copy" ] && h264=h264
-		decode_cuvid="-c:v h264_cuvid"
-		decode_qsv="-c:v h264_qsv"
+		decode_cuvid="-c:v:0 h264_cuvid"
+		decode_qsv="-c:v:0 h264_qsv"
 		#decode_mmal="-c:v h264_mmal"
-		decode_mmal="-c:v "$codec"_mmal"
+		decode_mmal="-c:v:0 "$codec"_mmal"
 		set_video $h264
 		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		#exit
 		;;
 	    "hevc")
-		video="-c:v copy"
+		video="-c:v:0 copy"
 		deinterlace=
 		#[ "$vcodec" != "" ] && hevc=$vcodec
 		[ "$vcodec" != "" -a "$vcodec" != "hevc" ] && hevc=$vcodec
 		[ "$OUTPUT" == "mpg" ] && hevc=mpeg2
 		[ "$OUTPUT" == "webm" ] && hevc=vp9
-		decode_cuvid="-c:v hevc_cuvid"
-		decode_qsv="-c:v hevc_qsv"
+		decode_cuvid="-c:v:0 hevc_cuvid"
+		decode_qsv="-c:v:0 hevc_qsv"
 		set_video $hevc
 		;;
 	    "vc1")
-		video="-c:v copy"
+		video="-c:v:0 copy"
 		[ "$OUTPUT" == "vdr" -a "$vc1" == "copy" ] && vc1=h264
-		decode_cuvid="-c:v vc1_cuvid"
-		decode_mmal="-c:v "$codec"_mmal"
-		decode_qsv="-c:v vc1_qsv"
+		decode_cuvid="-c:v:0 vc1_cuvid"
+		decode_mmal="-c:v:0 "$codec"_mmal"
+		decode_qsv="-c:v:0 vc1_qsv"
 		set_video $vc1
 		;;
 	    "msmpeg4v3"|"msmpeg4v2"|"mpeg4")
@@ -3182,25 +3186,25 @@ analyze() {
 		# without encoding but stream copy to fix it.
 		[ "$vcodec" != "" -a "$vcodec" != "mpeg4" ] && mpeg4=$vcodec
 		#[ "$OUTPUT" == "mp4" ] && echo "mpeg4 in mp4 not allowed" && exit 8
-		video="-c:v $mpeg4"
+		video="-c:v:0 $mpeg4"
 		[ "$OUTPUT" == "vdr" -a "$mpeg4" == "copy" ] && mpeg4=h264
-		[ $codec == "mpeg4" ] && decode_cuvid="-c:v mpeg4_cuvid"
+		[ $codec == "mpeg4" ] && decode_cuvid="-c:v:0 mpeg4_cuvid"
 		[ "$hwaccel" == "vaapi" ] && add_vf format=nv12,hwupload && HWACC="$VAAPI"
 		[ "$hwaccel" == "qsv" ] && add_vf format=nv12,hwupload
 		set_video $mpeg4
 		;;
 	    "vp6f"|"flv1")
 		parameter --nohw
-		video="-c:v copy"
+		video="-c:v:0 copy"
 		set_video copy
 		[ "$OUTPUT" == "vdr" ] && set_video h264
 		#[ "$OUTPUT" == "webm" ] && set_video vp9
 		#[ "$vcodec" != "" ] && set_video $vcodec
 		;;
 	    "vp8")
-		decode_cuvid="-c:v vp8_cuvid"
-		decode_cuvid="-c:v vp8_qsv"
-		video="-c:v copy"
+		decode_cuvid="-c:v:0 vp8_cuvid"
+		decode_cuvid="-c:v:0 vp8_qsv"
+		video="-c:v:0 copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$vp8" == "copy" ] && vp8=h264
 		#[ "$vp8" == "h264" ]  && set_h264
@@ -3208,9 +3212,9 @@ analyze() {
 		set_video $vp8
 		;;
 	    "vp9")
-		decode_cuvid="-c:v vp9_cuvid"
-		decode_qsv="-c:v vp9_qsv"
-		video="-c:v copy"
+		decode_cuvid="-c:v:0 vp9_cuvid"
+		decode_qsv="-c:v:0 vp9_qsv"
+		video="-c:v:0 copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$vp9" == "copy" ] && vp9=hevc
 		#[ "$vp9" == "h264" ]  && set_h264
@@ -3219,8 +3223,8 @@ analyze() {
 		;;
 	    "av1")
 		#decode_cuvid="-c:v av1_cuvid"
-		decode_cuvid="-c:v av1_qsv"
-		video="-c:v copy"
+		decode_cuvid="-c:v:0 av1_qsv"
+		video="-c:v:0 copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$av1" == "copy" ] && av1=h264
 		#[ "$av1" == "h264" ]  && set_h264
@@ -3388,9 +3392,16 @@ analyze() {
 		;;
 	    "mjpeg")
 		[ "$OUTPUT" == "vdr" ] && continue
-		map="$map -map $str0:$str"
-		subt="$subt -c:$stro copy"
-		stro1=$(($stro1+1))
+		[ "$mjpeg" == "0" ] && continue
+		if [ "$mjpeg" == "dump" ]
+		then
+		    OPT_G="-dump_attachment:t \"\" $OPT_G"
+		    #OPT_G="-dump_attachment:t ./cover.jpg $OPT_G"
+		else
+		    map="$map -map $str0:$str"
+		    subt="$subt -c:$stro copy -disposition:$stro +attached_pic"
+		    stro1=$(($stro1+1))
+		fi
 		;;
 	    "bin_data"|"png")
 		#set -x
