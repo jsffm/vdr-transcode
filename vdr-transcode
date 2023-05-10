@@ -4416,22 +4416,24 @@ cp -p "$log_c" $t
 g=$(id -g -n $USER)
 chown $USER:$g $t
 r=$(grep "^video:" $t)
-if [ "$r" != "" ]
+if [ "$r" == "" ]
 then
-    videos=$(echo $r|cut -d \  -f 1)
-    videos=$(echo $videos|cut -d ':' -f 2)
-    videos=${videos:0:${#videos}-2}
-    audios=$(echo $r|cut -d \  -f 2)
-    audios=$(echo $audios|cut -d ':' -f 2)
-    audios=${audios:0:${#audios}-2}
-    dur=$(grep "Duration:" $t|head -n 1)
-    dur=$(echo $dur|cut -d \  -f 2)
-    if [ "$dur" != "N/A," ]
-    then
-	durs1=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
-	brv=$(($videos*8/$durs1))
-	bra=$(($audios*8/$durs1))
-    fi
+    r=$(grep "video:" $t)
+    r=${r#*] }
+fi
+videos=$(echo $r|cut -d \  -f 1)
+videos=$(echo $videos|cut -d ':' -f 2)
+videos=${videos:0:${#videos}-2}
+audios=$(echo $r|cut -d \  -f 2)
+audios=$(echo $audios|cut -d ':' -f 2)
+audios=${audios:0:${#audios}-2}
+dur=$(grep "Duration:" $t|head -n 1)
+dur=$(echo $dur|cut -d \  -f 2)
+if [ "$dur" != "N/A," ]
+then
+    durs1=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    brv=$(($videos*8/$durs1))
+    bra=$(($audios*8/$durs1))
 fi
 echo "===========================================================" >> "$log_c"
 echo "Video:" $brv"kb/s Audio:" $bra"kb/s" >> "$log_c"
