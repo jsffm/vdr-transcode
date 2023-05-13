@@ -587,7 +587,7 @@ parameter() {
 	"-vp9_q"|"-gq")
 	    gq=$2	# VP8
 	    ;;
-	"-qv")
+	"-qv"|"-vq")
 	    #OPT="$OPT -q:v $2"
 	    qv=$2
 	    crf=$2
@@ -858,6 +858,9 @@ parameter() {
 	    ;;
 	"-mjpeg")
 	    mjpeg=$2
+	    ;;
+	"-meta_rem")
+	    OPT="$OPT -metadata $2=\"\""
 	    ;;
 	"--as")
 	    TODO=$1
