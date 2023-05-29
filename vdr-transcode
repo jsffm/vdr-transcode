@@ -2287,6 +2287,19 @@ set_h264() {
 	    #preset="$preset -crf $crf"
 	    #preset="$preset -qp $crf"
 	    ;;
+	"h264_amf")
+	    #usage=highquality
+	    usage=transcoding
+	    #quality=quality
+	    quality=balanced
+	    rc=cqp
+	    q="-qp_p $crf -qp_i $crf"
+	    #rc=qvbr
+	    #q="-qvbr_level $crf"
+	    #rc=vbr_peak
+	    #q=$h264_br
+	    preset="-usage $usage -quality $quality -rc $rc $q"
+	    ;;
     esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="$preenc -c:v:0 $h264enc $preset $aspect $h264_br"
