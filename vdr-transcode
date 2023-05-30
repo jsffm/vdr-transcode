@@ -177,6 +177,7 @@ help_Video() {
     echo " --nohw           # no hardwaredecoding"
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
     echo " -vb <n>          # constant bitrate for h264_omx"
+    echo " -vq|-qv <n>      # video quality"
 }
 
 help_Audio() {
