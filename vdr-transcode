@@ -585,6 +585,9 @@ parameter() {
 	"-hevc_q"|"-cq")
 	    hevc_cq=$2
 	    ;;
+	"-b_ref_mode")
+	    b_ref_mode="-b_ref_mode $2"
+	    ;;
 	"-vp9_q"|"-gq")
 	    gq=$2	# VP8
 	    ;;
@@ -2336,7 +2339,7 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
-	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level_hevc -rc $nvenc_rc -cq $hevc_cq $opt_r"
+	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level_hevc -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
 	    #preset="$preset -init_qpB 25"
 	    ;;
 	"hevc_vaapi")
