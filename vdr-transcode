@@ -262,6 +262,7 @@ help_Configuration_V() {
     echo " -hevc_level <level>"
     echo " -hevc_profile <profile>     # main|main10"
     echo " -hevc_preset <preset>       # if you know, what you are doing"
+    echo " -b_ref_mode <int>           # hevc_nvenc, 0=disabled, 1=each, 2=middle"
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
     echo " -nvenc_rc vbr|constqp       # default vbr"
     echo " -vp9enc libvpx-vp9|vp9_vaapi|vp9_qsv"
