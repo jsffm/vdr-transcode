@@ -3616,7 +3616,12 @@ header() {
     if [ -e /proc/asound/NVidia ]
     then
 	xlog=/var/log/Xorg.0.log
-	[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> "$log_c"
+	#[ -e $xlog ] && grep "NVIDIA GPU " $xlog >> "$log_c"
+	if [ -e $xlog ]
+	then
+	    grep "NVIDIA GPU " $xlog >> "$log_c"
+	    grep "GLX Module" $xlog >> "$log_c"
+	fi
     fi
     wsln=/usr/lib/wsl/lib/nvidia-smi
     if [ -e $wsln ]
