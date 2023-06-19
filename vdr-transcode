@@ -1075,52 +1075,62 @@ set_disposition() {
     #exit
 }
 
+parameter_line() {
+    #declare -a $parametera_log
+    while [ "$1" ]
+    do
+	#parameter "$1" "$2" "$3" "$4"
+	parameter "$@"
+	if [ "${1:0:1}" == "-" -a "${1:1:1}" != "-" ]
+	then
+	    parameter_log="$parameter_log $1 $2\n"
+	    parameter_auto="$parameter_auto $1 $2|"
+	    shift
+	else
+	    parameter_log="$parameter_log $1\n"
+	    parameter_auto="$parameter_auto $1|"
+	fi
+	shift
+    done
+}
+
+select_from_to() {
+    #set -x
+    IFS=,
+    del=
+    for s in $select_str
+    do
+	#echo $s
+	if [[ "$s" == *-* ]]
+	then
+	    s1=${s%-*}
+	    s2=${s#*-}
+	    for (( i=$s1 ; i<=$s2 ; i++ ))
+	    do
+		#echo $i
+		select_str2=$select_str2$del$i
+		del=,
+	    done
+	else
+	    select_str2=$select_str2$del$s
+	fi
+	del=,
+    done
+    unset IFS
+    #IFS=
+    #exit
+}
+
 #set -x
 [ "$conf" != "" ] && read_configuration $conf
 [ "$conf1" != "" ] && read_configuration $conf1
-#declare -a $parametera_log
-while [ "$1" ]
-do
-    parameter "$1" "$2" "$3" "$4"
-    if [ "${1:0:1}" == "-" -a "${1:1:1}" != "-" ]
-    then
-	parameter_log="$parameter_log $1 $2\n"
-	parameter_auto="$parameter_auto $1 $2|"
-	shift
-    else
-	parameter_log="$parameter_log $1\n"
-	parameter_auto="$parameter_auto $1|"
-    fi
-    shift
-done
+parameter_line $@
+
 #[ "$auto" == "1" ] && read_configuration $vtc
 [ -e $vtc ] && read_configuration $vtc
 #exit
 
-#set -x
-IFS=,
-del=
-for s in $select_str
-do
-    #echo $s
-    if [[ "$s" == *-* ]]
-    then
-	s1=${s%-*}
-	s2=${s#*-}
-	for (( i=$s1 ; i<=$s2 ; i++ ))
-	do
-	    #echo $i
-	    select_str2=$select_str2$del$i
-	    del=,
-	done
-    else
-	select_str2=$select_str2$del$s
-    fi
-    del=,
-done
-unset IFS
-#IFS=
-#exit
+select_from_to
 
 status() {
     # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
