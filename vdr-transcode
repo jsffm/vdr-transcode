@@ -124,6 +124,9 @@ ffmpeg=ffmpeg
 ffprobe=ffprobe
 declare -a lang
 declare -a langa
+declare -a chan_sel
+declare -a chan_sel_id
+chan_sel_i=0
 
 log=vdr-transcode.log
 logs=/var/log/vdr-transcode.log
@@ -293,6 +296,7 @@ help_Configuration_A() {
     echo " -aaclib aac|libfdk_aac|libfaac # default aac"
     echo " -aac_decode libfdk_aac # For decoding xHE-AAC"
     echo " -opus_br <kbit>     # 2ch br in kbit default 64"
+    echo " -chan_sel <chan_id>=<str>[,<str>]"
 }
 
 help() {
@@ -821,6 +825,13 @@ parameter() {
 	"--sel_eac3")
 	    select_str0=0
 	    sel_best="eac3"
+	    ;;
+	"-chan_sel")
+	    #set -x
+	    chan_sel_id[$chan_sel_i]=${2%=*}
+	    chan_sel[$chan_sel_i]=${2#*=}
+	    chan_sel_i=$(($chan_sel_i+1))
+	    #exit
 	    ;;
 	"--info")
 	    info=1
@@ -1598,6 +1609,7 @@ input_vdr() {
     #d31=$(echo $d30|cut -d '-' -f 1)
     #d32=$(echo $d30|cut -d '-' -f 2)
     IFS=- read d31 d32 <<< $d30
+    vers=$d32
     #set -x
     s=$($ffprobe $ffmpeg_i 2>&1 | grep service_name | cut -d ':' -f 2)
     service_name=$(echo $s)
@@ -1611,6 +1623,19 @@ input_vdr() {
         #dest=$dd2.$d31-$d32.rec
         dest=$dp/$dd.$d31-$d32.rec
     done
+    #set -x
+    if [ "$select_str" == "" -a $vers == 0 -a ! -e logfile -a -e info ]
+    then
+	select_str0=0
+	C=$(grep ^C info)
+	read _ id _ <<< $C
+	for (( i=0; i<$chan_sel_i; i++ ))
+	do
+	    [ "$id" == ${chan_sel_id[$i]} ] && select_str2=${chan_sel[$i]}
+	done
+	[ "$select_str2" != "" ] && chan_sel_msg="chan_sel=$select_str2"
+    fi
+    #exit
     [ ${name:0:1} == "%" ] && name=${name:1}
     [ "$name" == "_" ] && name=video
     [ "$odir" != "" ] && dp=$odir
@@ -3634,6 +3659,7 @@ header() {
     log_conf $vtc
     echo "PWD:" $PWD >> "$log_c"
     cat $old >> "$log_c"
+    [ "$chan_sel_msg" != "" ] && echo $chan_sel_msg >> $log_c
 }
 
 info_create() {
