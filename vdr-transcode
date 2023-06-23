@@ -76,7 +76,7 @@ pcm=aac
 gq=30		# VP8
 #[ -e /dev/dri/renderD128 ] && gq=120
 mjpeg=0
-gop="-g 50"
+gop_vdr="-g 50"
 
 #h264_level=3.0  # 720x576i
 h264_level=4.1
@@ -611,7 +611,8 @@ parameter() {
 	    av1preset=$2
 	    ;;
 	"-g")
-	    gop="-g $2"
+	    gop_vdr="-g $2"
+	    gop_file=$gop_vdr
 	    ;;
 	"-vf")
 	    add_vf $2
@@ -2273,6 +2274,12 @@ set_video() {
 	    exit 8
 	    ;;
     esac
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	video="$video $gop_vdr"
+    else
+	video="$video $gop_file"
+    fi
 }
 
 set_h264() {
@@ -2343,7 +2350,7 @@ set_h264() {
     esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="$preenc -c:v:0 $h264enc $preset $aspect $h264_br"
-    [ "$OUTPUT" == "vdr" ] && video="$video $gop"
+    #[ "$OUTPUT" == "vdr" ] && video="$video $gop"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
@@ -2416,7 +2423,7 @@ set_hevc() {
 	    ;;
     esac
     video="$preenc -c:v:0 $hevcenc $preset $aspect $OPT_V"
-    [ "$OUTPUT" == "vdr" ] && video="$video $gop"
+    #[ "$OUTPUT" == "vdr" ] && video="$video $gop"
     [ "$hwaccel" == "cuvid" ] && OPT_I="$decode_cuvid"
     [ "$hwaccel" == "mmal" ] && OPT_I="$decode_mmal"
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
@@ -4480,7 +4487,8 @@ sek=$(($ende-$start))
 
 [ -e $vtc ] && mv $vtc $vtc.rdy
 #set -x
-cp -p "$log_c" $t
+#cp -p "$log_c" $t
+cp "$log_c" $t
 g=$(id -g -n $USER)
 chown $USER:$g $t
 r=$(grep "^video:" $t)
