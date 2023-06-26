@@ -4293,7 +4293,7 @@ ls_del() {
 	if [ ! -e "$c2" ]
 	then
 	    i=$(($i+1))
-	    [ $i -gt 10 ] && break
+	    [ $i -gt 100 ] && break
 	    continue
 	fi
 	size=$(du $c2)
