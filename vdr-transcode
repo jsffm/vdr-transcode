@@ -763,7 +763,7 @@ parameter() {
 	"-hwaccel")
 	    hwaccel=$w2
 	    case "$2" in
-		"cuvid")
+		"cuvid"|"cuda")
 		    h264enc=h264_nvenc
 		    hevcenc=hevc_nvenc
 		    ;;
@@ -2122,6 +2122,12 @@ set_hwacc() {
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
 	    #h264enc=h264_nvenc
 	    #hevcenc=hevc_nvenc
+	    ;;
+	"cuda")
+	    #HWACC="-hwaccel cuda"
+	    HWACC="-hwaccel cuda -hwaccel_output_format cuda"
+	    deinterlace="yadif_cuda"
+	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
 	    ;;
 	"vdpau")
 	    export DISPLAY=:0.0
