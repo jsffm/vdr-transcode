@@ -3298,7 +3298,7 @@ analyze() {
 		;;
 	    "av1")
 		#decode_cuvid="-c:v av1_cuvid"
-		decode_cuvid="-c:v:0 av1_qsv"
+		decode_qsv="-c:v:0 av1_qsv"
 		video="-c:v:0 copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$av1" == "copy" ] && av1=h264
