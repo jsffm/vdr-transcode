@@ -1125,7 +1125,7 @@ select_from_to() {
 #set -x
 [ "$conf" != "" ] && read_configuration $conf
 [ "$conf1" != "" ] && read_configuration $conf1
-parameter_line $@
+parameter_line "$@"
 
 #[ "$auto" == "1" ] && read_configuration $vtc
 [ -e $vtc ] && read_configuration $vtc
@@ -4229,6 +4229,7 @@ server_kill() {
         if [ -e /proc/$pid ]
         then
             kill -15 $pid
+            [ $? > 0 ] && echo "Error $?"
         else
 	    echo "not running"
         fi
