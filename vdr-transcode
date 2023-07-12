@@ -2568,7 +2568,8 @@ set_av1() {
 	    preset="-preset fast"
 	    [ "$av1preset" != "" ] && preset="-preset $av1preset"
 	    video="-c:v:0 av1_qsv -profile:v:0 main $preset -q:v:0 $qav1 $aspect"
-	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    #[ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu))
 	    ;;
 	*)
 	    echo "-av1enc=$av1enc wrong"
