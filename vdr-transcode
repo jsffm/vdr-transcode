@@ -912,6 +912,11 @@ parameter() {
 	    #pa=$@
 	    #auto_conf
 	    ;;
+	"--a_conf")
+	    #auto_sh_conf
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"--alog")
 	    cat $logs
 	    exit
@@ -4230,7 +4235,7 @@ server_kill() {
         if [ -e /proc/$pid ]
         then
             kill -15 $pid
-            [ $? > 0 ] && echo "Error $?"
+            [ $? -gt 0 ] && echo "Error $?"
         else
 	    echo "not running"
         fi
@@ -4410,6 +4415,15 @@ auto_conf() {
     exit
 }
 
+auto_sh_conf() {
+    #set -x
+    while read line
+    do
+	[ "${line:0:1}" != "#" ] && echo $line
+    done < $confs
+    exit
+}
+
 #set -x
 case "$INPUT" in
     "vdr"|"")
@@ -4481,6 +4495,9 @@ case $TODO in
 	;;
     "--conf")
 	auto_conf
+	;;
+    "--a_conf")
+	auto_sh_conf
 	;;
     "--diag")
 	diag
