@@ -107,6 +107,7 @@ aac_6ch_br=256k
 opus_br=64 # 2ch kbit
 skip=10
 marks_mkv=0
+rt_port=5000
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
@@ -132,6 +133,8 @@ log=vdr-transcode.log
 logs=/var/log/vdr-transcode.log
 runs=/var/run/vt_server.pid
 runvt=/var/run/vt.pid
+runrts=/var/run/vt_rts.pid
+rtlog=/tmp/rt_log
 if [ "$USER" != "root" ]
 then
     mkdir -p ~/vdr-transcode
@@ -996,6 +999,22 @@ parameter() {
 	    add_vf $p
 	    #OPT="$OPT -filter_complex $p"
 	    #exit
+	    ;;
+	"--rts")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"--rtse")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"--rtsk")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"-rtc")
+	    rt_client=1
+	    rt_server=$2
 	    ;;
 	*)
 	    echo $1 wrong
@@ -3574,6 +3593,25 @@ transcode() {
     [ -e ffmetadata ] && ffmpeg_i="$ffmpeg_i -i ffmetadata"
     #opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $subt $OPT $metal \"$name\""
     [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && name="\"$name\""
+    if [ "$rt_client" == 1 ]
+    then
+	#set -x
+	echo $ffmpeg_i
+	ffmpeg_i_s=$ffmpeg_i
+	ffmpeg_i=${ffmpeg_i//-i /}
+	port=$(($rt_port+1))
+	#ffmpeg_i="-i http://$HOSTNAME:$port/$ffmpeg_i"
+	www=/var/www/localhost/htdocs/video
+	ln -s $PWD $www
+	#ffmpeg_i="-f mpegts -i http://$HOSTNAME/video/$ffmpeg_i"
+	ffmpeg_i="-i http://$HOSTNAME/video/$ffmpeg_i"
+	#echo $name
+	o=$name
+	#name=$(basename $name)
+	name="-f mpegts -"
+	#exit
+	#set +x
+    fi
     opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $disp $subt $OPT $metal $name"
     [ "$auto" == "1" ] && opt="-nostdin $opt"
     echo $ffmpeg $opt >> "$log_c"
@@ -3583,15 +3621,34 @@ transcode() {
 	exit
     fi
     #exit
-    if [ "$quiet" == 1 ]
+    if [ "$rt_client" == 1 ]
     then
-	nice $ffmpeg $opt 2>> "$log_c"
+	#set -x
+	#nc -l $port &
+	#PID=$!
+	#sleep 5
+	#ffprobe -hide_banner $ffmpeg_i
+	#nc $rt_server $rt_port -e $ffmpeg $opt
+	#$ffmpeg $opt
+	#echo $ffmpeg $opt | nc $rt_server $rt_port
+	nc -l -p $(($rt_port+1)) > $o &
+	PID2=$!
+	#nc -w 1 $rt_server $rt_port 2> $rtlog <<< "$ffmpeg $opt | nc $HOSTNAME $(($rt_port+1))"
+	nc -w 1 $rt_server $rt_port <<< "$ffmpeg $opt | nc $HOSTNAME $(($rt_port+1))" 2> $rtlog
+	kill -15 $PID2
+	rm $www
+	#exit
     else
-	#nice $ffmpeg $opt 2>&1 | tee -a $log_c
-        #sss="nice $ffmpeg $opt"
-        #eval "$sss" 2>&1 | tee -a "$log_c"
-        [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
-	$x nice $ffmpeg $opt 2>&1 | tee -a "$log_c"
+	if [ "$quiet" == 1 ]
+	then
+	    nice $ffmpeg $opt 2>> "$log_c"
+	else
+	    #nice $ffmpeg $opt 2>&1 | tee -a $log_c
+    	    #sss="nice $ffmpeg $opt"
+    	    #eval "$sss" 2>&1 | tee -a "$log_c"
+    	    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+	    $x nice $ffmpeg $opt 2>&1 | tee -a "$log_c"
+	fi
     fi
     rm -f ffmetadata
     echo "===========================================================" >> "$log_c"
@@ -4416,6 +4473,7 @@ auto_conf() {
 }
 
 auto_sh_conf() {
+    # --a_conf
     #set -x
     while read line
     do
@@ -4423,6 +4481,40 @@ auto_sh_conf() {
     done < $confs
     exit
 }
+
+rt_server() {
+    #set -x
+    if [ -e $runrts ]
+    then
+	if [ -e /proc/$(cat $runrts) ]
+	then
+	    echo "Already running"
+	    exit
+	fi
+    fi
+    #nc $rt_port -l -e "vdr-transcode -rtse" &
+    #nc -p $rt_port -l -e "/bin/bash" 2> $rtlog &
+    nc -p $rt_port -l -e "/bin/bash" &
+    #nc $rt_port -l &
+    echo $! > $runrts
+    echo "RT Server startet PID:"$(cat $runrts)
+    exit 
+}
+
+rt_server_e() {
+    set -x
+    echo "todo"
+    exit
+}
+
+rt_server_k() {
+    if [ -e $runrts ]
+    then
+	kill -15 $(cat $runrts)
+    fi
+    exit
+}
+
 
 #set -x
 case "$INPUT" in
@@ -4501,6 +4593,15 @@ case $TODO in
 	;;
     "--diag")
 	diag
+	;;
+    "--rts")
+	rt_server
+	;;
+    "--rtse")
+	rt_server_e
+	;;
+    "--rtsk")
+	rt_server_k
 	;;
     *)
 	copy
