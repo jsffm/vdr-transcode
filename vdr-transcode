@@ -3599,7 +3599,6 @@ transcode() {
 	echo $ffmpeg_i
 	ffmpeg_i_s=$ffmpeg_i
 	ffmpeg_i=${ffmpeg_i//-i /}
-	port=$(($rt_port+1))
 	#ffmpeg_i="-i http://$HOSTNAME:$port/$ffmpeg_i"
 	www=/var/www/localhost/htdocs/video
 	ln -s $PWD $www
@@ -3624,6 +3623,7 @@ transcode() {
     if [ "$rt_client" == 1 ]
     then
 	#set -x
+	port2=$(($rt_port+1))
 	#nc -l $port &
 	#PID=$!
 	#sleep 5
@@ -3631,11 +3631,18 @@ transcode() {
 	#nc $rt_server $rt_port -e $ffmpeg $opt
 	#$ffmpeg $opt
 	#echo $ffmpeg $opt | nc $rt_server $rt_port
-	nc -l -p $(($rt_port+1)) > $o &
+	nc -l -p $port2 > $o &
 	PID2=$!
+	#nc -w 1 $rt_server $rt_port <<< "$ffmpeg $opt | nc $HOSTNAME $(($rt_port+1))"
 	#nc -w 1 $rt_server $rt_port 2> $rtlog <<< "$ffmpeg $opt | nc $HOSTNAME $(($rt_port+1))"
-	nc -w 1 $rt_server $rt_port <<< "$ffmpeg $opt | nc $HOSTNAME $(($rt_port+1))" 2> $rtlog
+	#exec 2> $rtlog
+	#nc -w 1 $rt_server $rt_port <<< "$ffmpeg $opt | nc $HOSTNAME $port2" 2> $rtlog
+	rtlog=/var/www/localhost/htdocs/files/rt_log
+	nc -w 1 $rt_server $rt_port <<< "$ffmpeg $opt 2> $rtlog | nc $HOSTNAME $port2"
 	kill -15 $PID2
+	#wget http://$HOSTNAME/files/rt_log -O $dest/rt_log
+	wget http://$HOSTNAME/files/rt_log
+	cat rt_log >> "$log_c"
 	rm $www
 	#exit
     else
