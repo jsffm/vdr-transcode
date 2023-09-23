@@ -226,6 +226,7 @@ help_Configuration() {
     echo " -vdr <path_to_vdr>"
     echo " -ffmpeg <path_to_ffmpeg>"
     echo " -ffprobe <path_to_ffprobe>"
+    echo " -ffpath <ffmpeg_dir>"
     echo " -mark <mark>     # mark at the end of transcoded recordings"
     echo " -odir <path>     # output directory"
     echo " -probesize <n>   # probesize"
@@ -956,6 +957,10 @@ parameter() {
 	    ;;
 	"-ffprobe")
 	    ffprobe="$2"
+	    ;;
+	"-ffpath")
+	    ffmpeg="$2"/ffmpeg
+	    ffprobe="$2"/ffprobe
 	    ;;
 	"-odir")
 	    odir=$2
