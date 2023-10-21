@@ -782,6 +782,7 @@ parameter() {
 		    h264enc=h264_vaapi
 		    hevcenc=hevc_vaapi
 		    vp9enc=vp9_vaapi
+		    av1enc=av1_vaapi
 		    ;;
 		"qsv")
 		    h264enc=h264_qsv
@@ -2606,6 +2607,17 @@ set_av1() {
 	    video="-c:v:0 av1_qsv -profile:v:0 main $preset -q:v:0 $qav1 $aspect"
 	    #[ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu))
+	    ;;
+	"av1_vaapi")
+	    if [ "$qav1" == "" ]
+	    then
+		qav1=31
+		echo "av1_q set to $qav1" >> "$log_c"
+	    fi
+	    #rc_mode="-rc_mode ICQ"
+	    rc_mode="-rc_mode CQP"
+	    video="-c:v:0 av1_vaapi -profile:v:0 main $rc_mode -q:v:0 $qav1 $aspect"
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	*)
 	    echo "-av1enc=$av1enc wrong"
