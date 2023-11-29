@@ -909,7 +909,7 @@ parameter() {
 	"-server_pid")
 	    echo "deprecated, use -pid_dir"
 	    eval runs=$2
-	    eval runvt=(dirname $2)/vt.pid
+	    eval runvt=$(dirname $2)/vt.pid
 	    ;;
 	"-pid_dir")
 	    eval runs=$2/vt_server.pid
@@ -3702,8 +3702,8 @@ transcode() {
 	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
 	#eval $sss
     #else
-	#eval $ffprobe -hide_banner -i \"$name\" 2>$t	# checkme
-	eval $ffprobe -hide_banner -i "$name" 2>$t	# checkme
+	eval $ffprobe -hide_banner -i \"$name\" 2>$t	# checkme
+	#eval $ffprobe -hide_banner -i "$name" 2>$t	# checkme
 	#eval $ffmpeg -hide_banner -ss 3 -i $name -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>$t	# checkme
 	#$ffprobe -hide_banner -i $name 2>$t
     #fi
