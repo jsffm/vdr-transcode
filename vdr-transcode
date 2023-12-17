@@ -195,6 +195,7 @@ help_Audio() {
     echo " -vol [<str>=]<factor> # Volume"
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
     echo " -ab <n>          # constant bitrate for mp3, aac_stereo"
+    echo " -ar <n>          # audio bitrate"
     echo " -lang <str[-str]>=<lang>[,<str[-str]>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
@@ -683,6 +684,9 @@ parameter() {
 	    ;;
 	"-af")
 	    OPT="$OPT -af $2"
+	    ;;
+	"-ar")
+	    OPT="$OPT -ar $2"
 	    ;;
 	"-dsur")
 	    #OPT="$OPT -dsur_mode $2"
@@ -3702,8 +3706,12 @@ transcode() {
 	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
 	#eval $sss
     #else
-	eval $ffprobe -hide_banner -i \"$name\" 2>$t	# checkme
-	#eval $ffprobe -hide_banner -i "$name" 2>$t	# checkme
+    if [[ "$name" == *"("* ]]
+    then
+	eval $ffprobe -hide_banner -i "\"$name\"" 2>$t	# checkme
+    else
+	eval $ffprobe -hide_banner -i "$name" 2>$t	# checkme
+    fi
 	#eval $ffmpeg -hide_banner -ss 3 -i $name -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>$t	# checkme
 	#$ffprobe -hide_banner -i $name 2>$t
     #fi
