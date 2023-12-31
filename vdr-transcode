@@ -4118,7 +4118,7 @@ copy_audio() {
     out=$name.$fmt
     oldsize=1
     i=1
-    while [ -e $out ]
+    while [ -e "$out" ]
     do
 	i=$(($i+1))
 	out=$name-$i.$fmt
@@ -4186,16 +4186,17 @@ copy_wav() {
     #exit
 }
 
-copy_m4a() {
+copy_aac() {
     #set -x
-    fmt=m4a
-    out=$name.m4a
+    fmt=aac
+    [ "$1" == "m4a" ] && fmt=m4a
+    out=$name.$fmt
     oldsize=1
     i=1
-    while [ -e $out ]
+    while [ -e "$out" ]
     do
 	i=$(($i+1))
-	out=$name-$i.m4a
+	out=$name-$i.$fmt
     done
     log_c=$out.log
     echo $PWD/$log_c > $vtlog
@@ -4203,7 +4204,7 @@ copy_m4a() {
     #set -x
     #analyze $ffmpeg_i
     # Stream #0:1[0x101](deu): Audio: aac (LC) ([15][0][0][0] / 0x000F), 48000 Hz, stereo, fltp, 99 kb/s'
-    r=$($ffprobe $ffmpeg_i 2>&1 | grep "Audio:" | head -n 1)
+    r=$($x $ffprobe -hide_banner "$ffmpeg_i" 2>&1 | grep "Audio:" | head -n 1)
     typ=$(echo $r | cut -d \  -f 4)
     video="-vn"
     if [ "$typ" == "aac" ]
@@ -4264,8 +4265,11 @@ copy() {
 	    # copy_wav $OUTPUT
 	    copy_audio $OUTPUT
 	    ;;
+	"aac")
+	    copy_aac $OUTPUT
+	    ;;
 	"m4a")
-	    copy_m4a $OUTPUT
+	    copy_aac $OUTPUT
 	    ;;
 	"m2t"|"mka")
 	    copy_audio $OUTPUT
