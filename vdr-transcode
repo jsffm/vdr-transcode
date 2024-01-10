@@ -754,6 +754,9 @@ parameter() {
 	"-hevc_profile")
 	    hevc_profile=$2
 	    ;;
+	"-profile")
+	    profile=$2
+	    ;;
 	"-hevc_preset")
 	    hevc_preset=$2
 	    ;;
@@ -2607,8 +2610,9 @@ set_av1() {
 		echo "av1_q set to $qav1" >> "$log_c"
 	    fi
 	    preset="-preset fast"
+	    [ "$profile" = "" ] && profile=main
 	    [ "$av1preset" != "" ] && preset="-preset $av1preset"
-	    video="-c:v:0 av1_qsv -profile:v:0 main $preset -q:v:0 $qav1 $aspect"
+	    video="-c:v:0 av1_qsv -profile:v:0 $profile $preset -q:v:0 $qav1 $aspect"
 	    #[ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    [ "$hwaccel" == "qsv" ] && OPT_G="$OPT_G -qsv_device /dev/dri/renderD"$((128+$gpu))
 	    ;;
