@@ -2979,23 +2979,39 @@ analyze() {
     [ "$trace" != "" ] && >&2 cat $t
     #set -x
     echo "Analyze:" >> "$log_c"
-    which mediainfo 2> /dev/null
-    if [ $? -eq 0 ]
+    #set -x
+    if [ "$ifmt" == "vdr" ]
     then
-	scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
-	scanorder=$(mediainfo --Inform="Video;%ScanOrder/String%" "$input")
-	[ "$scanorder" != "" ] && scantype=$scanorder
-	if [ "$ifofile" != "" ]
+	if [ -e info ]
 	then
-	    echo -n "Duration: " >> "$log_c"
-	    mediainfo --Inform="General;%Duration/String3%" $ifofile >> "$log_c"
+	    lf=$(grep ^F info)
+	    [ "$lf" != "" ] && read _ fpsv hw vw s format _ <<< $lf
+	    [ "$s" != "" ] && scantype=$s
+	    [ "$s" == "p" ] && scantype="Progressive"
+	    #echo $fpsv
 	fi
-	hw=$(mediainfo --Inform="Video;%Width%" "$input")
-	vw=$(mediainfo --Inform="Video;%Height%" "$input")
-	[ "$scantype" == "" ] && check_scantype_ffmpeg
-    else
-	echo "mediainfo missing, trying ffmpeg" >> "$log_c"
-	check_scantype_ffmpeg
+    fi
+    #exit
+    if [ "$vw" == "" ]
+    then
+	which mediainfo 2> /dev/null
+	if [ $? -eq 0 ]
+	then
+	    scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
+	    scanorder=$(mediainfo --Inform="Video;%ScanOrder/String%" "$input")
+	    [ "$scanorder" != "" ] && scantype=$scanorder
+	    if [ "$ifofile" != "" ]
+	    then
+		echo -n "Duration: " >> "$log_c"
+		mediainfo --Inform="General;%Duration/String3%" $ifofile >> "$log_c"
+	    fi
+	    hw=$(mediainfo --Inform="Video;%Width%" "$input")
+	    vw=$(mediainfo --Inform="Video;%Height%" "$input")
+	    [ "$scantype" == "" ] && check_scantype_ffmpeg
+	else
+	    echo "mediainfo missing, trying ffmpeg" >> "$log_c"
+	    check_scantype_ffmpeg
+	fi
     fi
     echo "scantype=$scantype" >> "$log_c"
     if [ "$scantype" == "Progressive" -o "$scantype" == "" ]
@@ -3175,10 +3191,16 @@ analyze() {
 		IFS="(" read vtyp _ <<< $vtyp
 	    fi
 	    #echo "[$vtyp]"
+	    #set -x
+	    if [ "$fpsv" != "" ]
+	    then
+		fps=$fpsv
+	    else
+		fps1=${line%fps*}
+		nw=$(echo $fps1|wc -w)
+		fps=$(echo $fps1|cut -d \  -f $nw)
+	    fi
 	    #exit
-	    fps1=${line%fps*}
-	    nw=$(echo $fps1|wc -w)
-	    fps=$(echo $fps1|cut -d \  -f $nw)
 	    ivcodec=$codec
 	    #echo "deinterlace=$deinterlace" >> "$log_c"
 	    #eval ovcodec=$$ivcodec
