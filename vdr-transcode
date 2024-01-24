@@ -2986,8 +2986,12 @@ analyze() {
 	then
 	    lf=$(grep ^F info)
 	    [ "$lf" != "" ] && read _ fpsv hw vw s format _ <<< $lf
-	    [ "$s" != "" ] && scantype=$s
-	    [ "$s" == "p" ] && scantype="Progressive"
+	    if [ "$s" != "" ]
+	    then
+		echo "Scantype found in info" >> $log_c
+		scantype=$s
+		[ "$s" == "p" ] && scantype="Progressive"
+	    fi
 	    #echo $fpsv
 	fi
     fi
@@ -2997,6 +3001,7 @@ analyze() {
 	which mediainfo 2> /dev/null
 	if [ $? -eq 0 ]
 	then
+	    echo "Check scantype with mediainfo" >> $log_c
 	    scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
 	    scanorder=$(mediainfo --Inform="Video;%ScanOrder/String%" "$input")
 	    [ "$scanorder" != "" ] && scantype=$scanorder
