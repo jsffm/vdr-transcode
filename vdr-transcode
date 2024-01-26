@@ -2985,7 +2985,7 @@ analyze() {
 	if [ -e info ]
 	then
 	    lf=$(grep ^F info)
-	    [ "$lf" != "" ] && read _ fpsv hw vw s format _ <<< $lf
+	    [ "$lf" != "" ] && read _ fpsv hw vw s aspecto _ <<< $lf
 	    if [ "$s" != "" ]
 	    then
 		echo "Scantype found in info" >> $log_c
