@@ -2985,18 +2985,18 @@ analyze() {
 	if [ -e info ]
 	then
 	    lf=$(grep ^F info)
-	    [ "$lf" != "" ] && read _ fpsv hw vw s aspecto _ <<< $lf
+	    [ "$lf" != "" ] && read _ fpsv hw vw s aspecti _ <<< $lf
 	    if [ "$s" != "" ]
 	    then
 		echo "Scantype found in info" >> $log_c
-		scantype=$s
+		[ "$s" != "-" ] && scantype=$s
 		[ "$s" == "p" ] && scantype="Progressive"
 	    fi
 	    #echo $fpsv
 	fi
     fi
     #exit
-    if [ "$vw" == "" ]
+    if [ "$scantype" == "" ]
     then
 	which mediainfo 2> /dev/null
 	if [ $? -eq 0 ]
