@@ -2988,7 +2988,7 @@ analyze() {
 	    [ "$lf" != "" ] && read _ fpsv hw vw s aspecti _ <<< $lf
 	    if [ "$s" != "" ]
 	    then
-		echo "Scantype found in info" >> $log_c
+		echo "Scantype $s found in info" >> $log_c
 		[ "$s" != "-" ] && scantype=$s
 		[ "$s" == "p" ] && scantype="Progressive"
 	    fi
