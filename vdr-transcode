@@ -968,6 +968,9 @@ parameter() {
 	    auto=1
 	    #quiet=1
 	    ;;
+	"--out_stat")
+	    out_stat=1
+	    ;;
 	"--apc")
 	    apply_codec=1
 	    ;;
@@ -3721,11 +3724,25 @@ transcode() {
 	if [ "$quiet" == 1 ]
 	then
 	    nice $ffmpeg $opt 2>> "$log_c"
+	elif [ "$out_stat" != "" -a "$auto" == "" ]
+	then
+	    #set -x
+	    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+	    $x nice $ffmpeg $opt 2>> "$log_c" &
+	    PID1=$!
+	    #tail -f $log_c &
+	    #sleep 1s
+	    #watch -p vdr-transcode --stat &
+	    while true; do sleep 2s; clear; vdr-transcode --stat; done &
+	    PID2=$!
+	    wait $PID1
+	    kill -15 $PID2
+	    #set +x
 	else
 	    #nice $ffmpeg $opt 2>&1 | tee -a $log_c
-    	    #sss="nice $ffmpeg $opt"
-    	    #eval "$sss" 2>&1 | tee -a "$log_c"
-    	    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
+	    #sss="nice $ffmpeg $opt"
+	    #eval "$sss" 2>&1 | tee -a "$log_c"
+	    [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
 	    $x nice $ffmpeg $opt 2>&1 | tee -a "$log_c"
 	fi
     fi
@@ -4757,3 +4774,4 @@ rm -f $lck
 rm $runvt
 rm $t
 rm -f $old
+[ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 $dest/logfile
