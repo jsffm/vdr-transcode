@@ -4776,4 +4776,4 @@ rm -f $lck
 rm $runvt
 rm $t
 rm -f $old
-[ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 $dest/logfile
+[ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 $log_c
