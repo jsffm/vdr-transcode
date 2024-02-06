@@ -3734,7 +3734,8 @@ transcode() {
 	    #tail -f $log_c &
 	    #sleep 1s
 	    #watch -p vdr-transcode --stat &
-	    while true; do sleep 2s; clear; vdr-transcode --stat; done &
+	    #while true; do sleep 2s; clear; vdr-transcode --stat; done &
+	    while true; do sleep 2s; clear; status $(<"$vtlog"); done &
 	    PID2=$!
 	    wait $PID1
 	    kill -15 $PID2
