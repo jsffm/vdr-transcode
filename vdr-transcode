@@ -419,6 +419,7 @@ parameter() {
 	    ;;
 	"-r")
 	    OPT="$OPT -r $2"
+	    #add_vf fps=$2
 	    fpso=$2
 	    ;;
 	"-b")
@@ -3735,7 +3736,8 @@ transcode() {
 	    #sleep 1s
 	    #watch -p vdr-transcode --stat &
 	    #while true; do sleep 2s; clear; vdr-transcode --stat; done &
-	    while true; do sleep 2s; clear; status $(<"$vtlog"); done &
+	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
+	    while true; do sleep 2s; clear; status $log_c; done &
 	    PID2=$!
 	    wait $PID1
 	    kill -15 $PID2
@@ -3867,7 +3869,7 @@ info_create() {
 	[[ "$INPUT" == *wdrmedien* ]] && sender=WDR
 	[[ "$INPUT" == *daserste* ]] && sender="Das Erste"
     fi
-    echo "C M $sender" > $info
+    echo "C Mediathek $sender" > $info
     echo "E 0 $rec_time $dauer" >> $info
     if [ "$info_subt" != "" ]
     then
@@ -4033,6 +4035,7 @@ copy_vdr() {
 	echo genindex
         #nice $vdr --genindex="./$dest"
         #set -x
+        [ -e $dest/info ] && cp -p $dest/info $dest/info.s
         [[ "$dest" != */* ]] && dest="./"$dest
         nice $vdr --genindex=$dest &
         PID=$!
