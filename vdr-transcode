@@ -3520,6 +3520,7 @@ analyze() {
 		if [ "$fmt" == "mp4" ]
 		then
 		    subt="$subt -c:$stro dvd_subtitle"
+		    OPT_G="$OPT_G -canvas_size "$hw"x"$vw
 		else
 		    subt="$subt -c:$stro copy"
 		fi
