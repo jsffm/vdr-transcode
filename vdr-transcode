@@ -2936,7 +2936,7 @@ set_pid() {
 }
 
 check_scantype_ffmpeg() {
-	echo "Check scantype with ffmpeg" >> $log_c
+	echo "Check scantype with ffmpeg" >> "$log_c"
 	# ffprobe -hide_banner -show_streams <input> | grep field_order=
 	s1=$(grep "Video:" $t)
 	# Stream #0:0[0x96a]: Video: hevc (Main)
@@ -3006,7 +3006,7 @@ analyze() {
 	which mediainfo 2> /dev/null
 	if [ $? -eq 0 ]
 	then
-	    echo "Check scantype with mediainfo" >> $log_c
+	    echo "Check scantype with mediainfo" >> "$log_c"
 	    scantype=$(mediainfo --Inform="Video;%ScanType/String%" "$input")
 	    scanorder=$(mediainfo --Inform="Video;%ScanOrder/String%" "$input")
 	    [ "$scanorder" != "" ] && scantype=$scanorder
@@ -3738,7 +3738,7 @@ transcode() {
 	    #watch -p vdr-transcode --stat &
 	    #while true; do sleep 2s; clear; vdr-transcode --stat; done &
 	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
-	    while true; do sleep 2s; clear; status $log_c; done &
+	    while true; do sleep 2s; clear; status "$log_c"; done &
 	    PID2=$!
 	    wait $PID1
 	    kill -15 $PID2
@@ -4780,4 +4780,4 @@ rm -f $lck
 rm $runvt
 rm $t
 rm -f $old
-[ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 $log_c
+[ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 "$log_c"
