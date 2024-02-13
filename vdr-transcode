@@ -3519,8 +3519,8 @@ analyze() {
 		# [mp4 @ 0x55c7d71871c0] Could not find tag for codec dvb_subtitle in stream #3, codec not currently supported in container
 		if [ "$fmt" == "mp4" ]
 		then
-		    subt="$subt -c:$stro dvd_subtitle"
-		    OPT_G="$OPT_G -canvas_size "$hw"x"$vw
+		    subt="$subt -c:$stro dvdsub"
+		    OPT_G="$OPT_G -canvas_size:$stro "$hw"x"$vw
 		else
 		    subt="$subt -c:$stro copy"
 		fi
@@ -3530,7 +3530,7 @@ analyze() {
 		map="$map -map $str0:$str"
 		if [ "$OUTPUT" == "vdr" ]
 		then
-		    subt="$subt -c:$stro dvb_subtitle"
+		    subt="$subt -c:$stro dvbsub"
 		else
 		    subt="$subt -c:$stro copy"
 		fi
@@ -3561,7 +3561,14 @@ analyze() {
 		[ "$fmt" == "mp4" ] && continue
 		[ "$OUTPUT" == "webm" ] && continue
 		map="$map -map $str0:$str"
-		subt="$subt -c:$stro copy"
+		if [ "$fmt" == "mp4" ]
+		then
+		    subt="$subt -c:$stro dvdsub"
+		    #subt="$subt -c:$stro mov_text"
+		    OPT_G="$OPT_G -canvas_size:$stro "$hw"x"$vw
+		else
+		    subt="$subt -c:$stro copy"
+		fi
 		stro1=$(($stro1+1))
 		;;
 	    #"dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext"|"none"|"mjpeg")
@@ -3633,7 +3640,7 @@ analyze() {
 		    *)
 			msg="Codec $codec unknown"
 			echo $msg
-			echo $msg >> $log_c
+			echo $msg >> "$log_c"
 			exit 8
 			;;
 		esac
@@ -3850,7 +3857,7 @@ header() {
     log_conf $vtc
     echo "PWD:" $PWD >> "$log_c"
     cat $old >> "$log_c"
-    [ "$chan_sel_msg" != "" ] && echo $chan_sel_msg >> $log_c
+    [ "$chan_sel_msg" != "" ] && echo $chan_sel_msg >> "$log_c"
 }
 
 info_create() {
@@ -3909,7 +3916,7 @@ copy_vdr() {
     then
 	echo $(dirname $PWD)"/"${log_c:3} > $vtlog
     else
-	echo $PWD/$log_c > $vtlog
+	echo "$PWD/$log_c" > $vtlog
     fi
     header
     [ "$auto" != "1" ] && echo $d $PWD >> $logs
@@ -4104,7 +4111,7 @@ copy_file() {
     done
     dest=$out
     log_c=$out.log
-    echo $PWD/$log_c > $vtlog
+    echo "$PWD/$log_c" > $vtlog
     header
     analyze $ffmpeg_i
     #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
@@ -4186,7 +4193,7 @@ copy_audio() {
 	out=$name-$i.$fmt
     done
     log_c=$out.log
-    echo $PWD/$log_c > $vtlog
+    echo "$PWD/$log_c" > $vtlog
     header
     #analyze $ffmpeg_i
     video="-vn"
@@ -4212,7 +4219,7 @@ copy_mp3() {
 	out=$name-$i.mp3
     done
     log_c=$out.log
-    echo $PWD/$log_c > $vtlog
+    echo "$PWD/$log_c" > $vtlog
     header
     #analyze $ffmpeg_i
     video="-vn"
@@ -4236,7 +4243,7 @@ copy_wav() {
 	out=$name-$i.wav
     done
     log_c=$out.log
-    echo $PWD/$log_c > $vtlog
+    echo "$PWD/$log_c" > $vtlog
     header
     #analyze $ffmpeg_i
     video="-vn"
@@ -4261,7 +4268,7 @@ copy_aac() {
 	out=$name-$i.$fmt
     done
     log_c=$out.log
-    echo $PWD/$log_c > $vtlog
+    echo "$PWD/$log_c" > $vtlog
     header
     #set -x
     #analyze $ffmpeg_i
