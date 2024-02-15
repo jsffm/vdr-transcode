@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#set -x
+
+HEAD=$(<.git/HEAD)
+IFS="/" read _ _ branch <<< $HEAD
+#echo $branch
+
+[ "$branch" == "master" ] && git checkout development
+[ "$branch" == "development" ] && git checkout master
