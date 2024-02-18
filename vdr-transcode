@@ -2254,8 +2254,9 @@ inf() {
     if [ -e $info ]
     then
 	#sender=$(grep ^C $info|cut -d \  -f 3-)
-	read _ _ sender <<< $(grep ^C $info)
+	read _ chn_id sender <<< $(grep ^C $info)
 	echo $sender
+	grep $chn_id $conf
     fi
     if [ $oldsize -lt 5000 ]
     then
