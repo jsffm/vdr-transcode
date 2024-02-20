@@ -248,6 +248,7 @@ help_Configuration_V() {
     #echo " video"
     echo " video configuration"
     echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
+    echo " -h264_HD <codec> # HD only"
     echo " -hevc copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -mpeg2 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -mpeg4 copy|h264|hevc|vp8|vp9|mpeg2"
@@ -498,6 +499,9 @@ parameter() {
 	    ;;
 	"-h264")
 	    h264=$2
+	    ;;
+	"-h264_HD")
+	    h264_HD=$2
 	    ;;
 	"-h264_br")
 	    h264_br="-b:v:0 $2"
@@ -3330,6 +3334,7 @@ analyze() {
 		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
 		[ "$fpso" != "" -a "$h264" == "copy" ] && h264=h264
+		[ "$h264_HD" != "" -a "$h264" == "copy" -a $vw -ge 720 ] && h264=$h264_HD
 		decode_cuvid="-c:v:0 h264_cuvid"
 		decode_qsv="-c:v:0 h264_qsv"
 		#decode_mmal="-c:v h264_mmal"
