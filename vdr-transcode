@@ -211,6 +211,9 @@ help_Automation() {
     echo " --as &             # server start, search pathes in /etc/vdr-transcode-s.conf"
     echo " --ak               # server stop"
     echo " --conf <parameter> # mark for processing"
+    echo " --confr            # mark recursiv gt min_br"
+    echo " -confr <min_br>    # mark recursiv gt min_br"
+    echo " -min_br <min_br>"
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
@@ -940,6 +943,18 @@ parameter() {
 	    INPUT=none
 	    #pa=$@
 	    #auto_conf
+	    ;;
+	"--confr")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"-confr")
+	    TODO=$1
+	    INPUT=none
+	    min_br=$2
+	    ;;
+	"-min_br")
+	    min_br=$2
 	    ;;
 	"--a_conf")
 	    #auto_sh_conf
@@ -4605,6 +4620,59 @@ auto_conf() {
     exit
 }
 
+auto_confr() {
+    #set -x
+    for rr in `find . -type d -name "*0.rec"`
+    do
+	#echo $rr
+	[ -e $rr/$vtc ] && continue
+	[ -e $rr/$vtc".rdy" ] && continue
+	si=$(stat $rr/index -c "%s")
+	fl=$(grep ^F $rr/info)
+	read _ f _ <<< $fl
+	[ "$f" == "" ] && f=25
+	# F 50.02779322
+	if [[ "$f" == *.* ]]
+	then
+	    s=$(echo "$si*25/$f/200"|bc)
+	else
+	    s=$(($si*25/$f/200))
+	fi
+	#date -u -d @$s
+	w="$rr/*.ts"
+	size=0
+	for r in $w
+	do
+	    [ ! -e "$r" ] && continue
+	    #s1=$(ls -l --block-size=1k $r|cut -d \  -f 5)
+	    s1=$(stat "$r" -c "%s")
+	    size=$(($size+$s1/1024))
+	done
+	br=$(($size*8/$s))
+	if [ $br -gt $min_br ]
+	then
+	    #set -x
+	    echo $rr
+	    touch $rr/$vtc
+	    IFS='|'
+	    for p in $parameter_auto
+	    do
+		#p=$(echo $p)
+		[ "${p:0:1}" == " " ] && p=${p:1}
+		#echo $p
+		IFS=\  read p1 _ <<< "$p"
+		[ "$p1" == "--confr" ] && continue
+		[ "$p1" == "-confr" ] && continue
+		echo $p >> $rr/$vtc
+	    done
+	    cat $rr/$vtc
+	    #exit
+	fi
+	#exit
+    done
+    exit
+}
+
 auto_sh_conf() {
     # --a_conf
     #set -x
@@ -4720,6 +4788,9 @@ case $TODO in
 	;;
     "--conf")
 	auto_conf
+	;;
+    "--confr"|"-confr")
+	auto_confr
 	;;
     "--a_conf")
 	auto_sh_conf
