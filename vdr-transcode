@@ -3026,7 +3026,7 @@ analyze() {
 	    [ "$scantype" == "" ] && check_scantype_ffmpeg
 	else
 	    #echo "mediainfo missing, trying ffmpeg" >> "$log_c"
-	    echo "trying ffmpeg" >> "$log_c"
+	    #echo "trying ffmpeg" >> "$log_c"
 	    check_scantype_ffmpeg
 	fi
     fi
@@ -3663,6 +3663,13 @@ analyze() {
     #exit
 }
 
+ctrl_c() {
+    kill -15 $PID1
+    kill -15 $PID2
+    echo "cancelled"
+    exit
+}
+
 transcode() {
     #set -x
     name="$1"
@@ -3750,6 +3757,7 @@ transcode() {
 	    PID1=$!
 	    #tail -f $log_c &
 	    #sleep 1s
+	    trap ctrl_c SIGINT
 	    #watch -p vdr-transcode --stat &
 	    #while true; do sleep 2s; clear; vdr-transcode --stat; done &
 	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
