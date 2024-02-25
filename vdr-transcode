@@ -4622,6 +4622,11 @@ auto_conf() {
 
 auto_confr() {
     #set -x
+    if [ "$min_br" == "" ]
+    then
+	echo "min_br not set"
+	exit
+    fi
     for rr in `find . -type d -name "*0.rec"`
     do
 	#echo $rr
