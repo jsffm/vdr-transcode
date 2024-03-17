@@ -284,7 +284,7 @@ help_Configuration_V() {
     echo " -av1_preset <n>             # default 8"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
     echo " -hwaccel cuvid|cuda|vaapi|qsv|vdpau|-"
-    echo " -libva i965|iHD"
+    echo " -libva i965|iHD|radeonsi"
     echo " -gpu <n>                    # vaapi qsv"
     echo " -m4_b                       # mpeg4 bitrate"
     echo " -deint_mode =mode=1"
