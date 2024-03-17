@@ -2497,6 +2497,15 @@ set_hevc() {
 	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
 	    ;;
+	"hevc_amf")
+	    #usage=highquality
+	    usage=transcoding
+	    #quality=quality
+	    quality=balanced
+	    rc=cqp
+	    [ "$hevc_cq" != "" ] && q="-qp_p $hevc_cq -qp_i $hevc_cq"
+	    preset="-usage $usage -quality $quality -rc $rc $q"
+	    ;;
 	*)
 	    echo "-hevcenc=$hevcenc wrong"
 	    exit 8
