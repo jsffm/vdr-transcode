@@ -4514,6 +4514,7 @@ ls_del() {
 	    [ $i -gt 100 ] && break
 	    continue
 	fi
+	i=0
 	size=$(du $c2)
 	size=$(echo $size | cut -d \  -f 1)
 	echo $size $c2
