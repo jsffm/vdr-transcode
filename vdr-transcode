@@ -1015,6 +1015,9 @@ parameter() {
 	    threads=$2
 	    OPT="$OPT -threads $2"
 	    ;;
+	"--c")
+	    check=1
+	    ;;
 	"--sim")
 	    sim=1
 	    ;;
@@ -3678,12 +3681,24 @@ analyze() {
 		esac
 		;;
 	esac
+	[ "$check" != "" ] && echo $line
     done < $t
     if [ "$hwaccel" == "vaapi" ]
     then
 	[ "$deinterlace" != "" ] && add_vf $deinterlace
     fi
     [ "$vcodec" != "copy" ] && video="$video $vf"
+    if [ "$check" != "" ]
+    then
+	read answer
+	[ "$answer" == "n" ] && exit
+	if [ "$OUTPUT" == "vdr" ]
+	then
+	    mkdir -p $dest
+	    mv $log_c $dest/logfile
+	    log_c=$dest/logfile
+	fi
+    fi
     #exit
 }
 
@@ -3948,6 +3963,9 @@ copy_vdr() {
     if [ "$sim" != "" ]
     then
 	log_c=logfile-sim
+    elif [ "$check" != "" ]
+    then
+	log_c=logfile-check
     else
 	log_c=$dest/logfile
 	mkdir -p $dest
