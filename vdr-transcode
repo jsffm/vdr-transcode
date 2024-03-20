@@ -167,6 +167,7 @@ help_Output() {
     echo " --inf"
     echo " --stat       # status"
     echo " --diag"
+    echo " --c          # check streams before transcoding"
 }
 
 help_Video() {
@@ -3692,12 +3693,12 @@ analyze() {
     then
 	read answer
 	[ "$answer" == "n" ] && exit
-	if [ "$OUTPUT" == "vdr" ]
-	then
-	    mkdir -p $dest
-	    mv $log_c $dest/logfile
-	    log_c=$dest/logfile
-	fi
+    fi
+    if [ "$OUTPUT" == "vdr" -a "$sim" == "" ]
+    then
+	mkdir -p $dest
+	mv $log_c $dest/logfile
+	log_c=$dest/logfile
     fi
     #exit
 }
@@ -3960,19 +3961,11 @@ to_utf8() {
 copy_vdr() {
     #set -x
     fmt=vdr
-    if [ "$sim" != "" ]
-    then
-	log_c=logfile-sim
-    elif [ "$check" != "" ]
-    then
-	log_c=logfile-check
-    else
-	log_c=$dest/logfile
-	mkdir -p $dest
-    fi
+    log_c=logfile-temp
     if [ "$ifmt" == "vdr" ]
     then
-	echo $(dirname $PWD)"/"${log_c:3} > $vtlog
+	#echo $(dirname $PWD)"/"${log_c:3} > $vtlog
+	echo $(dirname $PWD)"/"${dest:3}"/logfile" > $vtlog
     else
 	echo "$PWD/$log_c" > $vtlog
     fi
