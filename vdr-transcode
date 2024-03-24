@@ -215,7 +215,7 @@ help_Automation() {
     echo " --confr            # mark recursiv gt min_bitrate"
     echo " -confr <min_br>    # mark recursiv gt min_bitrate"
     echo " -min_br <min_br>"
-    echo " -confsz <min_size> # find recursiv gt min_size for marking"
+    echo " -confsz <min_size>[M|G] # find recursiv gt min_size for marking"
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
