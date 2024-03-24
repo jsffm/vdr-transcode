@@ -215,6 +215,7 @@ help_Automation() {
     echo " --confr            # mark recursiv gt min_bitrate"
     echo " -confr <min_br>    # mark recursiv gt min_bitrate"
     echo " -min_br <min_br>"
+    echo " -confsz <min_size> # find recursiv gt min_size for marking"
     echo " --alog             # process log"
     echo " --aq               # process queue"
     echo " --ac               # check processed"
@@ -958,6 +959,11 @@ parameter() {
 	    ;;
 	"-min_br")
 	    min_br=$2
+	    ;;
+	"-confsz")
+	    TODO=$1
+	    INPUT=none
+	    min_size=$2
 	    ;;
 	"--a_conf")
 	    #auto_sh_conf
@@ -2315,7 +2321,7 @@ inf() {
     fi
     #rm -f $t
     #rm -f $old
-    exit
+    #exit
 }
 
 set_video() {
@@ -4710,6 +4716,85 @@ auto_confr() {
     exit
 }
 
+auto_confsz() {
+    #set -x
+    min_size=$1
+    [ "${min_size: -1}" == "M" ] && min_size=$((${min_size:0: -1}*1024))
+    [ "${min_size: -1}" == "G" ] && min_size=$((${min_size:0: -1}*1024*1024))
+    skip=0
+    for rr in `find . -type d -name "*0.rec"`
+    do
+	#echo $rr
+	[ -e $rr/$vtc ] && continue
+	[ -e $rr/$vtc".rdy" ] && continue
+	[ ! -e $rr/index ] && continue
+	[ ! -e $rr/info ] && continue
+	si=$(stat $rr/index -c "%s")
+	fl=$(grep ^F $rr/info)
+	read _ f _ <<< $fl
+	[ "$f" == "" ] && f=25
+	# F 50.02779322
+	if [[ "$f" == *.* ]]
+	then
+	    s=$(echo "$si*25/$f/200"|bc)
+	else
+	    s=$(($si*25/$f/200))
+	fi
+	#date -u -d @$s
+	w="$rr/*.ts"
+	size=0
+	for r in $w
+	do
+	    [ ! -e "$r" ] && continue
+	    #s1=$(ls -l --block-size=1k $r|cut -d \  -f 5)
+	    s1=$(stat "$r" -c "%s")
+	    size=$(($size+$s1/1024))
+	done
+	br=$(($size*8/$s))
+	#echo $size $br
+	if [ $size -gt $min_size ]
+	then
+	    #set -x
+	    echo $rr
+	    #echo $size $br
+	    wd="$PWD"
+	    cd "$rr"
+	    #pwd
+	    #oldsize=$size
+	    input_vdr
+	    #echo $ffmpeg_i
+	    inf
+	    echo "Press Enter for next, t for touch or parameter"
+	    read vtconf
+	    if [ "$vtconf" != "" ]
+	    then
+		if [ "$vtconf" == "t" ]
+		then
+		    touch vt.conf
+		else
+		    #read _ _ vtconf2 <<< $vtconf
+		    parameter_line $vtconf
+		    IFS='|'
+		    for p in $parameter_auto
+		    do
+			#p=$(echo $p)
+			[ "${p:0:1}" == " " ] && p=${p:1}
+			#echo $p
+			[ "${p:0:7}" == "-confsz" ] && continue
+			echo $p >> $vtc
+		    done
+		    cat $vtc
+		    unset IFS
+		fi    
+	    fi
+	    #exit
+	    cd "$wd"
+	fi
+	#exit
+    done
+    exit
+}
+
 auto_sh_conf() {
     # --a_conf
     #set -x
@@ -4794,6 +4879,7 @@ case $TODO in
 	;;
     "--inf")
 	inf
+	exit
 	;;
     "--stat")
 	status $(<"$vtlog")
@@ -4828,6 +4914,9 @@ case $TODO in
 	;;
     "--confr"|"-confr")
 	auto_confr
+	;;
+    "-confsz")
+	auto_confsz $min_size
 	;;
     "--a_conf")
 	auto_sh_conf
