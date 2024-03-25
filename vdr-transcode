@@ -4665,7 +4665,7 @@ auto_confr() {
 	echo "min_br not set"
 	exit
     fi
-    for rr in `find . -type d -name "*0.rec"`
+    for rr in `find . -mount -type d -name "*0.rec"`
     do
 	#echo $rr
 	[ -e $rr/$vtc ] && continue
@@ -4722,7 +4722,7 @@ auto_confsz() {
     [ "${min_size: -1}" == "M" ] && min_size=$((${min_size:0: -1}*1024))
     [ "${min_size: -1}" == "G" ] && min_size=$((${min_size:0: -1}*1024*1024))
     skip=0
-    for rr in `find . -type d -name "*0.rec"`
+    for rr in `find . -mount -type d -name "*0.rec"`
     do
 	#echo $rr
 	[ -e $rr/$vtc ] && continue
