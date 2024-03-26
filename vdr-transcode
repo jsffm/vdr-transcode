@@ -4773,6 +4773,7 @@ auto_confsz() {
 		    touch vt.conf
 		else
 		    #read _ _ vtconf2 <<< $vtconf
+		    parameter_auto=
 		    parameter_line $vtconf
 		    IFS='|'
 		    for p in $parameter_auto
