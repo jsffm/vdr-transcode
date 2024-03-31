@@ -167,7 +167,7 @@ help_Output() {
     echo " --inf"
     echo " --stat       # status"
     echo " --diag"
-    echo " --c          # streams preview"
+    echo " --p          # streams preview"
 }
 
 help_Video() {
@@ -1024,7 +1024,7 @@ parameter() {
 	    threads=$2
 	    OPT="$OPT -threads $2"
 	    ;;
-	"--c")
+	"--p"|"--c")
 	    check=1
 	    ;;
 	"--sim")
@@ -3740,10 +3740,16 @@ ctrl_c() {
     exit
 }
 
+run_stat() {
+    while true; do sleep 2s; clear; status "$log_c"; echo "s=stat, l=log"; done &
+    PID2=$!
+}
+
 transcode() {
     #set -x
     name="$1"
-    [ "$auto" == "1" ] && echo $(<$vtlog) > dest
+    #[ "$auto" == "1" ] && echo $(<$vtlog) > dest
+    echo $(<$vtlog) > dest
     if [ "$OUTPUT" == "vdr" -a "$vencoder" != "" ]
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
@@ -3831,8 +3837,9 @@ transcode() {
 	    #sleep 1s
 	    trap ctrl_c SIGINT
 	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
-	    while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
-	    PID2=$!
+	    #while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
+	    #PID2=$!
+	    run_stat
 	    #wait $PID1
 	    while true
 	    do
@@ -3845,11 +3852,12 @@ transcode() {
 			tail -f $log_c &
 			PID2=$!
 			;;
-		    i)
+		    s)
 			kill -15 $PID2
 			#while true; do sleep 2s; clear; status "$log_c"; done &
-			while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
-			PID2=$!
+			#while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
+			#PID2=$!
+			run_stat
 			;;
 		esac
 		[ ! -e /proc/$PID1 ] && break
