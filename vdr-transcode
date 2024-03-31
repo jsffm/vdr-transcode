@@ -507,7 +507,7 @@ parameter() {
 	    h264=$2
 	    ;;
 	"-h264_HD")
-	    h264_HD=$2
+	    h264_HD=$w2
 	    ;;
 	"-h264_br")
 	    h264_br="-b:v:0 $2"
@@ -2376,6 +2376,15 @@ set_video() {
     else
 	video="$video $gop_file"
     fi
+    if [ "$check" != "" ]
+    then
+	echo "hwaccel=$hwaccel" > "$log_c.2"
+	#[ "$c" == "" ] && c=$vencoder
+	#echo "$codec -> $vcodec $c"
+	vc=$vcodec
+	[ "$vc" == "" ] && vc=copy
+	echo $str": $codec -> 0: $vc $vencoder" >> "$log_c.2"
+    fi
 }
 
 set_h264() {
@@ -2970,6 +2979,12 @@ set_audio() {
 	    ;;
     esac
     [ "$upm" != "" ] && audio_t="$audio_t $upm"
+    if [ "$check" != "" ]
+    then
+	#ac=copy
+	#[ "$acodec" != "" ] && ac=$acodec
+	echo $str": $codec -> "$stro": $codec1" >> "$log_c.2"
+    fi
     #exit
     }
 
@@ -3705,6 +3720,7 @@ analyze() {
     [ "$vcodec" != "copy" ] && video="$video $vf"
     if [ "$check" != "" ]
     then
+	cat "$log_c.2"
 	read answer
 	[ "$answer" == "n" ] && exit
     fi
