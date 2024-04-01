@@ -3845,7 +3845,7 @@ transcode() {
 	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
 	    #while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
 	    #PID2=$!
-	    msg="s=stat, l=log, q=quiet, h=halt"
+	    msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
 	    run_stat
 	    #wait $PID1
 	    while true
@@ -3870,6 +3870,12 @@ transcode() {
 			;;
 		    h)
 			kill -15 $PID2
+			;;
+		    p)
+			kill -STOP $PID1
+			;;
+		    r)
+			kill -CONT $PID1
 			;;
 		esac
 		[ ! -e /proc/$PID1 ] && break
