@@ -3746,7 +3746,8 @@ ctrl_c() {
 }
 
 run_stat() {
-    while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
+    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
+    while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
     PID2=$!
 }
 
@@ -3844,6 +3845,7 @@ transcode() {
 	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
 	    #while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
 	    #PID2=$!
+	    msg="s=stat, l=log, q=quiet, h=halt"
 	    run_stat
 	    #wait $PID1
 	    while true
@@ -3859,10 +3861,15 @@ transcode() {
 			;;
 		    s)
 			kill -15 $PID2
-			#while true; do sleep 2s; clear; status "$log_c"; done &
-			#while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
-			#PID2=$!
 			run_stat
+			;;
+		    q)
+			kill -15 $PID2
+			clear
+			echo "$msg"
+			;;
+		    h)
+			kill -15 $PID2
 			;;
 		esac
 		[ ! -e /proc/$PID1 ] && break
