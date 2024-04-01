@@ -1279,6 +1279,7 @@ status() {
     fps=${l#*fps=}
     fps=$(echo $fps|cut -d \  -f 1)
     size=${l#*size=}
+    [ "$size" == "" ] && return
     size=$(echo $size|cut -d \  -f 1)
     size=${size:0:-2}
     speed=${l#*speed=}
@@ -2462,7 +2463,8 @@ set_h264() {
     [ "$vcodec" == "" ] && vcodec="h264"
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$h264enc"
     #[ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata comment=vdr-transcode_$h264enc"
-    [ "$OUTPUT" == "vdr" ] && vencoder=$h264enc
+    #[ "$OUTPUT" == "vdr" ] && vencoder=$h264enc
+    vencoder=$h264enc
     #OPT="$OPT -metadata comment=vdr-transcode_$h264enc"
     #OPT="$OPT -metadata:s:v:0 encoder=$h264enc"
     #exit
@@ -2543,7 +2545,8 @@ set_hevc() {
     [ "$hwaccel" == "qsv" ] && OPT_I="$decode_qsv"
     [ "$vcodec" == "" ] && vcodec="hevc"
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$hevcenc"
-    [ "$OUTPUT" == "vdr" ] && vencoder=$hevcenc
+    #[ "$OUTPUT" == "vdr" ] && vencoder=$hevcenc
+    vencoder=$hevcenc
 }
 
 set_vp8() {
@@ -2893,6 +2896,7 @@ core(){
 set_audio_plus() {
     map="$map -map $str0:$str"
     audio="$audio -c:$stro copy"
+    [ "$check" != "" ] && echo $str": $codec -> "$stro": copy" >> "$log_c.2"
     stro1=$(($stro1+1))
     stro=$stro1
     codec1=${codec1:1}
@@ -2979,12 +2983,7 @@ set_audio() {
 	    ;;
     esac
     [ "$upm" != "" ] && audio_t="$audio_t $upm"
-    if [ "$check" != "" ]
-    then
-	#ac=copy
-	#[ "$acodec" != "" ] && ac=$acodec
-	echo $str": $codec -> "$stro": $codec1" >> "$log_c.2"
-    fi
+    [ "$check" != "" ] && echo $str": $codec -> "$stro": $codec1" >> "$log_c.2"
     #exit
     }
 
@@ -3595,10 +3594,14 @@ analyze() {
 		map="$map -map $str0:$str"
 		if [ "$OUTPUT" == "vdr" ]
 		then
-		    subt="$subt -c:$stro dvbsub"
+		    #subt="$subt -c:$stro dvbsub"
+		    sencoder=dvbsub
 		else
-		    subt="$subt -c:$stro copy"
+		    #subt="$subt -c:$stro copy"
+		    sencoder=copy
 		fi
+		subt="$subt -c:$stro $sencoder"
+		[ "$check" != "" ] && echo $str": $codec -> "$stro": $sencoder" >> "$log_c.2"
 		stro1=$(($stro1+1))
 		;;
 	    #"subrip"|"ass")
@@ -3721,6 +3724,8 @@ analyze() {
     if [ "$check" != "" ]
     then
 	cat "$log_c.2"
+	rm "$log_c.2"
+	echo "==>" $dest
 	read answer
 	[ "$answer" == "n" ] && exit
     fi
@@ -3749,7 +3754,7 @@ transcode() {
     #set -x
     name="$1"
     #[ "$auto" == "1" ] && echo $(<$vtlog) > dest
-    echo $(<$vtlog) > dest
+    [ "$OUTPUT" == "vdr" ] && echo $(<$vtlog) > dest
     if [ "$OUTPUT" == "vdr" -a "$vencoder" != "" ]
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
