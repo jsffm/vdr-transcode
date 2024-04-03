@@ -3877,6 +3877,12 @@ transcode() {
 		    r)
 			kill -CONT $PID1
 			;;
+		    +)
+			renice --relative +5 -p $PID1
+			;;
+		    -)
+			renice --relative -5 -p $PID1
+			;;
 		esac
 		[ ! -e /proc/$PID1 ] && break
 	    done
