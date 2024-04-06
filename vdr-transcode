@@ -2983,7 +2983,7 @@ set_audio() {
 	    ;;
     esac
     [ "$upm" != "" ] && audio_t="$audio_t $upm"
-    [ "$check" != "" ] && echo $str": $codec -> "$stro": $codec1" >> "$log_c.2"
+    [ "$check" != "" ] && echo $str": $codec -> "$stro": $codec1 $ab" >> "$log_c.2"
     #exit
     }
 
