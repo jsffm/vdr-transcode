@@ -1600,6 +1600,7 @@ input_vdra() {
     [ ${name:0:1} == "%" ] && name=${name:1}
     [ "$name" == "_" ] && name=video
     OPT="$OPT -copyts -start_at_zero"
+    OPT_G="$OPT_G -f mpeg"
     name=../$name
     chk_skip
     ifmt="vdr"
@@ -1739,6 +1740,7 @@ input_vdr() {
     [ "$odir" != "" ] && dp=$odir
     name=$dp/$name
     chk_skip
+    OPT_G="$OPT_G -f mpegts"
     ifmt="vdr"
     #exit
 }
