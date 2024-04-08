@@ -231,6 +231,8 @@ help_Configuration() {
     echo " other"
     echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
     echo " --out_stat            # alternate output on screen"
+    echo " -out_stat log|stat    # alternate output on screen"
+    echo " -dvdvideo 1   # -f dvdvideo"
     echo " -vdr <path_to_vdr>"
     echo " -ffpath <ffmpeg_dir>"
     echo " -ffmpeg <path_to_ffmpeg>    # deprecated, use -ffpath"
@@ -1003,7 +1005,10 @@ parameter() {
 	    #quiet=1
 	    ;;
 	"--out_stat")
-	    out_stat=1
+	    out_stat="stat"
+	    ;;
+	"-out_stat")
+	    out_stat=$2
 	    ;;
 	"--apc")
 	    apply_codec=1
@@ -3942,7 +3947,13 @@ transcode() {
 	    #while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
 	    #PID2=$!
 	    msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
-	    run_stat
+	    if [ "$out_stat" == "log" ]
+	    then
+		tail -f $log_c &
+		PID2=$!
+	    else
+		run_stat
+	    fi
 	    #wait $PID1
 	    while true
 	    do
