@@ -1582,7 +1582,7 @@ input_vdra() {
     oldsize=$(echo $s|cut -d \  -f 1)
     echo "oldsize="$oldsize >> $old
     input=001.vdr
-    ffmpeg_i="-i concat:"
+    ffmpeg_i="-f mpeg -i concat:"
     w="0*.vdr"
     d=
     for r in $w
@@ -1616,7 +1616,7 @@ input_vdra() {
     [ ${name:0:1} == "%" ] && name=${name:1}
     [ "$name" == "_" ] && name=video
     OPT="$OPT -copyts -start_at_zero"
-    OPT_G="$OPT_G -f mpeg"
+    #OPT_G="$OPT_G -f mpeg"
     name=../$name
     chk_skip
     ifmt="vdr"
@@ -1647,9 +1647,9 @@ input_vdr() {
     if [ $nw -eq 1 ]
     then
 	w=$(echo $w)
-	ffmpeg_i="-i $w"
+	ffmpeg_i="-f mpegts -i $w"
     else
-	ffmpeg_i="-i concat:"
+	ffmpeg_i="-f mpegts -i concat:"
 	d=
 	for r in $w
 	do
@@ -1756,7 +1756,7 @@ input_vdr() {
     [ "$odir" != "" ] && dp=$odir
     name=$dp/$name
     chk_skip
-    OPT_G="$OPT_G -f mpegts"
+    #OPT_G="$OPT_G -f mpegts"
     ifmt="vdr"
     #exit
 }
@@ -1979,8 +1979,8 @@ input_dvdvideo() {
     oldsize=$(($sum/1024))
     ls_iso $dvd_path >> $old
     echo "oldsize="$oldsize >> $old
-    OPT_G="$OPT_G -f dvdvideo -title $tr"
-    ffmpeg_i="-i $dvd_path"
+    #OPT_G="$OPT_G -f dvdvideo -title $tr"
+    ffmpeg_i="-f dvdvideo -title $tr -i $dvd_path"
     ifofile=$dvd_path"VTS_"$tr2"_0.IFO"
     d="$PWD"
     d=$(echo "$d"|tr ' ' '_')
