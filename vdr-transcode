@@ -150,6 +150,7 @@ help_Input() {
     echo "Input"
     echo " -i <file[+file2]>|vdr|dvd[:<track>]|<http> # default vdr"
     echo " -dvd <path>"
+    echo " -dvdvideo 1   # -f dvdvideo"
     echo " -BD <path>    # AVCHD"
     echo " -tr <track>   # DVD or AVCHD track"
     echo " -va <seconds> # add video at end, only ts"
@@ -394,6 +395,9 @@ parameter() {
 	"-dvd")
 	    INPUT=dvd
 	    dvd_path=$2
+	    ;;
+	"-dvdvideo")
+	    dvdvideo=1
 	    ;;
 	"-BD")
 	    INPUT=BD
@@ -1267,6 +1271,7 @@ status() {
     #echo fps1=$fps1
     echo "Duration: $dur, fps=$fps1 $sender"
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
+    # frame= 1739 fps=1739 q=34.0 size=    2560KiB time=00:00:44.92 bitrate= 466.9kbit
     #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
     # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
     #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
@@ -1280,8 +1285,12 @@ status() {
     fps=$(echo $fps|cut -d \  -f 1)
     size=${l#*size=}
     [ "$size" == "" ] && return
+    #set -x
     size=$(echo $size|cut -d \  -f 1)
-    size=${size:0:-2}
+    e=${size: -2}
+    [ "$e" == "kB" ] && size=${size:0:-2}
+    [ "$e" == "iB" ] && size=${size:0:-3}
+    #exit
     speed=${l#*speed=}
     time=${l##*time=}
     time=$(echo $time | cut -d \  -f 1)
@@ -1399,6 +1408,8 @@ diag() {
     $ffmpeg -hide_banner -encoders | grep aac
     $ffmpeg -hide_banner -encoders | grep opus
     $ffmpeg -hide_banner -encoders | grep vorbis
+    echo
+    $ffmpeg -hide_banner -demuxers | grep dvdvideo
     exit
 }
 
@@ -1831,6 +1842,11 @@ echo "title="$chna >> $meta
 input_dvd() {
     #echo
     #set -x
+    if [ "$dvdvideo" != "" ]
+    then
+	input_dvdvideo $1
+	return
+    fi
     #[ "$hwaccel" == "cuvid" ] && parameter --nohw
     tr=1
     [ "$1" != "" ] && tr=$1
@@ -1917,6 +1933,82 @@ input_dvd() {
     fi
     #OPT_G="$OPT_G -fflags +genpts"
     OPT_G="$OPT_G -fix_sub_duration"
+    #exit
+}
+
+input_dvdvideo() {
+    #set -x
+    tr=1
+    [ "$1" != "" ] && tr=$1
+    tr2=$(printf "%02d" $tr)
+    #echo $INPUT
+    #echo $dvd_path
+    #echo "tr="$tr
+    if [ "$dvd_path" != "" ]
+    then
+	[ ${dvd_path: -1} != "/" ] && dvd_path=$dvd_path"/"
+	b=$(basename "$dvd_path")
+	[ "$b" != "VIDEO_TS" ] && dvd_path=$dvd_path"VIDEO_TS/"
+    else
+	dvd_path="VIDEO_TS/"
+    fi
+    rm -f $old
+    if [ "${dvd_path:0:5}" == "/mnt/" ]
+    then
+	p=$(mount | grep $(dirname $dvd_path) | cut -d \  -f 1)
+	echo $p > $old
+    fi
+    #olds=$(du $dvd_path)
+    #read oldsize _ <<< $olds
+    #echo $oldsize
+    i=1
+    sum=0
+    while [ -e $dvd_path"VTS_"$tr2"_$i.VOB" ]
+    do
+	r=$dvd_path"VTS_"$tr2"_$i.VOB"
+        #echo $r
+	s=$(ls -l $r|cut -d \  -f 5)
+	sum=$(($sum+$s))
+        i=$(($i+1))
+    done
+    oldsize=$(($sum/1024))
+    ls_iso $dvd_path >> $old
+    echo "oldsize="$oldsize >> $old
+    OPT_G="$OPT_G -f dvdvideo -title $tr"
+    ffmpeg_i="-i $dvd_path"
+    ifofile=$dvd_path"VTS_"$tr2"_0.IFO"
+    d="$PWD"
+    d=$(echo "$d"|tr ' ' '_')
+    name="$(basename "$d")-$tr"
+    #name=$(echo "$name"|tr '_' ' ')
+    #info_name=$(echo $(basename "$d")|tr '_' ' ')	# checkme
+    info_name=$(basename "$d")				# checkme
+    ifmt="dvd"
+    s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
+    rec_time=$s
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	#set -x
+	[ -e ../info.vdr ] && info=../info.vdr
+	[ -e info.vdr ] && info=info.vdr
+	[ -e $(dirname $dvd_path)/info.vdr ] && info=$(dirname $dvd_path)/info.vdr
+	#if [ -e ../info.vdr ]
+	if [ "$info" != "" ]
+	then
+	    e=$(grep "^E" $info)
+	    s=$(echo $e|cut -d \  -f 3)
+	    rec_time=$s
+	fi
+	dest=$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
+	#exit
+	d32=0
+	while [ -e $dest ]
+	do
+	    d32=$(($d32+1))
+	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
+	done
+    fi
+    #scantype="top first"
     #exit
 }
 
@@ -3006,7 +3098,8 @@ check_scantype_ffmpeg() {
 	codec=${codec//,/}
 	# top first
 	#if [[ "$s1" == *progressive* ]]
-	if [[ "$s1" == *"top first"* ]]
+	#if [[ "$s1" == *"top first"* ]]
+	if [[ "$s1" == *" first"* ]]
 	then
 	    scantype="not progr"
 	else
@@ -3038,7 +3131,7 @@ analyze() {
 	    set_pid
 	    $x $ffmpeg -hide_banner -ss $skip -t 60 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" > $t
 	else
-	    $x $ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
+	    $x $ffprobe -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Stream" > $t
 	fi
     fi
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
@@ -3547,7 +3640,7 @@ analyze() {
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
-	    "mp2")
+	    "mp2"|"mp1")
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$OUTPUT" == "webm" ] && mp2=opus
