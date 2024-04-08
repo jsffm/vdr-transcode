@@ -47,6 +47,7 @@
 #set -x
 
 OUTPUT=vdr
+INPUT=vdr
 h264=copy
 #h264=hevc
 hevc=copy
@@ -3856,7 +3857,8 @@ transcode() {
     #set -x
     name="$1"
     #[ "$auto" == "1" ] && echo $(<$vtlog) > dest
-    [ "$OUTPUT" == "vdr" ] && echo $(<$vtlog) > dest
+    #[ "$OUTPUT" == "vdr" ] && echo $(<$vtlog) > dest
+    [ "$INPUT" == "vdr" ] && echo $(<$vtlog) > dest
     if [ "$OUTPUT" == "vdr" -a "$vencoder" != "" ]
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
