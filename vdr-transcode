@@ -3205,6 +3205,7 @@ analyze() {
     while read line
     do
 	#echo $line
+	[ "$check" != "" ] && echo $line
 	stro=$stro1
 	line2=${line//,/}
 	#w1=$(echo $line2|cut -d \  -f 1)
@@ -3716,7 +3717,7 @@ analyze() {
 		esac
 		;;
 	esac
-	[ "$check" != "" ] && echo $line
+	#[ "$check" != "" ] && echo $line
     done < $t
     if [ "$hwaccel" == "vaapi" ]
     then
