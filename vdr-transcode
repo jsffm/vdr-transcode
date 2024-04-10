@@ -1964,9 +1964,6 @@ input_dvdvideo() {
 	p=$(mount | grep $(dirname $dvd_path) | cut -d \  -f 1)
 	echo $p > $old
     fi
-    #olds=$(du $dvd_path)
-    #read oldsize _ <<< $olds
-    #echo $oldsize
     i=1
     sum=0
     while [ -e $dvd_path"VTS_"$tr2"_$i.VOB" ]
@@ -1978,11 +1975,17 @@ input_dvdvideo() {
         i=$(($i+1))
     done
     oldsize=$(($sum/1024))
-    ls_iso $dvd_path >> $old
+    if [ $oldsize -eq 0 ]
+    then
+	olds=$(du $dvd_path)
+	read oldsize _ <<< $olds
+    fi
     echo "oldsize="$oldsize >> $old
+    ls_iso $dvd_path >> $old
     #OPT_G="$OPT_G -f dvdvideo -title $tr"
     ffmpeg_i="-f dvdvideo -title $tr -i $dvd_path"
     ifofile=$dvd_path"VTS_"$tr2"_0.IFO"
+    [ ! -e $ifofile ] && ifofile=$dvd_path"VTS_01_0.IFO"
     d="$PWD"
     d=$(echo "$d"|tr ' ' '_')
     name="$(basename "$d")-$tr"
@@ -1990,7 +1993,7 @@ input_dvdvideo() {
     #info_name=$(echo $(basename "$d")|tr '_' ' ')	# checkme
     info_name=$(basename "$d")				# checkme
     ifmt="dvd"
-    s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
+    s=$(date "+%s" -r $ifofile)
     rec_time=$s
     if [ "$OUTPUT" == "vdr" ]
     then
@@ -2014,6 +2017,7 @@ input_dvdvideo() {
 	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	done
     fi
+    #OPT_G="$OPT_G -fix_sub_duration"
     #scantype="top first"
     #exit
 }
