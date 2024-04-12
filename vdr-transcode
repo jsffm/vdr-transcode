@@ -3518,6 +3518,14 @@ analyze() {
 		decode_qsv="-c:v:0 hevc_qsv"
 		set_video $hevc
 		;;
+	    "vvc")
+		video="-c:v:0 copy"
+		deinterlace=
+		vvc=copy
+		[ "$vcodec" != "" ] && vvc=$vcodec
+		set_video $vvc
+		OPT_G="$OPT_G -strict -2"
+		;;
 	    "vc1")
 		video="-c:v:0 copy"
 		[ "$OUTPUT" == "vdr" -a "$vc1" == "copy" ] && vc1=h264
