@@ -3972,6 +3972,13 @@ transcode() {
 			tail -f $log_c &
 			PID2=$!
 			;;
+		    f)
+			kill -15 $PID2
+			sleep 1s
+			less -S $log_c
+			tail -f $log_c &
+			PID2=$!
+			;;
 		    s)
 			kill -15 $PID2
 			run_stat
