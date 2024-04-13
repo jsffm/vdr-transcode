@@ -4799,6 +4799,7 @@ auto_check() {
 	    [ ! -e $c2 ] && continue
 	    status $c2
 	    c2=$(dirname $c2)
+	    [ ! -e $c2/logfile ] && continue
 	    #s=$(ls -l $c/index|cut -d \  -f 5)
 	    #echo "index" $s
 	    #s=$(ls -l $c2/index|cut -d \  -f 5)
@@ -4889,7 +4890,7 @@ auto_confr() {
 	if [ $br -gt $min_br ]
 	then
 	    #set -x
-	    echo $rr
+	    echo $br $rr
 	    touch $rr/$vtc
 	    IFS='|'
 	    for p in $parameter_auto
