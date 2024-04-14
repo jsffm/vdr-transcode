@@ -359,6 +359,7 @@ hwdownload() {
     #if [ "$hwaccel" == "cuvid" ]
     if [ "$hwaccel" != "" ]
     then
+	[[ "$vf" == *hwdownload* ]] && return
 	add_vf hwdownload
 	#set -x
 	new_vtyp=nv12
@@ -2495,6 +2496,7 @@ set_video() {
 
 set_h264() {
     #set -x
+    [ "$hwaccel" == "vulkan" ] && hwdownload
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     #h264_profile=main
