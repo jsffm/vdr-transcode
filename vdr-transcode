@@ -827,7 +827,7 @@ parameter() {
 		    vp9enc=vp9_qsv
 		    av1enc=av1_qsv
 		    ;;
-		"vdpau"|"-")
+		"vdpau"|"-"|"vulkan")
 		    ;;
 		*)
 		    echo "-hwaccel" $2 "wrong"
@@ -2365,8 +2365,9 @@ set_hwacc() {
 	    ;;
 	"vulkan")
 	    #export DISPLAY=:0.0
-	    HWACC="-hwaccel vulkan"
-	    [ "$scale" != "" ] && add_vf scale=$scale
+	    HWACC="-hwaccel vulkan -hwaccel_output_format vulkan"
+	    deinterlace="bwdif_vulkan"
+	    [ "$scale" != "" ] && add_vf scale_vulkan=$scale
 	    ;;
 	*)
 	    [ "$scale" != "" ] && add_vf scale=$scale
@@ -2576,6 +2577,7 @@ set_h264() {
 
 set_hevc() {
     [ "$s8bit" != "" ] && hwdownload && add_vf format=yuv420p
+    [ "$hwaccel" == "vulkan" ] && hwdownload
     case "$hevcenc" in
 	"libx265")
 	    #parameter --nohw
@@ -3125,6 +3127,7 @@ show() {
 
 analyze() {
     #set -x
+    local s
     [ "$trace" != "" ] && >&2 ls -l $t
     #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
@@ -3841,10 +3844,12 @@ analyze() {
     [ "$vcodec" != "copy" ] && video="$video $vf"
     if [ "$check" != "" ]
     then
+	show "$deinterlace"
 	show "$OPT"
 	show "$OPT_G"
 	show "$crop"
 	show "$aspect"
+	show "$vf"
 	cat "$log_c.2"
 	rm "$log_c.2"
 	echo "==>" $dest
