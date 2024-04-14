@@ -3119,6 +3119,10 @@ check_scantype_ffmpeg() {
 	#echo "ivcodec=$ivcodec"
 }
 
+show() {
+    [ "$1" != "" ] && echo $1
+}
+
 analyze() {
     #set -x
     [ "$trace" != "" ] && >&2 ls -l $t
@@ -3837,6 +3841,10 @@ analyze() {
     [ "$vcodec" != "copy" ] && video="$video $vf"
     if [ "$check" != "" ]
     then
+	show "$OPT"
+	show "$OPT_G"
+	show "$crop"
+	show "$aspect"
 	cat "$log_c.2"
 	rm "$log_c.2"
 	echo "==>" $dest
