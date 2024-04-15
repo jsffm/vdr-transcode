@@ -2307,7 +2307,9 @@ input_BD() {
 set_hwacc() {
     case "$hwaccel" in
 	"cuvid")
+	    #HWACC="-vsync passthrough -hwaccel cuvid -hwaccel_output_format cuda"
 	    HWACC="-hwaccel cuvid -hwaccel_output_format cuda"
+	    preenc="-fps_mode passthrough"
 	    #HWACC="-hwaccel cuvid -hwaccel_output_format nv12"
 	    #HWACC="-hwaccel cuvid -hwaccel_output_format yuv420p"
 	    #deinterlace="-vf yadif_cuda"
@@ -2318,7 +2320,9 @@ set_hwacc() {
 	    ;;
 	"cuda")
 	    #HWACC="-hwaccel cuda"
+	    #HWACC="-vsync 0 -hwaccel cuda -hwaccel_output_format cuda"
 	    HWACC="-hwaccel cuda -hwaccel_output_format cuda"
+	    preenc="-fps_mode passthrough"
 	    deinterlace="yadif_cuda"
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
 	    ;;
@@ -3870,6 +3874,8 @@ analyze() {
 ctrl_c() {
     kill -15 $PID1
     kill -15 $PID2
+    sleep 1s
+    [ -e /proc/$PID1 ] && kill -9 $PID1
     echo "cancelled"
     exit
 }
