@@ -2346,7 +2346,7 @@ set_hwacc() {
 	    #vp9enc=vp9_vaapi
 	    ;;
 	"qsv")
-	    #[ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
+	    [ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
 	    if [ "$vga" != "DG2" ]
 	    then
 		#HWACC="-hwaccel qsv -hwaccel_output_format qsv -qsv_device /dev/dri/renderD"$((128+$gpu))
@@ -2438,6 +2438,7 @@ inf() {
 
 set_video() {
     c=$1
+    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
     [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" -a "$ivcodec" != "vp8" -a "$ivcodec" != "av1" ] && c=vp9
     [ "$vcodec" != "" ] && c=$vcodec
     case $c in
@@ -2526,7 +2527,7 @@ set_h264() {
 	    #preset="$preset -b_adapt 0"
 	    ;;
 	"h264_vaapi")
-	    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
+	    #[ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    [ "$crf" == "" ] && crf=21
 	    preset="-profile:v:0 $h264_profile $level $rc_mode -qp $crf $quality $maxr"
@@ -2608,7 +2609,7 @@ set_hevc() {
 	"hevc_vaapi")
 	    #LIBVA_DRIVER_NAME=iHD
 	    #export LIBVA_DRIVER_NAME=i965
-	    [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
+	    #[ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    [ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
