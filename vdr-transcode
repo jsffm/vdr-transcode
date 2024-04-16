@@ -289,7 +289,7 @@ help_Configuration_V() {
     echo " -av1_q <n>                  # default 50"
     echo " -av1_preset <n>             # default 8"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
-    echo " -hwaccel cuvid|cuda|vaapi|qsv|vdpau|-"
+    echo " -hwaccel cuvid|cuda|vaapi|qsv|vdpau|vulkan|-"
     echo " -libva i965|iHD|radeonsi"
     echo " -gpu <n>                    # vaapi qsv"
     echo " -m4_b                       # mpeg4 bitrate"
@@ -1415,6 +1415,7 @@ diag() {
     $ffmpeg -hide_banner -encoders | grep aac
     $ffmpeg -hide_banner -encoders | grep opus
     $ffmpeg -hide_banner -encoders | grep vorbis
+    $ffmpeg -hide_banner -filters | grep vulkan
     echo
     $ffmpeg -hide_banner -demuxers | grep dvdvideo
     exit
