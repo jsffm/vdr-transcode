@@ -3986,7 +3986,7 @@ transcode() {
 	    msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
 	    if [ "$out_stat" == "log" ]
 	    then
-		tail -f $log_c &
+		tail -f "$log_c" &
 		PID2=$!
 	    else
 		run_stat
@@ -4000,14 +4000,14 @@ transcode() {
 		case $key in
 		    l)
 			kill -15 $PID2
-			tail -f $log_c &
+			tail -f "$log_c" &
 			PID2=$!
 			;;
 		    f)
 			kill -15 $PID2
 			sleep 1s
-			less -S $log_c
-			tail -f $log_c &
+			less -S "$log_c"
+			tail -f "$log_c" &
 			PID2=$!
 			;;
 		    s)
