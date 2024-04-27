@@ -2310,7 +2310,7 @@ set_hwacc() {
 	"cuvid")
 	    #HWACC="-vsync passthrough -hwaccel cuvid -hwaccel_output_format cuda"
 	    HWACC="-hwaccel cuvid -hwaccel_output_format cuda"
-	    preenc="-fps_mode passthrough"
+	    #[ "$fpso" == "" ] && preenc="-fps_mode passthrough"
 	    #HWACC="-hwaccel cuvid -hwaccel_output_format nv12"
 	    #HWACC="-hwaccel cuvid -hwaccel_output_format yuv420p"
 	    #deinterlace="-vf yadif_cuda"
@@ -2323,7 +2323,7 @@ set_hwacc() {
 	    #HWACC="-hwaccel cuda"
 	    #HWACC="-vsync 0 -hwaccel cuda -hwaccel_output_format cuda"
 	    HWACC="-hwaccel cuda -hwaccel_output_format cuda"
-	    preenc="-fps_mode passthrough"
+	    #[ "$fpso" == "" ] && preenc="-fps_mode passthrough"
 	    deinterlace="yadif_cuda"
 	    [ "$scale" != "" ] && add_vf scale_cuda=$scale
 	    ;;
