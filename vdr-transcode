@@ -424,6 +424,11 @@ parameter() {
 	    INPUT=none
 	    #status
 	    ;;
+	"--astat")
+	    TODO=$1
+	    INPUT=none
+	    #status
+	    ;;
 	"--diag")
 	    TODO=$1
 	    INPUT=none
@@ -1321,6 +1326,7 @@ status() {
 	#set -x
 	size2=$(($size*1000/$prm))
 	#if [[ "$fps1" == *.* ]]
+	[ "$fps" == "0.0" ] && return
 	[[ "$fps1" == *.* ]] && p1=1
 	[[ "$fps" == *.* ]] && p2=1
 	if [ "$p1" == "1" -o "$p2" == 1 ]
@@ -1340,6 +1346,76 @@ status() {
 	#date -u -d @$exptime
     fi
     #exit
+}
+
+ctrl_c_a() {
+    echo "ctrl_c_a $PID2"
+    kill -15 $PID2
+    echo "cancelled"
+    exit
+}
+
+run_stat_a() {
+    while true
+	do sleep 2s
+	clear
+	status "$1"
+	echo -e "\n$msg"
+    done
+    #PID2=$!
+}
+
+astat() {
+    #set -x
+    echo $vtlog
+    [ -e $vtlog ] && log=$(<$vtlog)
+    #[ ! -e "$log" ] && exit 8
+    #exit
+    trap ctrl_c_a SIGINT
+    msg="s=stat, l=log, q=quiet, h=halt"
+    #status "$log"
+    run_stat_a "$log" &
+    PID2=$!
+    while true
+    do
+	log=$(<$vtlog)
+	read -t 2 -n 1 key
+	case $key in
+	    l)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		tail -f "$log" &
+		PID2=$!
+		;;
+	    s)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		run_stat_a "$log" &
+		PID2=$!
+		;;
+	    f)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		less -S "$log"
+		tail -f "$log" &
+		PID2=$!
+		;;
+	    q)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		clear
+		echo $msg
+		;;
+	    h)
+		kill -15 $PID2
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		;;
+	    k)
+		kill -15 $(<$runvt)
+		#kill -15 $(pidof ffmpeg)
+		pid=$(pidof ffmpeg)
+		cat /proc/$pid/cmdline
+		kill -15 $pid
+		;;
+	esac
+    done
+    exit
 }
 
 diag() {
@@ -3874,7 +3950,8 @@ analyze() {
 }
 
 ctrl_c() {
-    kill -15 $PID1
+    echo "ctrl_c"
+    [ "$PID1" != "" ] && kill -15 $PID1
     kill -15 $PID2
     sleep 1s
     [ -e /proc/$PID1 ] && kill -9 $PID1
@@ -3884,7 +3961,8 @@ ctrl_c() {
 
 run_stat() {
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
-    while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
+    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
+    while true; do sleep 2s; clear; status "$1"; echo -e "\n$msg"; done &
     PID2=$!
 }
 
@@ -3989,7 +4067,7 @@ transcode() {
 		tail -f "$log_c" &
 		PID2=$!
 	    else
-		run_stat
+		run_stat "$log_c"
 	    fi
 	    #wait $PID1
 	    while true
@@ -3999,34 +4077,34 @@ transcode() {
 		#echo -n $key
 		case $key in
 		    l)
-			kill -15 $PID2
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			tail -f "$log_c" &
 			PID2=$!
 			;;
 		    f)
-			kill -15 $PID2
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			sleep 1s
 			less -S "$log_c"
 			tail -f "$log_c" &
 			PID2=$!
 			;;
 		    s)
-			kill -15 $PID2
-			run_stat
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			run_stat "$log_c"
 			;;
 		    q)
-			kill -15 $PID2
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			clear
 			echo "$msg"
 			;;
 		    h)
-			kill -15 $PID2
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			;;
 		    p)
-			kill -STOP $PID1
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			;;
 		    r)
-			kill -CONT $PID1
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			;;
 		    +)
 			renice --relative +5 -p $PID1
@@ -4039,6 +4117,10 @@ transcode() {
 	    done
 	    kill -15 $PID2
 	    #set +x
+	elif [ "$auto" != "" ]
+	then
+	    [ ${ffmpeg_i: -1} == \" ] && x=eval
+	    $x nice $ffmpeg $opt 2>> "$log_c"
 	else
 	    #nice $ffmpeg $opt 2>&1 | tee -a $log_c
 	    #sss="nice $ffmpeg $opt"
@@ -5104,6 +5186,10 @@ case $TODO in
 	status $(<"$vtlog")
 	exit
 	;;
+    "--astat")
+	astat
+	exit
+	;;
     "--as")
 	server
 	;;
@@ -5227,4 +5313,6 @@ rm -f $lck
 rm $runvt
 rm $t
 rm -f $old
+#echo $$ >> "$log_c"
 [ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 "$log_c"
+#echo $$
