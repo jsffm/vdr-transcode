@@ -1367,7 +1367,7 @@ run_stat_a() {
 
 astat() {
     #set -x
-    echo $vtlog
+    #echo $vtlog
     [ -e $vtlog ] && log=$(<$vtlog)
     #[ ! -e "$log" ] && exit 8
     #exit
@@ -1379,6 +1379,12 @@ astat() {
     while true
     do
 	log=$(<$vtlog)
+	if [ "$log" != "$loga" ]
+	then
+	    [ -e /proc/$PID2 ] && kill -15 $PID2
+	    run_stat_a "$log" &
+	    PID2=$!
+	fi
 	read -t 2 -n 1 key
 	case $key in
 	    l)
@@ -1414,6 +1420,7 @@ astat() {
 		kill -15 $pid
 		;;
 	esac
+	loga=$log
     done
     exit
 }
