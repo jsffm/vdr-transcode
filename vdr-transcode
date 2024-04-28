@@ -1307,6 +1307,7 @@ status() {
     speed=${l#*speed=}
     time=${l##*time=}
     time=$(echo $time | cut -d \  -f 1)
+    [ "$time" == "N/A" ] && return
     time2=$(date +"%s" -u -d "1970-01-01 ${time:0:8}")
     restz=$(($durs-$time2))
     if [ "$dur2" != "N/A,’" ]
