@@ -1351,20 +1351,10 @@ status() {
 }
 
 ctrl_c_a() {
-    echo "ctrl_c_a $PID2"
+    #echo "ctrl_c_a $PID2"
     kill -15 $PID2
     echo "cancelled"
     exit
-}
-
-run_stat_a() {
-    while true
-	do sleep 2s
-	clear
-	status "$1"
-	echo -e "\n$msg"
-    done
-    #PID2=$!
 }
 
 astat() {
@@ -1375,17 +1365,14 @@ astat() {
     #exit
     trap ctrl_c_a SIGINT
     msg="s=stat, l=log, q=quiet, h=halt"
-    #status "$log"
-    run_stat_a "$log" &
-    PID2=$!
+    run_stat "$log"
     while true
     do
 	log=$(<$vtlog)
 	if [ "$log" != "$loga" ]
 	then
 	    [ -e /proc/$PID2 ] && kill -15 $PID2
-	    run_stat_a "$log" &
-	    PID2=$!
+	    run_stat "$log"
 	fi
 	read -t 2 -n 1 key
 	case $key in
@@ -1396,8 +1383,7 @@ astat() {
 		;;
 	    s)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		run_stat_a "$log" &
-		PID2=$!
+		run_stat "$log"
 		;;
 	    f)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -3959,7 +3945,7 @@ analyze() {
 }
 
 ctrl_c() {
-    echo "ctrl_c"
+    #echo "ctrl_c"
     [ "$PID1" != "" ] && kill -15 $PID1
     kill -15 $PID2
     sleep 1s
