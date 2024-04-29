@@ -4095,10 +4095,10 @@ transcode() {
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			;;
 		    p)
-			[ -e /proc/$PID2 ] && kill -15 $PID2
+			kill -STOP $PID1
 			;;
 		    r)
-			[ -e /proc/$PID2 ] && kill -15 $PID2
+			kill -CONT $PID1
 			;;
 		    +)
 			renice --relative +5 -p $PID1
