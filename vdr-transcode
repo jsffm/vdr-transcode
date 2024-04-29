@@ -1399,13 +1399,13 @@ astat() {
 	    h)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		;;
-	    k)
-		kill -15 $(<$runvt)
+	    #k)
+		#kill -15 $(<$runvt)
 		#kill -15 $(pidof ffmpeg)
-		pid=$(pidof ffmpeg)
-		cat /proc/$pid/cmdline
-		kill -15 $pid
-		;;
+		#pid=$(pidof ffmpeg)
+		#cat /proc/$pid/cmdline
+		#kill -15 $pid
+		#;;
 	esac
 	loga=$log
     done
