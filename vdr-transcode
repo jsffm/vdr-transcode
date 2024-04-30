@@ -1367,7 +1367,7 @@ astat() {
     [ ! -e "$vtlog" ] && exit 8
     #exit
     trap ctrl_c_a SIGINT
-    msg="s=stat, l=log, q=quiet, h=halt"
+    msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
     run_stat "$log"
     while true
     do
@@ -1401,6 +1401,10 @@ astat() {
 		;;
 	    h)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
+		;;
+	    x)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		exit
 		;;
 	    #k)
 		#kill -15 $(<$runvt)
