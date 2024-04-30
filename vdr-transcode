@@ -1346,6 +1346,9 @@ status() {
 	[ $restz -gt 0 ] && echo "Est: $exp"
 	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
 	#date -u -d @$exptime
+	echo
+	df -h --output=avail $log
+	#df -h $log
     fi
     #exit
 }
@@ -1361,7 +1364,7 @@ astat() {
     #set -x
     #echo $vtlog
     [ -e $vtlog ] && log=$(<$vtlog)
-    #[ ! -e "$log" ] && exit 8
+    [ ! -e "$vtlog" ] && exit 8
     #exit
     trap ctrl_c_a SIGINT
     msg="s=stat, l=log, q=quiet, h=halt"
@@ -1388,7 +1391,7 @@ astat() {
 	    f)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		less -S "$log"
-		tail -f "$log" &
+		run_stat "$log"
 		PID2=$!
 		;;
 	    q)
@@ -5177,7 +5180,7 @@ case $TODO in
 	exit
 	;;
     "--stat")
-	status $(<"$vtlog")
+	[ -e $vtlog ] && status $(<"$vtlog")
 	exit
 	;;
     "--astat")
