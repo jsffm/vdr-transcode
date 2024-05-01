@@ -286,7 +286,7 @@ help_Configuration_V() {
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
     echo " -nvenc_rc vbr|constqp       # default vbr"
     echo " -vp9enc libvpx-vp9|vp9_vaapi|vp9_qsv"
-    echo " -av1enc libsvtav1|librav1e|libaom-av1 # default libsvtav1"
+    echo " -av1enc libsvtav1|av1_qsv|librav1e|libaom-av1 # default libsvtav1"
     echo " -av1_q <n>                  # default 50"
     echo " -av1_preset <n>             # default 8"
     echo " -pix_fmt <pix_fmt>          # e.g. yuv420p"
@@ -639,7 +639,7 @@ parameter() {
 	"-vp9_q"|"-gq")
 	    gq=$2	# VP8
 	    ;;
-	"-qv"|"-vq")
+	"-qv"|"-vq"|"-qp")
 	    #OPT="$OPT -q:v $2"
 	    qv=$2
 	    crf=$2
@@ -2850,14 +2850,14 @@ set_av1() {
 	    ;;
 	"libsvtav1")
 	    [ "$av1preset" == "" ] && av1preset=8
-	    if [ ${ffmpeg_v:0:1} -lt 5 ]
-	    then
-		[ "$qav1" == "" ] && qav1=50
-		video="-c:v:0 $av1enc -preset $av1preset -rc cqp -qp $qav1 -sc_detection 0"
-	    else
+	    #if [ ${ffmpeg_v:0:1} -lt 5 ]
+	    #then
 		[ "$qav1" == "" ] && qav1=55
-		video="-c:v:0 $av1enc -preset $av1preset -crf $qav1 -sc_detection 0"
-	    fi
+		video="-c:v:0 $av1enc -preset $av1preset -qp $qav1"
+	    #else
+		#[ "$qav1" == "" ] && qav1=55
+		#video="-c:v:0 $av1enc -preset $av1preset -crf $qav1"
+	    #fi
 	    #video="$video -svtav1-params fast-decode=2"
 	    ;;
 	"av1_qsv")
@@ -3417,6 +3417,7 @@ analyze() {
 	#set -x
 	IFS='()' read _ slang _ <<< $str1
 	#echo $slang
+	[ "${slang:0:1}" == "[" ] && slang=
 	if [[ "$str1" == *[0x* ]]
 	then
 	    #set -x
