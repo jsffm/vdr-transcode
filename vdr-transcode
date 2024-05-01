@@ -3174,7 +3174,7 @@ set_audio() {
 	    ;;
     esac
     [ "$upm" != "" ] && audio_t="$audio_t $upm"
-    [ "$check" != "" ] && echo $str": $codec -> "$stro": $codec1 $ab" >> "$log_c.2"
+    [ "$check" != "" ] && echo $str": $slang $codec -> "$stro": $codec1 $ab" >> "$log_c.2"
     #exit
     }
 
@@ -3414,6 +3414,9 @@ analyze() {
 	#str0=${str0:${#str0}-1:1}
 	str0=${str0: -1}
 	str1=${line#*:}
+	#set -x
+	IFS='()' read _ slang _ <<< $str1
+	#echo $slang
 	if [[ "$str1" == *[0x* ]]
 	then
 	    #set -x
@@ -3771,8 +3774,10 @@ analyze() {
 		;;
 	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
 		map="$map -map $str0:$str"
-		[ "$acodec" != "" ] && set_audio $acodec
-		[ "$OUTPUT" == "webm" ] && set_opus
+		#[ "$acodec" != "" ] && set_audio $acodec
+		#[ "$OUTPUT" == "webm" ] && set_opus
+		[ "$OUTPUT" == "webm" ] && pcm=opus
+		[ "$acodec" != "" ] && pcm=$acodec
 		set_audio $pcm
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
@@ -3807,7 +3812,7 @@ analyze() {
 		    sencoder=copy
 		fi
 		subt="$subt -c:$stro $sencoder"
-		[ "$check" != "" ] && echo $str": $codec -> "$stro": $sencoder" >> "$log_c.2"
+		[ "$check" != "" ] && echo $str": $slang $codec -> "$stro": $sencoder" >> "$log_c.2"
 		stro1=$(($stro1+1))
 		;;
 	    #"subrip"|"ass")
@@ -3843,6 +3848,7 @@ analyze() {
 		else
 		    subt="$subt -c:$stro copy"
 		fi
+		[ "$check" != "" ] && echo $str": $slang $codec -> "$stro": $sencoder" >> "$log_c.2"
 		stro1=$(($stro1+1))
 		;;
 	    #"dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext"|"none"|"mjpeg")
