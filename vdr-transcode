@@ -3332,6 +3332,9 @@ analyze() {
     # Stream #0:2[0x81]: Audio: ac3, 48000 Hz, 5.1(side), fltp, 384 kb/s
     # Stream #0:2[0xa0]: Audio: pcm_dvd, 48000 Hz, 2 channels, s16, 1536 kb/s
     # Stream #0:0[0x1bf]: Data: dvd_nav_packet
+    #
+    # Stream #0:0[0x1e0]: Video: mpeg2video, yuv420p(tv, top first), 720x576, SAR 64:45 DAR 16:9, 25 fps, 25 tbr, 90k tbn
+    # Stream #0:1[0x80](ger): Audio: ac3, 48000 Hz, 5.1(side), fltp, 448 kb/s
     # mpg
     # Stream #0:0[0x1e0]: Video: mpeg2video (Main), yuv420p(tv, fcc/bt470bg/bt470bg, top first), 480x576 [SAR 8:5 DAR 4:3], 25 fps, 25 tbr, 90k tbn, 50 tbc
     # Stream #0:1[0x1c0]: Audio: mp2, 44100 Hz, stereo, s16p, 128 kb/s
@@ -3404,25 +3407,25 @@ analyze() {
 	stro=$stro1
 	line2=${line//,/}
 	#w1=$(echo $line2|cut -d \  -f 1)
-	read w1 _ typ codec _ <<< $line2
+	read w1 stream typ codec _ <<< $line2
 	[ "$w1" != "Stream" ] && continue
 	#codec=$(echo $line|cut -d \  -f 4)
 	#codec=${codec//,/}
 	#typ=$(echo $line|cut -d \  -f 3)
 	#set -x
-	str0=${line%%:*}
+	str0=${stream%%:*}
 	#str0=${str0:${#str0}-1:1}
 	str0=${str0: -1}
-	str1=${line#*:}
+	str1=${stream#*:}
 	#set -x
 	IFS='()' read _ slang _ <<< $str1
 	#echo $slang
-	[ "${slang:0:1}" == "[" ] && slang=
+	#[ "${slang:0:1}" == "[" ] && slang=
 	if [[ "$str1" == *[0x* ]]
 	then
 	    #set -x
 	    str=${str1%%[*}
-	    trid=${line#*[}
+	    trid=${stream#*[}
 	    trid=${trid%%]*}
 	    #[ "${langa[$(($trid))]}" != "" ] && metal="$metal -metadata:s:$stro language=${langa[$(($trid))]}"
 	    #exit
