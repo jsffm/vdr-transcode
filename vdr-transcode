@@ -80,11 +80,11 @@ mjpeg=0
 gop_vdr="-g 50"
 
 #h264_level=3.0  # 720x576i
-h264_level=4.1
+#h264_level=4.1
 #h264_level=4.2
 #hevc_level=4.0
 x264_preset=fast
-hevc_level=4.1
+#hevc_level=4.1
 hevc_profile=main
 h264enc=libx264
 #h264enc="h264_nvenc"
@@ -275,7 +275,7 @@ help_Configuration_V() {
     echo " -vp9_q|-gq <n>   # quality vp8/9 default 30, < better, > smaller"
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_qsv|h264_omx"
-    #echo " -h264_level <level> # default 4.1"
+    echo " -h264_level <level>"
     echo " -x264_preset <preset> # default fast"
     echo " -h264_br         # bitrate for h264_omx, -b works too"
     echo " -hevcenc hevc_nvenc|hevc_vaapi|hevc_qsv|libx265|libkvazaar"
@@ -2583,7 +2583,7 @@ set_h264() {
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     #h264_profile=main
-    level="-level $h264_level"
+    [ "$h264_level" != "" ] && level="-level $h264_level"
     case $h264enc in
 	"libx264")
 	    #parameter --nohw
@@ -2663,6 +2663,7 @@ set_h264() {
 set_hevc() {
     [ "$s8bit" != "" ] && hwdownload && add_vf format=yuv420p
     [ "$hwaccel" == "vulkan" ] && hwdownload
+    [ "$level_hevc" != "" ] && level=$level_hevc
     case "$hevcenc" in
 	"libx265")
 	    #parameter --nohw
@@ -2670,7 +2671,9 @@ set_hevc() {
 	    deinterlace="yadif"
 	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
 	    [ "$hevc_cq" == "" ] && hevc_cq=28
-	    x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
+	    #x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
+	    x265_params="-x265-params crf=$hevc_cq"
+	    [ "$hevc_level" != "" ] && x265_params="$x265_params:level-idc=$hevc_level"
 	    [ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
 	    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
 	    #preset="-preset veryfast $h265_level -crf $hevc_cq $maxr"
@@ -2680,7 +2683,7 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
-	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level_hevc -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
+	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
 	    #preset="$preset -init_qpB 25"
 	    ;;
 	"hevc_vaapi")
@@ -2691,7 +2694,7 @@ set_hevc() {
 	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
 	    [ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
 	    [ "$hevc_cq" == "" ] && hevc_cq=32
-	    preset="-profile:v:0 $hevc_profile -tier high $level_hevc $rc_mode -qp $hevc_cq $opt_r"
+	    preset="-profile:v:0 $hevc_profile -tier high $level $rc_mode -qp $hevc_cq $opt_r"
 	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
@@ -2712,8 +2715,11 @@ set_hevc() {
 	    decode_cuvid=
 	    #preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    [ "$hevc_cq" == "" ] && hevc_cq=28
-	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
+	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
+	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq"
+	    [ "$hevc_level" == "" ] && set_hevc_level
+	    [ "$hevc_level" != "" ] && preset="$preset,level=$hevc_level"
 	    ;;
 	"hevc_amf")
 	    #usage=highquality
@@ -3210,6 +3216,17 @@ show() {
     [ "$1" != "" ] && echo $1
 }
 
+set_hevc_level() {
+    if [ "$vw" != "" ]
+    then
+	[ $vw -le 576 ] && hevc_level=3.1
+	[ $vw -ge 720 ] && hevc_level=4.1
+	[ $vw -ge 1080 ] && hevc_level=4.2
+	[ $vw -gt 2000 ] && hevc_level=5.1
+	[ $vw -gt 2160 ] && hevc_level=6.0
+    fi
+}
+
 analyze() {
     #set -x
     local s
@@ -3524,7 +3541,7 @@ analyze() {
 		#vw=$(echo $scale|cut -d ':' -f 2)
 		IFS=: read hw vw <<< $scale
 	    fi
-	    if [ "$vw" != "" ]
+	    if [ "$vw" != ""  -a "x" == "y" ]
 	    then
 		[ $vw -le 576 ] && h264_level=3.1
 		[ $vw -ge 1080 ] && h264_level=4.2
