@@ -4160,29 +4160,14 @@ transcode() {
     fi
     rm -f ffmetadata
     echo "===========================================================" >> "$log_c"
-    #ffprobe -hide_banner -i $name 2>> $log_c
-    #$ffprobe -hide_banner -i $name 2>$t
-    #sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
-    #eval $sss
-    #[ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
-    #$x $ffprobe -hide_banner -i "$name" 2>$t
-    #set -x
-    #name=${name/\(/(}
-    #name=${name/\)/)}
-    #if [ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ]
-    #then
-	#sss="$ffprobe -hide_banner -i \"$name\" 2>$t"
-	#eval $sss
-    #else
+    which mediainfo 2> /dev/null
+    [ $? -eq 0 -a "$OUTPUT" == "vdr" ] && mediainfo --Inform="Video;%Format_Profile%" $name >> "$log_c"
     if [[ "$name" == *"("* ]]
     then
 	eval $ffprobe -hide_banner -i "\"$name\"" 2>$t	# checkme
     else
 	eval $ffprobe -hide_banner -i "$name" 2>$t	# checkme
     fi
-	#eval $ffmpeg -hide_banner -ss 3 -i $name -c copy -map 0 -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>$t	# checkme
-	#$ffprobe -hide_banner -i $name 2>$t
-    #fi
     cat $t >> "$log_c"
     #set -x
     line=$(grep "Video:" $t)
