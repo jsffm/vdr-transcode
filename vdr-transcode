@@ -3139,6 +3139,9 @@ set_audio() {
 	"copy")
 	    audio_t="-c:$stro copy"
 	    ;;
+	"pcm")
+	    audio_t="-c:$stro pcm_s16le"
+	    ;;
 	"core")
 	    core
 	    ;;
