@@ -223,7 +223,7 @@ help_Automation() {
     echo " --ac               # check processed"
     echo " --ardy             # check for lost transcodings"
     echo " --rmdel            # deletes processed records, marked to delete, use on your own risk"
-    echo " --astat            # shows status like out_stat"
+    echo " --astat            # show status like out_stat"
 }
 
 help_Configuration() {
