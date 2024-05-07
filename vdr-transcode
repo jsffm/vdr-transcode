@@ -1347,7 +1347,7 @@ status() {
 	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
 	#date -u -d @$exptime
 	echo
-	df -h --output=avail "$log"
+	#df -h --output=avail "$log"
 	#df -h $log
     fi
     #exit
@@ -1397,7 +1397,7 @@ astat() {
 	    q)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		clear
-		echo $msg
+		echo -e $msg
 		;;
 	    h)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -3970,6 +3970,7 @@ analyze() {
 	echo "==>" $dest
 	read answer
 	[ "$answer" == "n" ] && exit
+	[ "$answer" == "a" ] && auto_conf
     fi
     if [ "$OUTPUT" == "vdr" -a "$sim" == "" ]
     then
@@ -3977,6 +3978,7 @@ analyze() {
 	mv $log_c $dest/logfile
 	log_c=$dest/logfile
     fi
+    [ "$auto" != "1" ] && echo $d $PWD >> $logs
     #exit
 }
 
@@ -3993,7 +3995,7 @@ ctrl_c() {
 run_stat() {
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
-    while true; do sleep 2s; clear; status "$1"; echo -e "\n$msg"; done &
+    while true; do sleep 2s; clear; status "$1"; df -h --output=avail "$1";echo -e "\n$msg"; done &
     PID2=$!
 }
 
@@ -4302,7 +4304,7 @@ copy_vdr() {
 	echo "$PWD/$log_c" > $vtlog
     fi
     header
-    [ "$auto" != "1" ] && echo $d $PWD >> $logs
+    #[ "$auto" != "1" ] && echo $d $PWD >> $logs
     analyze $ffmpeg_i
     if [ "$video_add" != "" ]
     then
@@ -4968,6 +4970,7 @@ auto_conf() {
 	[ "${p:0:1}" == " " ] && p=${p:1}
 	#echo $p
 	[ "$p" == "--conf" ] && continue
+	[ "$p" == "--p" ] && continue
 	echo $p >> $vtc
     done
     cat $vtc
