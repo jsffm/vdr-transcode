@@ -2475,6 +2475,20 @@ streams() {
     exit
 }
 
+show_size() {
+    if [ $1 -lt 5000 ]
+    then
+	echo "Size:" $1 "kbyte"
+    elif [ $1 -lt 4000000 ]
+    then
+	awk -v "s=$1" 'BEGIN {printf "Size: %.1f Mbyte\n", s/1024+0.05}'
+    else
+	awk -v "s=$1" 'BEGIN {printf "Size: %.1f Gbyte\n", s/1024/1024+0.05}'
+    fi
+    #echo -n "Size: "
+    #numfmt --to=iec --from-unit=1000 <<< $1
+}
+
 inf() {
     #set -x
     #echo "["$ffmpeg_i"]"
@@ -2486,17 +2500,7 @@ inf() {
 	echo $sender
 	grep $chn_id $conf
     fi
-    if [ $oldsize -lt 5000 ]
-    then
-	echo "Size:" $oldsize "kbyte"
-    else
-	if [ $oldsize -lt 4000000 ]
-	then
-	    awk -v "s=$oldsize" 'BEGIN {printf "Size: %.1f Mbyte\n", s/1024+0.05}'
-	else
-	    awk -v "s=$oldsize" 'BEGIN {printf "Size: %.1f Gbyte\n", s/1024/1024+0.05}'
-	fi
-    fi
+    show_size $oldsize
     #$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     #sss="$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E \"Duration|Stream|Chapter\""
     #eval $sss
@@ -3238,6 +3242,7 @@ analyze() {
     #set -x
     local s
     [ "$trace" != "" ] && >&2 ls -l $t
+    [ "$check" != "" ] && show_size $oldsize
     #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
     #eval $sss
