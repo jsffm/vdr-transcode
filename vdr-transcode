@@ -3286,7 +3286,7 @@ analyze() {
     #exit
     if [ "$scantype" == "" ]
     then
-	which mediainfo 2> /dev/null
+	which mediainfo 2> /dev/null > /dev/null 
 	if [ $? -eq 0 -a "${INPUT:0:4}" != "http" ]
 	then
 	    echo "Check scantype with mediainfo" >> "$log_c"
@@ -4231,7 +4231,7 @@ header() {
     proc=$(uname -p)
     [ "$proc" == "unknown" ] && proc=$(lscpu | grep "Model name:")
     echo $proc >> "$log_c"
-    which lspci 2> /dev/null
+    which lspci 2> /dev/null > /dev/null
     if [ $? -eq 0 ]
     then
 	vga1=$(lspci | grep VGA)
