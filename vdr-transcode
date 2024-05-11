@@ -1342,7 +1342,8 @@ status() {
 	przs=$(($size2*100/$oldsize))
 	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
 	echo "fps=$fps time=$dur2 $prz% $speed $drop"
-	echo "Size: $oldsize -> $size2 $przs%"
+	#echo "Size: $oldsize -> $size2 $przs%"
+	echo "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%"
 	[ $restz -gt 0 ] && echo "Est: $exp"
 	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
 	#date -u -d @$exptime
