@@ -2475,7 +2475,7 @@ streams() {
     exit
 }
 
-show_size() {
+show_size_x() {
     if [ $1 -lt 5000 ]
     then
 	echo "Size:" $1 "kbyte"
@@ -2485,9 +2485,13 @@ show_size() {
     else
 	awk -v "s=$1" 'BEGIN {printf "Size: %.1f Gbyte\n", s/1024/1024+0.05}'
     fi
-    #echo -n "Size: "
-    #numfmt --to=iec --from-unit=1000 <<< $1
 }
+
+show_size() {
+    echo -n "Size: "
+    numfmt --to=iec --from-unit=1000 --format=%.1f <<< $1
+}
+
 
 inf() {
     #set -x
