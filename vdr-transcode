@@ -2488,8 +2488,8 @@ show_size_x() {
 }
 
 show_size() {
-    echo -n "Size: "
-    numfmt --to=iec --from-unit=1000 --format=%.1f <<< $1
+    #echo -n "Size: "
+    numfmt --to=iec --from-unit=1024 --format=%.1f <<< $1
 }
 
 
@@ -2504,6 +2504,7 @@ inf() {
 	echo $sender
 	grep $chn_id $conf
     fi
+    echo -n "Size: "
     show_size $oldsize
     #$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     #sss="$ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E \"Duration|Stream|Chapter\""
@@ -3246,7 +3247,7 @@ analyze() {
     #set -x
     local s
     [ "$trace" != "" ] && >&2 ls -l $t
-    [ "$check" != "" ] && show_size $oldsize
+    [ "$check" != "" ] && echo "Size: "$(show_size $oldsize)
     #$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t
     #sss="$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Stream" > $t"
     #eval $sss
@@ -4169,7 +4170,7 @@ transcode() {
 		esac
 		[ ! -e /proc/$PID1 ] && break
 	    done
-	    kill -15 $PID2
+	    [ -e /proc/$PID2 ] && kill -15 $PID2
 	    #set +x
 	elif [ "$auto" != "" ]
 	then
@@ -5336,19 +5337,23 @@ fi
 #[ "$OUTPUT" == "vdr" -a "$si" != "" ] && date -u -d @$si +"index %T" >> "$log_c"
 if [ $oldsize -gt 1 ]
 then
-    echo "Alt " $oldsize >> "$log_c"
+    #echo "Alt " $oldsize $(show_size $oldsize) >> "$log_c"
+    printf "Old  %8d %8s\n" $oldsize $(show_size $oldsize) >> "$log_c"
     prz=$(($newsize*100/$oldsize))
-    echo "Neu " $newsize $prz"%" >> "$log_c"
-    echo "Save" $(($oldsize-$newsize))  >> "$log_c"
+    #echo "Neu " $newsize $(show_size $newsize) $prz"%" >> "$log_c"
+    printf "New  %8d %8s %d%%\n" $newsize $(show_size $newsize) $prz >> "$log_c"
+    S=$(($oldsize-$newsize))
+    #echo "Save" $S $(show_size $S) >> "$log_c"
+    printf "Save %8d %8s\n" $S $(show_size $S) >> "$log_c"
 fi
 if [ "$postproc" != "" ]
 then
 	$postproc $(realpath $dest) $vcodec
 fi
-echo -n "Dauer: " >> "$log_c"
+echo -n "Duration: " >> "$log_c"
 date -u -d @$sek "+%T" >> "$log_c"
 d=`date +"%F %T"`
-echo "Ende" $d >> "$log_c"
+echo "End" $d >> "$log_c"
 rm -f $lck
 rm $runvt
 rm $t
