@@ -5352,7 +5352,7 @@ if [ "$postproc" != "" ]
 then
 	$postproc $(realpath $dest) $vcodec
 fi
-echo -n "Duration: " >> "$log_c"
+echo -n "Duration " >> "$log_c"
 date -u -d @$sek "+%T" >> "$log_c"
 d=`date +"%F %T"`
 echo "End" $d >> "$log_c"
