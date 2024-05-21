@@ -4974,7 +4974,7 @@ auto_play() {
 	    if [ $answer == "s" ]
 	    then
 		status "$d2"
-		read $answer
+		read answer
 	    fi
 	    [ "$answer" == "" ] && continue
 	    d2=$(dirname $d1)
