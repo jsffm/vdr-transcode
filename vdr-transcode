@@ -997,6 +997,10 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
+	"--aplay")
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"--rmdel"|"--lsdel")
 	    TODO=$1
 	    INPUT=none
@@ -1245,6 +1249,7 @@ status() {
     # Est: 00:02:19
 
     #set -x
+    #echo "IFS="$IFS
     #log=$(cat $vtlog)
     #log="$1"
     log="$@"
@@ -1279,9 +1284,12 @@ status() {
     #fps1=$(grep "Video:" $log|head -n 1)
     fps1=$(grep "Video:" "$log"|tail -n 1)
     # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
+    # Stream #0:0[0x1ff]: Video: hevc (Main) (HEVC / 0x43564548), yuv420p(tv), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 90k tbn
+    #set -x
     fps1=${fps1%fps,*}
     nw=$(echo $fps1|wc -w)
     fps1=$(echo $fps1|cut -d \  -f $nw)
+    #fps1=25
     #echo fps1=$fps1
     echo "Duration: $dur, fps=$fps1 $sender"
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
@@ -4921,6 +4929,74 @@ auto_rdy() {
     exit
 }
 
+auto_play() {
+    local loga
+    declare -a loga
+    
+    t=/tmp/vtc
+    t2=/tmp/vtc2
+    #tac $logs > $t
+    #while read line
+    #file=$(cat $logs)
+    #set -x 
+    mapfile -t loga < $logs
+    nl=${#loga[*]}
+    #echo ${loga[0]}
+    #echo ${loga[1]}
+    #exit
+    #IFS=$'\n'
+    #for line in $file
+    for (( i=0; i<$nl; i++ ))
+    do
+	line=${loga[$i]}
+	#echo $line
+	#exit
+	#read _ _ d1 _ <<< $line
+	d1=$(echo $line|cut -d \  -f 3)
+	#echo $d1
+	#exit
+	[ ! -e "$d1" ] && continue
+	#set -x
+	ext=${d1##*.}
+	[ "$ext" != "rec" ] && continue
+	[ ! -e $d1/dest ] && continue
+	#echo $line
+	d2=$(<$d1/dest)
+	[ ! -e $d2 ] && continue
+	echo $d2
+	#set -x
+	#status $d2
+	#exit
+	#set -x
+	read answer
+	if [ "$answer" != "" ]
+	then
+	    if [ $answer == "s" ]
+	    then
+		status "$d2"
+		read $answer
+	    fi
+	    [ "$answer" == "" ] && continue
+	    d2=$(dirname $d1)
+	    n1=$(basename $d2)
+	    name=${n1//_/' '}
+	    #set -x
+	    l=$(svdrpsend lstr | grep "$name")
+	    IFS=$'\r' l2=$(echo $l|tail -n 1)
+	    IFS=
+	    l2=${l2:4}
+	    #read nr _ <<< $l2
+	    nr=$(echo $l2|cut -d \  -f 1)
+	    echo $nr
+	    svdrpsend play $nr
+	    read answer
+	    #exit
+	fi
+    done
+    #done < $logs
+    exit
+}
+
 auto_check() {
     #set -x
     t=/tmp/vtc
@@ -5253,6 +5329,9 @@ case $TODO in
 	;;
     "--ac")
 	auto_check
+	;;
+    "--aplay")
+	auto_play
 	;;
     "--ardy")
 	auto_rdy
