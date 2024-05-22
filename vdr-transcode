@@ -1249,6 +1249,12 @@ status() {
     # Est: 00:02:19
 
     #set -x
+    local log
+    local info
+    local nw
+    local l
+    local fps
+    local fps1
     #echo "IFS="$IFS
     #log=$(cat $vtlog)
     #log="$1"
@@ -1291,6 +1297,7 @@ status() {
     fps1=$(echo $fps1|cut -d \  -f $nw)
     #fps1=25
     #echo fps1=$fps1
+    #set +x
     echo "Duration: $dur, fps=$fps1 $sender"
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
     # frame= 1739 fps=1739 q=34.0 size=    2560KiB time=00:00:44.92 bitrate= 466.9kbit
@@ -4936,11 +4943,23 @@ auto_play() {
     t=/tmp/vtc
     t2=/tmp/vtc2
     #tac $logs > $t
-    #while read line
+    i=0
+    while read line
+    do
+	#read _ _ d1 _ <<< $line
+	d1=$(echo $line|cut -d \  -f 3)
+	[ ! -e "$d1" ] && continue
+	ext=${d1##*.}
+	[ "$ext" != "rec" ] && continue
+	[ ! -e $d1/dest ] && continue
+	loga[$i]="$line"
+	i=$(($i+1))
+    done < $logs
     #file=$(cat $logs)
     #set -x 
-    mapfile -t loga < $logs
+    #mapfile -t loga < $logs
     nl=${#loga[*]}
+    #exit
     #echo ${loga[0]}
     #echo ${loga[1]}
     #exit
@@ -4963,63 +4982,43 @@ auto_play() {
 	#echo $line
 	d2=$(<$d1/dest)
 	[ ! -e $d2 ] && continue
-	echo $d2
+	#echo $d2
 	#set -x
-	#status $d2
-	#exit
-	#set -x
+	a_check $d2
+	echo
+	echo "p=play"
 	read answer
-	if [ "$answer" != "" ]
-	then
-	    if [ $answer == "s" ]
-	    then
-		status "$d2"
-		read answer
-	    fi
-	    [ "$answer" == "" ] && continue
-	    d2=$(dirname $d1)
-	    n1=$(basename $d2)
-	    name=${n1//_/' '}
-	    #set -x
-	    l=$(svdrpsend lstr | grep "$name")
-	    IFS=$'\r' l2=$(echo $l|tail -n 1)
-	    IFS=
-	    l2=${l2:4}
-	    #read nr _ <<< $l2
-	    nr=$(echo $l2|cut -d \  -f 1)
-	    echo $nr
-	    svdrpsend play $nr
-	    read answer
-	    #exit
-	fi
+	[ "$answer" == "" ] && continue
+	#set -x
+	d2=$(dirname $d1)
+	d0=$(basename $d1)	# 2018-11-26.20.15.168-0.rec
+	n1=$(basename $d2)
+	name=${n1//_/' '}
+	datum=${d0:8:2}"."${d0:5:2}"."${d0:2:2}" "${d0:11:2}":"${d0:14:2}
+	l=$(svdrpsend lstr | grep "$name" | grep "$datum")
+	# + l='250-8086 26.11.18 20:15 1:00 nas-2~8TB-2~Serien~Das Boot~S01E01 Neue Wege
+	# '50-11719 26.11.18 20:15 1:00* nas-2~8TB-2~Serien~Das Boot~S01E01 Neue Wege
+	IFS=$'\r' l2=$(echo $l|tail -n 1)
+	unset IFS
+	l2=${l2:4}
+	#read nr _ <<< $l2
+	nr=$(echo $l2|cut -d \  -f 1)
+	#echo $nr
+	#exit
+	svdrpsend play $nr
+	read answer
+	#exit
     done
     #done < $logs
     exit
 }
 
-auto_check() {
-    #set -x
-    t=/tmp/vtc
-    t2=/tmp/vtc2
-    tac $logs > $t
-    #cat $t
-    sum=0
-    i=0
-    while read line
-    do
-	c=$(echo $line | cut -d \  -f 3-)
-	if [ ! -e "$c" ]
-	then
-	    i=$(($i+1))
-	    [ $i -gt 10 ] && break
-	    continue
-	fi
-	ext=${c##*.}
-	if [ "$ext" == "rec" ]
-	then
-	    [ ! -e $c/dest ] && continue
-	    c2=$(<$c/dest)
-	    [ ! -e $c2 ] && continue
+a_check() {
+	    local c2
+	    local d1
+	    local d2
+
+	    c2="$1"
 	    status $c2
 	    c2=$(dirname $c2)
 	    [ ! -e $c2/logfile ] && continue
@@ -5049,6 +5048,32 @@ auto_check() {
 	    #echo $d2ms $d1ms
 	    echo "Diff" $(($d2ms-$d1ms))"cs"
 	    #exit
+}
+
+auto_check() {
+    #set -x
+    t=/tmp/vtc
+    t2=/tmp/vtc2
+    tac $logs > $t
+    #cat $t
+    sum=0
+    i=0
+    while read line
+    do
+	c=$(echo $line | cut -d \  -f 3-)
+	if [ ! -e "$c" ]
+	then
+	    i=$(($i+1))
+	    [ $i -gt 10 ] && break
+	    continue
+	fi
+	ext=${c##*.}
+	if [ "$ext" == "rec" ]
+	then
+	    [ ! -e $c/dest ] && continue
+	    c2=$(<$c/dest)
+	    [ ! -e $c2 ] && continue
+	    a_check $c2
 	    sum=$(($sum+$oldsize))
 	fi
     done < $t
