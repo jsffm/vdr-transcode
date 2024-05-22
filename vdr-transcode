@@ -224,6 +224,7 @@ help_Automation() {
     echo " --ardy             # check for lost transcodings"
     echo " --rmdel            # deletes processed records, marked to delete, use on your own risk"
     echo " --astat            # show status like out_stat"
+    echo " --aplay            # like --ac with play"
 }
 
 help_Configuration() {
@@ -1276,14 +1277,12 @@ status() {
     #echo $dur
     dur=$(echo $dur1|cut -d \  -f 2)
     dur=${dur:0:8}
-    #set -x
     if [ "${dur:0:3}" == "N/A" ]
     then
 	#echo $dur1 | tail -n 1
 	dur=${dur1##*Duration: }
 	dur=${dur:0:8}
     fi
-    #exit
     durs=1
     [ "${dur:0:3}" != "N/A" ] && durs=$(date -u "+%s" -d "1970-01-01 $dur")
     durs1ms=$durs${dur:9:2}
@@ -1295,9 +1294,7 @@ status() {
     fps1=${fps1%fps,*}
     nw=$(echo $fps1|wc -w)
     fps1=$(echo $fps1|cut -d \  -f $nw)
-    #fps1=25
     #echo fps1=$fps1
-    #set +x
     echo "Duration: $dur, fps=$fps1 $sender"
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
     # frame= 1739 fps=1739 q=34.0 size=    2560KiB time=00:00:44.92 bitrate= 466.9kbit
@@ -1314,12 +1311,10 @@ status() {
     fps=$(echo $fps|cut -d \  -f 1)
     size=${l#*size=}
     [ "$size" == "" ] && return
-    #set -x
     size=$(echo $size|cut -d \  -f 1)
     e=${size: -2}
     [ "$e" == "kB" ] && size=${size:0:-2}
     [ "$e" == "iB" ] && size=${size:0:-3}
-    #exit
     speed=${l#*speed=}
     time=${l##*time=}
     time=$(echo $time | cut -d \  -f 1)
@@ -4942,7 +4937,6 @@ auto_play() {
     
     t=/tmp/vtc
     t2=/tmp/vtc2
-    #tac $logs > $t
     i=0
     while read line
     do
@@ -4955,13 +4949,7 @@ auto_play() {
 	loga[$i]="$line"
 	i=$(($i+1))
     done < $logs
-    #file=$(cat $logs)
-    #set -x 
-    #mapfile -t loga < $logs
     nl=${#loga[*]}
-    #exit
-    #echo ${loga[0]}
-    #echo ${loga[1]}
     #exit
     #IFS=$'\n'
     #for line in $file
