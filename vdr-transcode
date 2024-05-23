@@ -1372,28 +1372,19 @@ ctrl_c_a() {
     exit
 }
 
-astat() {
-    #set -x
-    #echo $vtlog
-    [ -e $vtlog ] && log=$(<$vtlog)
-    [ ! -e "$vtlog" ] && exit 8
-    #exit
-    trap ctrl_c_a SIGINT
-    msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
-    run_stat "$log"
-    while true
-    do
-	log=$(<$vtlog)
-	if [ "$log" != "$loga" ]
-	then
-	    [ -e /proc/$PID2 ] && kill -15 $PID2
-	    run_stat "$log"
-	fi
-	read -t 2 -n 1 key
+astat_key() {
+	key=$1
 	case $key in
 	    l)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
+		echo $log
 		tail -f "$log" &
+		PID2=$!
+		;;
+	    d)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		#tail -f $log | dialog --backtitle $log --no-shadow --progressbox 20 -1
+		tail -f $log | dialog --no-shadow --progressbox $log -1 -1 &
 		PID2=$!
 		;;
 	    s)
@@ -1430,6 +1421,31 @@ astat() {
 		#kill -15 $pid
 		#;;
 	esac
+	lastkey=$key
+}
+
+astat() {
+    #set -x
+    #echo $vtlog
+    [ -e $vtlog ] && log=$(<$vtlog)
+    [ ! -e "$vtlog" ] && exit 8
+    #exit
+    trap ctrl_c_a SIGINT
+    msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
+    run_stat "$log"
+    lastkey=s
+    while true
+    do
+	log=$(<$vtlog)
+	if [ "$log" != "$loga" ]
+	then
+	    [ -e /proc/$PID2 ] && kill -15 $PID2
+	    #run_stat "$log"
+	    sleep 2s
+	    astat_key $lastkey
+	fi
+	read -t 2 -n 1 key
+	[ "$key" != "" ] && astat_key $key
 	loga=$log
     done
     exit
