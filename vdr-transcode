@@ -4180,7 +4180,8 @@ run_stat() {
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
     #while true; do sleep 2s; clear; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
     clear
-    while true; do sleep 2s; printf '\033[;H'; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
+    #while true; do sleep 2s; printf '\033[;H'; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
+    while true; do sleep 2s; echo -en '\033[;H'; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
     PID2=$!
 }
 
