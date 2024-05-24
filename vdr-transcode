@@ -1569,6 +1569,7 @@ astat() {
     #echo $vtlog
     [ -e $vtlog ] && log=$(<$vtlog)
     [ ! -e "$vtlog" ] && exit 8
+    [ ! -e "$log" ] && exit
     #exit
     trap ctrl_c_a SIGINT
     msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
