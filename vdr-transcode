@@ -136,6 +136,7 @@ runs=/var/run/vt_server.pid
 runvt=/var/run/vt.pid
 runrts=/var/run/vt_rts.pid
 rtlog=/tmp/rt_log
+t_stat=/tmp/vt-stat
 if [ "$USER" != "root" ]
 then
     mkdir -p ~/vdr-transcode
@@ -1361,6 +1362,132 @@ status() {
 	#echo
 	#df -h --output=avail "$log"
 	#df -h $log
+    fi
+    #exit
+}
+
+status_d() {
+    # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
+    # /disk2/video/Blindspot/%In_der_Falle/2019-12-19.01.40.108-0.rec
+    # Duration: 00:40:27.48,
+    # fps=430 time=00:20:31.36 50% Comp=273%  8.6x
+    # Size: 2575433 -> 940032
+    # Est: 00:02:19
+
+    #set -x
+    local log
+    local info
+    local nw
+    local l
+    local fps
+    local fps1
+    local t=$t_stat
+    #echo "IFS="$IFS
+    #log=$(cat $vtlog)
+    #log="$1"
+    log="$@"
+    [ ! -e "$log" ] && exit 8
+    echo $log > $t
+    olddir=$(grep "PWD:" "$log")
+    olddir=${olddir:5}
+    info="$olddir/info"
+    if [ -e "$info" ]
+    then
+	sender=$(grep ^C "$info"|cut -d \  -f 3-)
+	#echo $sender
+    fi
+    oldsize=$(grep "oldsize=" "$log")
+    oldsize=${oldsize#*=}
+    # Duration: 01:51:21.66, start: 16209.384800, bitrate: 3498 kb/s
+    dur1=$(grep "Duration:" "$log"|head -n 2)
+    #echo $dur
+    dur=$(echo $dur1|cut -d \  -f 2)
+    dur=${dur:0:8}
+    if [ "${dur:0:3}" == "N/A" ]
+    then
+	#echo $dur1 | tail -n 1
+	dur=${dur1##*Duration: }
+	dur=${dur:0:8}
+    fi
+    durs=1
+    [ "${dur:0:3}" != "N/A" ] && durs=$(date -u "+%s" -d "1970-01-01 $dur")
+    durs1ms=$durs${dur:9:2}
+    #fps1=$(grep "Video:" $log|head -n 1)
+    fps1=$(grep "Video:" "$log"|tail -n 1)
+    # Stream #0:0(eng): Video: h264 (High), yuv420p(tv, bt709, top first), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 1k tbn, 50 tbc Stream #0:0(eng): Video: hevc (hevc_nvenc) (Main), cuda, 1920x1080 [SAR 1:1 DAR 16:9], q=-1--1, 2000 kb/s, 50 fps, 1k tbn, 50 tbc
+    # Stream #0:0[0x1ff]: Video: hevc (Main) (HEVC / 0x43564548), yuv420p(tv), 1920x1080 [SAR 1:1 DAR 16:9], 25 fps, 25 tbr, 90k tbn
+    #set -x
+    fps1=${fps1%fps,*}
+    nw=$(echo $fps1|wc -w)
+    fps1=$(echo $fps1|cut -d \  -f $nw)
+    #echo fps1=$fps1
+    echo "Duration: $dur, fps=$fps1 $sender" >> $t
+    # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
+    # frame= 1739 fps=1739 q=34.0 size=    2560KiB time=00:00:44.92 bitrate= 466.9kbit
+    #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
+    # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
+    #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
+    l=$(tr '\r' '\n' < "$log" | grep -a "^frame=" | tail -n 1)
+    #echo $l
+    dur2=${l#*time=}
+    dur2=${dur2:0:8}
+    dur2s=1
+    [ "$dur2" != "N/A,’" ] && dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
+    fps=${l#*fps=}
+    fps=$(echo $fps|cut -d \  -f 1)
+    size=${l#*size=}
+    [ "$size" == "" ] && return
+    size=$(echo $size|cut -d \  -f 1)
+    e=${size: -2}
+    [ "$e" == "kB" ] && size=${size:0:-2}
+    [ "$e" == "iB" ] && size=${size:0:-3}
+    speed=${l#*speed=}
+    time=${l##*time=}
+    time=$(echo $time | cut -d \  -f 1)
+    [ "$time" == "N/A" ] && return
+    time2=$(date +"%s" -u -d "1970-01-01 ${time:0:8}")
+    restz=$(($durs-$time2))
+    if [ "$dur2" != "N/A,’" ]
+    then
+	prz=$(($dur2s*100/$durs))
+	prm=$(($dur2s*1000/$durs))
+    fi
+    unset drop
+    if [[ "$l" == *"drop="* ]]
+    then
+	drop=${l##*drop=}
+	drop="drop="$(echo $drop | cut -d \  -f 1)
+    fi
+    #echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
+    #printf "fps=%3d, size=%d, time=%s, speed=%s\n" $fps $size $dur2 $speed
+    if [ $prz -gt 0 ]
+    then
+	#set -x
+	size2=$(($size*1000/$prm))
+	#if [[ "$fps1" == *.* ]]
+	[ "$fps" == "0.0" ] && return
+	[[ "$fps1" == *.* ]] && p1=1
+	[[ "$fps" == *.* ]] && p2=1
+	if [ "$p1" == "1" -o "$p2" == 1 ]
+	then
+	    exptime=$(echo "$restz*$fps1/$fps"|bc)
+	else
+	    exptime=$(($restz*$fps1/$fps))
+	fi
+	#echo $prz"% exp. size="$size2" exp. time="$(date "+%T"  -u -d @$exptime)
+	exp=$(date "+%T" -u -d @$exptime)
+	przs=$(($size2*100/$oldsize))
+	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
+	echo "fps=$fps time=$dur2 $prz% $speed $drop" >> $t
+	#echo "Size: $oldsize -> $size2 $przs%"
+	echo "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%" >> $t
+	[ $restz -gt 0 ] && echo "Est: $exp" >> $t
+	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
+	#date -u -d @$exptime
+	#echo
+	#df -h --output=avail "$log"
+	#df -h $log
+	#cat $t | dialog --begin 0 0 --progressbox 15 -1
     fi
     #exit
 }
@@ -4052,6 +4179,19 @@ run_stat() {
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
     while true; do sleep 2s; clear; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
+    PID2=$!
+}
+
+run_stat_d() {
+    local t=$t_stat
+    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
+    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
+    while true; do sleep 2s; clear; status_d "$1"; echo >> $t; \
+	df -h --output=avail "$1" >> $t ;echo -e "\n$msg" >> $t; \
+	cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
+	#dialog --keep-window --begin 0 0 --no-shadow --textbox $t 15 -1; \
+	#dialog --keep-window --begin 0 0 --no-shadow --tailboxbg $t 15 -1; \
+	done &
     PID2=$!
 }
 
