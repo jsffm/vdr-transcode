@@ -1372,6 +1372,21 @@ ctrl_c_a() {
     exit
 }
 
+
+log_d() {
+    local h
+    local w
+    local log="$1"
+    #set -x
+    local s=$(dialog --stdout --print-maxsize) # MaxSize: 24, 80
+    read _ h w <<< $s
+    h=${h//,/}
+    #tail -f $log | dialog --backtitle $log --no-shadow --progressbox 20 -1
+    #tail -f $log | dialog --no-shadow --hline "$msg" --progressbox $log $(($h-2)) -1 &
+    tail -f $log | dialog --no-shadow --progressbox $log -1 -1 &
+    PID2=$!
+}
+
 astat_key() {
 	key=$1
 	case $key in
@@ -1383,9 +1398,7 @@ astat_key() {
 		;;
 	    d)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		#tail -f $log | dialog --backtitle $log --no-shadow --progressbox 20 -1
-		tail -f $log | dialog --no-shadow --progressbox $log -1 -1 &
-		PID2=$!
+		log_d "$log"
 		;;
 	    s)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -4142,6 +4155,9 @@ transcode() {
 	    then
 		tail -f "$log_c" &
 		PID2=$!
+	    elif [ "$out_stat" == "d" ]
+	    then
+		log_d "$log_c"
 	    else
 		run_stat "$log_c"
 	    fi
@@ -4156,6 +4172,10 @@ transcode() {
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			tail -f "$log_c" &
 			PID2=$!
+			;;
+		    d)
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			log_d "$log_c"
 			;;
 		    f)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
