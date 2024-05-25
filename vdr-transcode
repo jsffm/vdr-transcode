@@ -4176,26 +4176,54 @@ ctrl_c() {
     exit
 }
 
-run_stat() {
+run_stat_a() {
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
     #while true; do sleep 2s; clear; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
     clear
     #while true; do sleep 2s; printf '\033[;H'; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
-    while true; do sleep 2s; echo -en '\033[;H'; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
+    #while true; do sleep 2s; echo -en '\033[;H'; status "$1"; echo; df -h --output=avail "$1";echo -e "\n$msg"; done &
+    while true
+    do 
+	sleep 2s
+	echo -en '\033[;H'
+	status "$1"
+	echo
+	df -h --output=avail "$1"
+	echo -e "\n$msg"
+	#echo $prz | dialog --begin 15 0 --gauge 5 -1 0
+    done &
     PID2=$!
 }
 
-run_stat_d() {
+run_stat() {
     local t=$t_stat
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
-    while true; do sleep 2s; clear; status_d "$1"; echo >> $t; \
-	df -h --output=avail "$1" >> $t ;echo -e "\n$msg" >> $t; \
-	cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
-	#dialog --keep-window --begin 0 0 --no-shadow --textbox $t 15 -1; \
+    clear
+    while true
+    do 
+	#clear
+	status_d "$1"
+	echo >> $t
+	df -h --output=avail "$1" >> $t
+	#echo -e "\n$msg" >> $t
+	#cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
+	#dialog --keep-window --begin 0 0 --no-shadow --textbox $t 15 -1
 	#dialog --keep-window --begin 0 0 --no-shadow --tailboxbg $t 15 -1; \
-	done &
+	ts=$(<$t)
+	#dialog --keep-window --begin 0 0 --no-shadow --infobox "$ts" 15 -1; \
+	if [ "$dialog" == "d" ]
+	then
+	    echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
+	    --hline "$msg" --infobox "$ts" 11 60 \
+	    --and-widget --begin 15 10 --keep-window --no-shadow --gauge "" 5 60 0
+	else
+	    echo -en '\033[;H'
+	    cat $t
+	fi
+	sleep 2s
+    done &
     PID2=$!
 }
 
@@ -4314,12 +4342,26 @@ transcode() {
 		case $key in
 		    l)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			tail -f "$log_c" &
-			PID2=$!
+			if [ "$dialog" == "d" ]
+			then
+			    [ -e /proc/$PID2 ] && kill -15 $PID2
+			    log_d "$log_c"
+			else
+			    tail -f "$log_c" &
+			    PID2=$!
+			fi
 			;;
 		    d)
+			#[ -e /proc/$PID2 ] && kill -15 $PID2
+			#log_d "$log_c"
+			if [ "$dialog" == "d" ]
+			then
+			    dialog=
+			else
+			    dialog=d
+			fi
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			log_d "$log_c"
+			run_stat "$log_c"
 			;;
 		    f)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -4338,6 +4380,10 @@ transcode() {
 		    s)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			run_stat "$log_c"
+			;;
+		    t)
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			run_stat_d "$log_c"
 			;;
 		    q)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
