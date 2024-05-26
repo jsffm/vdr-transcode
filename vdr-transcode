@@ -4197,6 +4197,7 @@ ctrl_c() {
     kill -15 $PID2
     sleep 1s
     [ -e /proc/$PID1 ] && kill -9 $PID1
+    tset
     echo "cancelled"
     exit
 }
@@ -5716,3 +5717,4 @@ rm -f $old
 #echo $$ >> "$log_c"
 [ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 "$log_c"
 #echo $$
+[ "$dialog" != "" ] && tset
