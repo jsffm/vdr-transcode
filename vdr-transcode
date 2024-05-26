@@ -1020,6 +1020,7 @@ parameter() {
 	    ;;
 	"--auto")
 	    auto=1
+	    dialog=
 	    #quiet=1
 	    ;;
 	"--out_stat")
@@ -1393,7 +1394,7 @@ status() {
     #log="$1"
     log="$@"
     [ ! -e "$log" ] && exit 8
-    echo -en '\033[;H'
+    [ "$dialog" == "" -a "$noff" == "" ] && echo -en '\033[;H'
     echo ${log:0:55} > $t
     olddir=$(grep "PWD:" "$log")
     olddir=${olddir:5}
@@ -1497,7 +1498,7 @@ status() {
 	#cat $t | dialog --begin 0 0 --progressbox 15 -1
 	if [ "$dialog" == "" ]
 	then
-	    echo -en '\033[;H'
+	    #echo -en '\033[;H'
 	    cat $t
 	    rm $t
 	fi
@@ -1541,6 +1542,7 @@ astat_key() {
 		    tail -f "$log" &
 		    PID2=$!
 		fi
+		lastkey=$key
 		;;
 	    d)
 		#[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -1557,6 +1559,7 @@ astat_key() {
 	    s)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		run_stat "$log"
+		lastkey=$key
 		;;
 	    f)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -1588,7 +1591,7 @@ astat_key() {
 		#kill -15 $pid
 		#;;
 	esac
-	lastkey=$key
+	#lastkey=$key
 }
 
 astat() {
@@ -5198,6 +5201,7 @@ auto_play() {
     declare -a loga
     
     dialog=
+    noff=1
     t=/tmp/vtc
     t2=/tmp/vtc2
     i=0
@@ -5580,6 +5584,8 @@ case $TODO in
 	exit
 	;;
     "--stat")
+	dialog=
+	noff=1
 	[ -e $vtlog ] && status $(<"$vtlog")
 	exit
 	;;
@@ -5606,6 +5612,8 @@ case $TODO in
 	ls_del_s
 	;;
     "--ac")
+	dialog=
+	noff=1
 	auto_check
 	;;
     "--aplay")
