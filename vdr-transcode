@@ -4221,6 +4221,7 @@ run_stat() {
 	else
 	    echo -en '\033[;H'
 	    cat $t
+	    echo -e "\n$msg"
 	fi
 	sleep 2s
     done &
