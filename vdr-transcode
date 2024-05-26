@@ -1023,7 +1023,7 @@ parameter() {
 	    out_stat="stat"
 	    ;;
 	"-out_stat")
-	    out_stat=$2
+	    out_stat=$w2
 	    ;;
 	"-dialog")
 	    dialog=$w2
