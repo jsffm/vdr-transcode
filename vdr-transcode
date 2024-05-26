@@ -225,6 +225,7 @@ help_Automation() {
     echo " --ardy             # check for lost transcodings"
     echo " --rmdel            # deletes processed records, marked to delete, use on your own risk"
     echo " --astat            # show status like out_stat"
+    echo "                    # s=stat, l=log, q=quiet, h=halt, x=exit"
     echo " --aplay            # like --ac with play"
 }
 
@@ -236,7 +237,9 @@ help_Configuration() {
     echo " -o vdr|mp4|mkv|ts|mp3 # default vdr"
     echo " --out_stat            # alternate output on screen"
     echo " -out_stat log|stat    # alternate output on screen"
-    echo " -dvdvideo 1   # -f dvdvideo"
+    echo "                       # s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
+    echo " -dialog 1             # status output by dialog"
+    echo " -dvdvideo 1           # -f dvdvideo"
     echo " -vdr <path_to_vdr>"
     echo " -ffpath <ffmpeg_dir>"
     echo " -ffmpeg <path_to_ffmpeg>    # deprecated, use -ffpath"
