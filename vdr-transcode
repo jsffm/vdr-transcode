@@ -1025,6 +1025,9 @@ parameter() {
 	"-out_stat")
 	    out_stat=$2
 	    ;;
+	"-dialog")
+	    dialog=$w2
+	    ;;
 	"--apc")
 	    apply_codec=1
 	    ;;
@@ -1242,7 +1245,7 @@ parameter_line "$@"
 
 select_from_to
 
-status() {
+status_a() {
     # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
     # /disk2/video/Blindspot/%In_der_Falle/2019-12-19.01.40.108-0.rec
     # Duration: 00:40:27.48,
@@ -1366,7 +1369,7 @@ status() {
     #exit
 }
 
-status_d() {
+status() {
     # vdr3-2 /usr/local/vdr/vdr-2.4.1 # to_h264_sh_current -s
     # /disk2/video/Blindspot/%In_der_Falle/2019-12-19.01.40.108-0.rec
     # Duration: 00:40:27.48,
@@ -1387,7 +1390,8 @@ status_d() {
     #log="$1"
     log="$@"
     [ ! -e "$log" ] && exit 8
-    echo $log > $t
+    echo -en '\033[;H'
+    echo ${log:0:55} > $t
     olddir=$(grep "PWD:" "$log")
     olddir=${olddir:5}
     info="$olddir/info"
@@ -1488,6 +1492,12 @@ status_d() {
 	#df -h --output=avail "$log"
 	#df -h $log
 	#cat $t | dialog --begin 0 0 --progressbox 15 -1
+	if [ "$dialog" == "" ]
+	then
+	    echo -en '\033[;H'
+	    cat $t
+	    rm $t
+	fi
     fi
     #exit
 }
@@ -1510,7 +1520,8 @@ log_d() {
     h=${h//,/}
     #tail -f $log | dialog --backtitle $log --no-shadow --progressbox 20 -1
     #tail -f $log | dialog --no-shadow --hline "$msg" --progressbox $log $(($h-2)) -1 &
-    tail -f $log | dialog --no-shadow --progressbox $log -1 -1 &
+    #tail -f $log | dialog --no-shadow --progressbox $log -1 -1 &
+    tail -f $log | dialog --no-shadow --hline "$msg" --progressbox $log -1 -1 &
     PID2=$!
 }
 
@@ -1519,13 +1530,26 @@ astat_key() {
 	case $key in
 	    l)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		echo $log
-		tail -f "$log" &
-		PID2=$!
+		if [ "$dialog" != "" ]
+		then
+		    log_d $log
+		else
+		    echo $log
+		    tail -f "$log" &
+		    PID2=$!
+		fi
 		;;
 	    d)
+		#[ -e /proc/$PID2 ] && kill -15 $PID2
+		#log_d "$log"
+		if [ "$dialog" != "" ]
+		then
+		    dialog=
+		else
+		    dialog=1
+		fi
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		log_d "$log"
+		run_stat "$log"
 		;;
 	    s)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -1572,7 +1596,8 @@ astat() {
     [ ! -e "$log" ] && exit
     #exit
     trap ctrl_c_a SIGINT
-    msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
+    #msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
+    msg="s=stat, l=log, q=quiet, h=halt, x=exit"
     run_stat "$log"
     lastkey=s
     while true
@@ -4204,7 +4229,7 @@ run_stat() {
     while true
     do 
 	#clear
-	status_d "$1"
+	status "$1"
 	echo >> $t
 	df -h --output=avail "$1" >> $t
 	#echo -e "\n$msg" >> $t
@@ -4213,13 +4238,13 @@ run_stat() {
 	#dialog --keep-window --begin 0 0 --no-shadow --tailboxbg $t 15 -1; \
 	ts=$(<$t)
 	#dialog --keep-window --begin 0 0 --no-shadow --infobox "$ts" 15 -1; \
-	if [ "$dialog" == "d" ]
+	if [ "$dialog" != "" ]
 	then
 	    echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
 	    --hline "$msg" --infobox "$ts" 11 60 \
 	    --and-widget --begin 15 10 --keep-window --no-shadow --gauge "" 5 60 0
 	else
-	    echo -en '\033[;H'
+	    #echo -en '\033[;H'
 	    cat $t
 	    echo -e "\n$msg"
 	fi
@@ -4326,12 +4351,18 @@ transcode() {
 	    msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
 	    if [ "$out_stat" == "log" ]
 	    then
-		tail -f "$log_c" &
-		PID2=$!
+		if [ "$dialog" != "" ]
+		then
+		    log_d "$log_c"
+		else
+		    tail -f "$log_c" &
+		    PID2=$!
+		fi
 	    elif [ "$out_stat" == "d" ]
 	    then
 		log_d "$log_c"
 	    else
+		sleep 2s
 		run_stat "$log_c"
 	    fi
 	    #wait $PID1
@@ -4343,7 +4374,7 @@ transcode() {
 		case $key in
 		    l)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			if [ "$dialog" == "d" ]
+			if [ "$dialog" != "" ]
 			then
 			    [ -e /proc/$PID2 ] && kill -15 $PID2
 			    log_d "$log_c"
@@ -4355,11 +4386,11 @@ transcode() {
 		    d)
 			#[ -e /proc/$PID2 ] && kill -15 $PID2
 			#log_d "$log_c"
-			if [ "$dialog" == "d" ]
+			if [ "$dialog" != "" ]
 			then
 			    dialog=
 			else
-			    dialog=d
+			    dialog=1
 			fi
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			run_stat "$log_c"
@@ -5162,6 +5193,7 @@ auto_play() {
     local loga
     declare -a loga
     
+    dialog=
     t=/tmp/vtc
     t2=/tmp/vtc2
     i=0
@@ -5194,6 +5226,7 @@ auto_play() {
 	ext=${d1##*.}
 	[ "$ext" != "rec" ] && continue
 	[ ! -e $d1/dest ] && continue
+	[ ! -e $d1/index ] && continue
 	#echo $line
 	d2=$(<$d1/dest)
 	[ ! -e $d2 ] && continue
@@ -5267,6 +5300,7 @@ a_check() {
 
 auto_check() {
     #set -x
+    dialog=
     t=/tmp/vtc
     t2=/tmp/vtc2
     tac $logs > $t
