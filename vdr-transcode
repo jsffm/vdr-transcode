@@ -1488,7 +1488,7 @@ status() {
 	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
 	echo "fps=$fps time=$dur2 $prz% $speed $drop" >> $t
 	#echo "Size: $oldsize -> $size2 $przs%"
-	echo "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%" >> $t
+	echo "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%   " >> $t
 	[ $restz -gt 0 ] && echo "Est: $exp" >> $t
 	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
 	#date -u -d @$exptime
@@ -1614,6 +1614,7 @@ astat() {
 	    [ -e /proc/$PID2 ] && kill -15 $PID2
 	    #run_stat "$log"
 	    sleep 2s
+	    clear
 	    astat_key $lastkey
 	fi
 	read -t 2 -n 1 key
