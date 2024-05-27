@@ -1395,7 +1395,9 @@ status() {
     log="$@"
     [ ! -e "$log" ] && exit 8
     [ "$dialog" == "" -a "$noff" == "" ] && echo -en '\033[;H'
-    echo ${log:0:55} > $t
+    logo=$log
+    [ "$dialog" != "" ] && logo=${log:0:55}
+    echo $logo > $t
     olddir=$(grep "PWD:" "$log")
     olddir=${olddir:5}
     info="$olddir/info"
