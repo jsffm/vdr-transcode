@@ -109,6 +109,7 @@ opus_br=64 # 2ch kbit
 skip=10
 marks_mkv=0
 rt_port=5000
+dialog=0
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
@@ -1020,7 +1021,7 @@ parameter() {
 	    ;;
 	"--auto")
 	    auto=1
-	    dialog=
+	    dialog=0
 	    #quiet=1
 	    ;;
 	"--out_stat")
@@ -1394,9 +1395,9 @@ status() {
     #log="$1"
     log="$@"
     [ ! -e "$log" ] && exit 8
-    [ "$dialog" == "" -a "$noff" == "" ] && echo -en '\033[;H'
+    [ "$dialog" == "0" -a "$noff" == "" ] && echo -en '\033[;H'
     logo=$log
-    [ "$dialog" != "" ] && logo=${log:0:55}
+    [ "$dialog" != "0" ] && logo=${log:0:55}
     echo $logo > $t
     olddir=$(grep "PWD:" "$log")
     olddir=${olddir:5}
@@ -1498,7 +1499,7 @@ status() {
 	#df -h --output=avail "$log"
 	#df -h $log
 	#cat $t | dialog --begin 0 0 --progressbox 15 -1
-	if [ "$dialog" == "" ]
+	if [ "$dialog" == "0" ]
 	then
 	    #echo -en '\033[;H'
 	    cat $t
@@ -1536,7 +1537,7 @@ astat_key() {
 	case $key in
 	    l)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		if [ "$dialog" != "" ]
+		if [ "$dialog" != "0" ]
 		then
 		    log_d $log
 		else
@@ -1549,9 +1550,9 @@ astat_key() {
 	    d)
 		#[ -e /proc/$PID2 ] && kill -15 $PID2
 		#log_d "$log"
-		if [ "$dialog" != "" ]
+		if [ "$dialog" != "0" ]
 		then
-		    dialog=
+		    dialog=0
 		else
 		    dialog=1
 		fi
@@ -1623,7 +1624,7 @@ astat() {
 	[ "$key" != "" ] && astat_key $key
 	loga=$log
     done
-    [ "$dialog" != "" ] && tset
+    [ "$dialog" != "0" ] && tset
     exit
 }
 
@@ -4249,7 +4250,7 @@ run_stat() {
 	#dialog --keep-window --begin 0 0 --no-shadow --tailboxbg $t 15 -1; \
 	ts=$(<$t)
 	#dialog --keep-window --begin 0 0 --no-shadow --infobox "$ts" 15 -1; \
-	if [ "$dialog" != "" ]
+	if [ "$dialog" != "0" ]
 	then
 	    echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
 	    --hline "$msg" --infobox "$ts" 11 60 \
@@ -4362,7 +4363,7 @@ transcode() {
 	    msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
 	    if [ "$out_stat" == "log" ]
 	    then
-		if [ "$dialog" != "" ]
+		if [ "$dialog" != "0" ]
 		then
 		    log_d "$log_c"
 		else
@@ -4385,7 +4386,7 @@ transcode() {
 		case $key in
 		    l)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			if [ "$dialog" != "" ]
+			if [ "$dialog" != "0" ]
 			then
 			    [ -e /proc/$PID2 ] && kill -15 $PID2
 			    log_d "$log_c"
@@ -4397,9 +4398,9 @@ transcode() {
 		    d)
 			#[ -e /proc/$PID2 ] && kill -15 $PID2
 			#log_d "$log_c"
-			if [ "$dialog" != "" ]
+			if [ "$dialog" != "0" ]
 			then
-			    dialog=
+			    dialog=0
 			else
 			    dialog=1
 			fi
@@ -5204,7 +5205,7 @@ auto_play() {
     local loga
     declare -a loga
     
-    dialog=
+    dialog=0
     noff=1
     t=/tmp/vtc
     t2=/tmp/vtc2
@@ -5312,7 +5313,7 @@ a_check() {
 
 auto_check() {
     #set -x
-    dialog=
+    dialog=0
     t=/tmp/vtc
     t2=/tmp/vtc2
     tac $logs > $t
@@ -5588,7 +5589,7 @@ case $TODO in
 	exit
 	;;
     "--stat")
-	dialog=
+	dialog=0
 	noff=1
 	[ -e $vtlog ] && status $(<"$vtlog")
 	exit
@@ -5616,7 +5617,7 @@ case $TODO in
 	ls_del_s
 	;;
     "--ac")
-	dialog=
+	dialog=0
 	noff=1
 	auto_check
 	;;
@@ -5732,4 +5733,4 @@ rm -f $old
 #echo $$ >> "$log_c"
 [ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 "$log_c"
 #echo $$
-[ "$dialog" != "" ] && tset
+[ "$dialog" != "0" ] && tset
