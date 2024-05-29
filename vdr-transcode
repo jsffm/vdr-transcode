@@ -1623,6 +1623,7 @@ astat() {
 	[ "$key" != "" ] && astat_key $key
 	loga=$log
     done
+    [ "$dialog" != "" ] && tset
     exit
 }
 
