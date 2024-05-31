@@ -228,6 +228,7 @@ help_Automation() {
     echo " --astat            # show status like out_stat"
     echo "                    # s=stat, l=log, q=quiet, h=halt, x=exit"
     echo " --aplay            # like --ac with play"
+    echo " --a_conf           # show active dirs (/etc/vdr-transcode-s.conf)"
 }
 
 help_Configuration() {
