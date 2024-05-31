@@ -1031,7 +1031,7 @@ parameter() {
 	    out_stat=$w2
 	    ;;
 	"-dialog")
-	    dialog=$w2
+	    dialog=$2
 	    ;;
 	"--apc")
 	    apply_codec=1
