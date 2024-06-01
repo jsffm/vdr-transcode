@@ -4901,6 +4901,12 @@ copy() {
 
 server() {
     #set -x
+    if [ "$1" == "-d" ]
+    then
+	vdr-transcode --as &
+	#server &
+	exit
+    fi
     if [ -e $runs ]
     then
         oldpid=$(<$runs)
@@ -4909,11 +4915,6 @@ server() {
             echo "already running"
             exit 99
         fi
-    fi
-    if [ "$1" == "-d" ]
-    then
-	vdr-transcode --as &
-	exit
     fi
     #PID=$(pidof $0)
     echo $$ > $runs
