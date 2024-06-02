@@ -1436,6 +1436,23 @@ astat_key() {
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		run_stat "$log"
 		;;
+	    h)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		echo "s=stat" > $t_stat
+		echo "l=log" >> $t_stat
+		echo "d=switch dialog <-> text" >> $t_stat
+		echo "q=quiet" >> $t_stat
+		echo "t=halt" >> $t_stat
+		echo "x=exit" >> $t_stat
+		echo "h=this page" >> $t_stat
+		if [ "$dialog" != "0" ]
+		then
+		    dialog --begin 4 10 --keep-window --no-shadow \
+			--hline "Help" --infobox "$(<$t_stat)" 11 60
+		else
+		    cat $t_stat
+		fi
+		;;
 	    s)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		run_stat "$log"
@@ -1456,7 +1473,7 @@ astat_key() {
 		clear
 		echo -e $msg
 		;;
-	    h)
+	    t)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		;;
 	    x)
@@ -1483,7 +1500,8 @@ astat() {
     #exit
     trap ctrl_c_a SIGINT
     #msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
-    msg="s=stat, l=log, q=quiet, h=halt, x=exit"
+    #msg="s=stat, l=log, q=quiet, h=halt, x=exit"
+    msg="s=stat, l=log, h=help, x=exit"
     run_stat "$log"
     lastkey=s
     while true
@@ -4082,7 +4100,7 @@ analyze() {
 ctrl_c() {
     #echo "ctrl_c"
     [ "$PID1" != "" ] && kill -15 $PID1
-    kill -15 $PID2
+    [ "$PID2" != "" ] && kill -15 $PID2
     sleep 1s
     [ -e /proc/$PID1 ] && kill -9 $PID1
     tset
@@ -4217,7 +4235,8 @@ transcode() {
 	    #while true; do sleep 2s; clear; status $(<"$vtlog"); done &
 	    #while true; do sleep 2s; clear; status "$log_c"; echo "i=inf,l=log"; done &
 	    #PID2=$!
-	    msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
+	    #msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
+	    msg="s=stat, l=log, h=help"
 	    if [ "$out_stat" == "log" ]
 	    then
 		if [ "$dialog" != "0" ]
@@ -4264,6 +4283,23 @@ transcode() {
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			run_stat "$log_c"
 			;;
+		    h)
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			echo "s=stat" > $t_stat
+			echo "l=log" >> $t_stat
+			echo "d=switch dialog <-> text" >> $t_stat
+			echo "q=quiet" >> $t_stat
+			echo "t=halt" >> $t_stat
+			echo "p=suspend, r=resume" >> $t_stat
+			echo "h=this page" >> $t_stat
+			if [ "$dialog" != "0" ]
+			then
+			    dialog --begin 4 10 --keep-window --no-shadow \
+				--hline "Help" --infobox "$(<$t_stat)" 11 60
+			else
+			    cat $t_stat
+			fi
+			;;
 		    f)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			sleep 1s
@@ -4291,7 +4327,7 @@ transcode() {
 			clear
 			echo "$msg"
 			;;
-		    h)
+		    t)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			;;
 		    p)
