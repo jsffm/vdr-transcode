@@ -1438,8 +1438,9 @@ astat_key() {
 		;;
 	    h)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		echo "s=stat" > $t_stat
-		echo "l=log" >> $t_stat
+		echo "s=stat  status" > $t_stat
+		echo "l=log   logfile" >> $t_stat
+		echo "c=--ac" >> $t_stat
 		echo "d=switch dialog <-> text" >> $t_stat
 		echo "q=quiet" >> $t_stat
 		echo "t=halt" >> $t_stat
@@ -1466,6 +1467,22 @@ astat_key() {
 	    m)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		mcview "$log"
+		run_stat "$log"
+		;;
+	    c)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		#dialog=0
+		#noff=1
+		f=$t_stat"-2"
+		#auto_check > $f
+		vdr-transcode --ac > $f
+		if [ "$dialog" != "0" ]
+		then
+		    dialog --textbox "$f" -1 -1
+		else
+		    less "$f"
+		fi
+		#dialog=1
 		run_stat "$log"
 		;;
 	    q)
@@ -4116,6 +4133,7 @@ run_stat() {
     while true
     do 
 	#clear
+	prz=0
 	status "$1"
 	echo >> $t
 	df -h --output=avail "$1" >> $t
@@ -4127,9 +4145,11 @@ run_stat() {
 	#dialog --keep-window --begin 0 0 --no-shadow --infobox "$ts" 15 -1; \
 	if [ "$dialog" != "0" ]
 	then
-	    echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
-	    --hline "$msg" --infobox "$ts" 11 60 \
-	    --and-widget --begin 15 10 --keep-window --no-shadow --gauge "" 5 60 0
+	    #echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
+	    #--hline "$msg" --infobox "$ts" 11 60 \
+	    #--and-widget --begin 15 10 --keep-window --no-shadow --gauge "" 5 60 0
+	    dialog --begin 4 10 --keep-window --no-shadow \
+	    --hline "$msg" --mixedgauge "$ts" 16 60 $prz
 	else
 	    #echo -en '\033[;H'
 	    cat $t
