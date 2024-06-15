@@ -1033,6 +1033,7 @@ parameter() {
 	    ;;
 	"-dialog")
 	    dialog=$2
+	    tset=1
 	    ;;
 	"--apc")
 	    apply_codec=1
@@ -1388,6 +1389,7 @@ status() {
 
 ctrl_c_a() {
     #echo "ctrl_c_a $PID2"
+    tset
     kill -15 $PID2
     echo "cancelled"
     exit
@@ -1432,6 +1434,7 @@ astat_key() {
 		    dialog=0
 		else
 		    dialog=1
+		    tset=1
 		fi
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		run_stat "$log"
@@ -1536,7 +1539,7 @@ astat() {
 	[ "$key" != "" ] && astat_key $key
 	loga=$log
     done
-    [ "$dialog" != "0" ] && tset
+    [ "$tset" != "" ] && tset
     exit
 }
 
@@ -4299,6 +4302,7 @@ transcode() {
 			    dialog=0
 			else
 			    dialog=1
+			    tset=1
 			fi
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			run_stat "$log_c"
@@ -5647,4 +5651,4 @@ rm -f $old
 #echo $$ >> "$log_c"
 [ "$out_stat" != "" -a "$auto" == "" ] && tail -n 20 "$log_c"
 #echo $$
-[ "$dialog" != "0" ] && tset
+[ "$tset" != "" ] && tset
