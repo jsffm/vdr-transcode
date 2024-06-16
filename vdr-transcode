@@ -4011,7 +4011,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    #"dvd_nav_packet"|"bin_data"|"png"|"dvb_teletext"|"none"|"mjpeg")
-	    "dvd_nav_packet"|"dvb_teletext"|"none")
+	    "dvd_nav_packet"|"dvb_teletext")
 		continue
 		;;
 	    "mjpeg")
@@ -4039,8 +4039,9 @@ analyze() {
 		#set +x
 		#exit
 		;;
-	    "text")
+	    "text"|"none")
 		#set -x
+		[ "$typ" != "Attachment:" ] && continue
 		if [ "$fmt" == "vdr" ]
 		then
 		    OPT_G="-dump_attachment:t $dest/info $OPT_G"
