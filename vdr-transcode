@@ -4261,8 +4261,10 @@ transcode() {
 	    #PID2=$!
 	    #msg="s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
 	    msg="s=stat, l=log, h=help"
+	    lastkey=s
 	    if [ "$out_stat" == "log" ]
 	    then
+		lastkey=l
 		if [ "$dialog" != "0" ]
 		then
 		    log_d "$log_c"
@@ -4294,19 +4296,26 @@ transcode() {
 			    tail -f "$log_c" &
 			    PID2=$!
 			fi
+			lastkey=l
 			;;
 		    d)
 			#[ -e /proc/$PID2 ] && kill -15 $PID2
 			#log_d "$log_c"
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			if [ "$dialog" != "0" ]
 			then
 			    dialog=0
+			    if [ "$lastkey" == "l" ]
+			    then
+				tail -f "$log_c" &
+				PID2=$!
+			    fi
 			else
 			    dialog=1
 			    tset=1
+			    [ "$lastkey" == "l" ] && log_d "$log_c"
 			fi
-			[ -e /proc/$PID2 ] && kill -15 $PID2
-			run_stat "$log_c"
+			[ "$lastkey" == "s" ] && run_stat "$log_c"
 			;;
 		    h)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -4342,10 +4351,7 @@ transcode() {
 		    s)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			run_stat "$log_c"
-			;;
-		    t)
-			[ -e /proc/$PID2 ] && kill -15 $PID2
-			run_stat_d "$log_c"
+			lastkey=s
 			;;
 		    q)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
