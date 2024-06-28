@@ -2653,7 +2653,7 @@ set_video() {
     [ "$vcodec" != "" ] && c=$vcodec
     case $c in
 	copy)
-	    video="-c:v:0 copy"
+	    video="-c:v:0 copy $aspect"
 	    deinterlace=
 	    vf=
 	    [ "$OUTPUT" == "mp4" -a "$vencoder" != "" ] && OPT="$OPT -metadata:s:v:0 handler_name=\"$vencoder\""
