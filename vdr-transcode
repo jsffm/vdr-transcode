@@ -320,6 +320,7 @@ help_Configuration_A() {
     echo " -aac_vbr <1-5>      # experimental"
     echo " -aaclib aac|libfdk_aac|libfaac # default aac"
     echo " -aac_decode libfdk_aac # For decoding xHE-AAC"
+    echo " -latm 0|1"
     echo " -opus_br <kbit>     # 2ch br in kbit default 64"
     echo " -chan_sel <chan_id>=<str>[,<str>]"
 }
@@ -602,6 +603,10 @@ parameter() {
 	    ;;
 	"-aac_vbr")
 	    aac_vbr=$2
+	    ;;
+	"-latm")
+	    latm=$2
+	    [ "$latm" == "1" ] && OPT="$OPT -latm 1 -mpegts_flags latm"
 	    ;;
 	"-aac_decode")	# libfdk_aac, for decoding xHE-AAC
 	    aac_decode=$2
