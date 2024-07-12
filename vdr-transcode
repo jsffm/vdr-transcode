@@ -606,7 +606,7 @@ parameter() {
 	    ;;
 	"-latm")
 	    latm=$2
-	    [ "$latm" == "1" ] && OPT="$OPT -latm 1 -mpegts_flags latm"
+	    [ "$latm" == "1" ] && OPT="$OPT -latm 1 -mpegts_flags latm -flags:a +global_header"
 	    ;;
 	"-aac_decode")	# libfdk_aac, for decoding xHE-AAC
 	    aac_decode=$2
