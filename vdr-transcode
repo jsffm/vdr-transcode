@@ -1459,6 +1459,7 @@ astat_key() {
 		    dialog --begin 4 10 --keep-window --no-shadow \
 			--hline "Help" --infobox "$(<$t_stat)" 11 60
 		else
+		    echo
 		    cat $t_stat
 		fi
 		;;
@@ -4336,6 +4337,7 @@ transcode() {
 			    dialog --begin 4 10 --keep-window --no-shadow \
 				--hline "Help" --infobox "$(<$t_stat)" 11 60
 			else
+			    echo
 			    cat $t_stat
 			fi
 			;;
@@ -4558,6 +4560,7 @@ copy_vdr() {
     fi
     [[ ! "$OPT" == *mpegts_flags* ]] && OPT="$OPT -mpegts_flags system_b"
     #OPT="$OPT -mpegts_flags latm"
+    #OPT="$OPT -omit_video_pes_length 0"
     OPT="$OPT -map_chapters -1"
     #OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
     OPT="$OPT $pids"
