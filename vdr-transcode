@@ -1619,6 +1619,8 @@ diag() {
     echo
     $ffmpeg -hide_banner -encoders | grep h264
     $ffmpeg -hide_banner -encoders | grep hevc
+    $ffmpeg -hide_banner -encoders | grep av1
+    $ffmpeg -hide_banner -encoders | grep vvc
     $ffmpeg -hide_banner -encoders | grep aac
     $ffmpeg -hide_banner -encoders | grep opus
     $ffmpeg -hide_banner -encoders | grep vorbis
@@ -3050,6 +3052,9 @@ set_vvc() {
     fi
     
     opt="-preset faster"
+    #opt="-preset faster -vvenc-params verbosity=3:stats=1:threads=$(nproc)"
+    #opt="$opt -vvenc-params verbosity=3:stats=1
+    #opt="$opt -vvenc-params InternalBitDepth=8"
     [ "$qv" != "" ] && opt="$opt -qp $qv"
     video="-c:v:0 libvvenc $opt"
 }
