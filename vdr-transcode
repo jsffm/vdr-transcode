@@ -2694,6 +2694,9 @@ set_video() {
 	avs3)
 	    set_avs3
 	    ;;
+	vvc)
+	    set_vvc
+	    ;;
 	*)
 	    echo "-$ivcodec $1 wrong"
 	    exit 8
@@ -3037,6 +3040,18 @@ set_av1() {
     esac
     video="$video $aspect"
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:v:0 handler_name=$av1enc"
+}
+
+set_vvc() {
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" -a "$crop" == "" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    
+    opt="-preset faster"
+    [ "$qv" != "" ] && opt="$opt -qp $qv"
+    video="-c:v:0 libvvenc $opt"
 }
 
 set_avs3() {
