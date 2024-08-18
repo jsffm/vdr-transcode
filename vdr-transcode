@@ -3055,6 +3055,7 @@ set_vvc() {
     #opt="-preset faster -vvenc-params verbosity=3:stats=1:threads=$(nproc)"
     #opt="$opt -vvenc-params verbosity=3:stats=1
     #opt="$opt -vvenc-params InternalBitDepth=8"
+    opt="$opt -threads $(nproc)"
     [ "$qv" != "" ] && opt="$opt -qp $qv"
     video="-c:v:0 libvvenc $opt"
 }
