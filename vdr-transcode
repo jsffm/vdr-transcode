@@ -3055,6 +3055,8 @@ set_vvc() {
     #opt="-preset faster -vvenc-params verbosity=3:stats=1:threads=$(nproc)"
     #opt="$opt -vvenc-params verbosity=3:stats=1
     #opt="$opt -vvenc-params InternalBitDepth=8"
+    #opt="$opt -vvenc-params OutputBitDepth=8"
+    opt="$opt -vvenc-params Sdr=sdr709"
     opt="$opt -threads $(nproc)"
     [ "$qv" != "" ] && opt="$opt -qp $qv"
     video="-c:v:0 libvvenc $opt"
@@ -3806,6 +3808,7 @@ analyze() {
 		[ "$vcodec" != "" ] && vvc=$vcodec
 		set_video $vvc
 		OPT_G="$OPT_G -strict -2"
+		#OPT="$OPT -pix_fmt yuv420p"
 		;;
 	    "vc1")
 		video="-c:v:0 copy"
