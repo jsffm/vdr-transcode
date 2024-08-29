@@ -3360,10 +3360,10 @@ set_pid() {
 check_scantype_ffmpeg() {
 	echo "Check scantype with ffmpeg" >> "$log_c"
 	# ffprobe -hide_banner -show_streams <input> | grep field_order=
-	s1=$(grep "Video:" $t)
+	#s1=$(grep "Video:" $t)
 	# Stream #0:0[0x96a]: Video: hevc (Main)
-	codec=$(echo $s1|cut -d \  -f 4)
-	codec=${codec//,/}
+	#codec=$(echo $s1|cut -d \  -f 4)
+	#codec=${codec//,/}
 	# top first
 	#if [[ "$s1" == *progressive* ]]
 	#if [[ "$s1" == *"top first"* ]]
@@ -3373,7 +3373,7 @@ check_scantype_ffmpeg() {
 	else
 	    scantype="Progressive"
 	fi
-	#[ "$codec" == "hevc" ] && scantype="Progressive"
+	#[ "$ivcodec" == "hevc" ] && scantype="Progressive"
 	#echo "ivcodec=$ivcodec"
 }
 
@@ -3427,6 +3427,10 @@ analyze() {
     #set -x
     echo "Analyze:" >> "$log_c"
     #set -x
+    s1=$(grep "Video:" $t)
+    # Stream #0:0[0x96a]: Video: hevc (Main)
+    codec=$(echo $s1|cut -d \  -f 4)
+    ivcodec=${codec//,/}
     if [ "$ifmt" == "vdr" ]
     then
 	if [ -e info ]
@@ -3441,6 +3445,11 @@ analyze() {
 	    fi
 	    #echo $fpsv
 	fi
+    fi
+    if [ "$ivcodec" == "hevc" ]
+    then
+	scantype="Progressive"
+	echo "hevc -> Progressive" >> $log_c
     fi
     #exit
     if [ "$scantype" == "" ]
