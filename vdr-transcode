@@ -2859,9 +2859,10 @@ set_hevc() {
 	    decode_cuvid=
 	    #preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    [ "$hevc_cq" == "" ] && hevc_cq=28
+	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
-	    preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq"
+	    preset="-kvazaar-params preset=$hevc_preset,qp=$hevc_cq"
 	    [ "$hevc_level" == "" ] && set_hevc_level
 	    [ "$hevc_level" != "" ] && preset="$preset,level=$hevc_level"
 	    ;;
