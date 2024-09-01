@@ -2811,8 +2811,9 @@ set_hevc() {
     case "$hevcenc" in
 	"libx265")
 	    #parameter --nohw
-	    HWACC=
-	    deinterlace="yadif"
+	    #HWACC=
+	    #deinterlace="yadif"
+	    hwdownload
 	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
 	    [ "$hevc_cq" == "" ] && hevc_cq=28
 	    #x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
@@ -2854,9 +2855,10 @@ set_hevc() {
 	"libkvazaar")
 	    #parameter --nohw
 	    #hwaccel=
-	    HWACC=
-	    deinterlace="yadif"
-	    decode_cuvid=
+	    #HWACC=
+	    #deinterlace="yadif"
+	    #decode_cuvid=
+	    hwdownload
 	    #preset="-profile:v $hevc_profile -kvazaar-params preset=ultrafast,qp=$hevc_cq,level=$hevc_level"
 	    [ "$hevc_cq" == "" ] && hevc_cq=28
 	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
