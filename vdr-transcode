@@ -77,7 +77,8 @@ pcm=aac
 gq=30		# VP8
 #[ -e /dev/dri/renderD128 ] && gq=120
 mjpeg=0
-gop_vdr="-g 50"
+gop_vdr_w=50
+gop_vdr="-g $gop_vdr_w"
 
 #h264_level=3.0  # 720x576i
 #h264_level=4.1
@@ -667,6 +668,7 @@ parameter() {
 	    av1preset=$2
 	    ;;
 	"-g")
+	    gop_vdr_w="$2"
 	    gop_vdr="-g $2"
 	    gop_file=$gop_vdr
 	    ;;
@@ -2867,6 +2869,7 @@ set_hevc() {
 	    preset="-kvazaar-params preset=$hevc_preset,qp=$hevc_cq"
 	    [ "$hevc_level" == "" ] && set_hevc_level
 	    [ "$hevc_level" != "" ] && preset="$preset,level=$hevc_level"
+	    #[ "$OUTPUT" == "vdr" ] && preset="$preset,gop=$gop_vdr_w"
 	    ;;
 	"hevc_amf")
 	    #usage=highquality
