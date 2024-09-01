@@ -2870,6 +2870,7 @@ set_hevc() {
 	    [ "$hevc_level" == "" ] && set_hevc_level
 	    [ "$hevc_level" != "" ] && preset="$preset,level=$hevc_level"
 	    #[ "$OUTPUT" == "vdr" ] && preset="$preset,gop=$gop_vdr_w"
+	    [ "$OUTPUT" == "vdr" ] && preset="$preset,gop=16"
 	    ;;
 	"hevc_amf")
 	    #usage=highquality
