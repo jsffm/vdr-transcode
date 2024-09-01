@@ -3393,7 +3393,7 @@ set_hevc_level() {
     then
 	[ $vw -le 576 ] && hevc_level=3.1
 	[ $vw -ge 720 ] && hevc_level=4.1
-	[ $vw -ge 1080 ] && hevc_level=4.2
+	[ $vw -ge 1080 ] && hevc_level=4.1
 	[ $vw -gt 2000 ] && hevc_level=5.1
 	[ $vw -gt 2160 ] && hevc_level=6.0
     fi
