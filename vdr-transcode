@@ -111,6 +111,7 @@ skip=10
 marks_mkv=0
 rt_port=5000
 dialog=0
+bitrate=0
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
@@ -1378,7 +1379,7 @@ status() {
 	przs=$(($size2*100/$oldsize))
 	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
 	echo "fps=$fps time=$dur2 $prz% $speed $drop" >> $t
-	echo "$bitr1 -> $bitr2" >> $t
+	[ $bitrate -gt 0 ] && echo "$bitr1 -> $bitr2" >> $t
 	#echo "Size: $oldsize -> $size2 $przs%"
 	echo "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%   " >> $t
 	[ $restz -gt 0 ] && echo "Est: $exp" >> $t
@@ -1452,14 +1453,14 @@ astat_key() {
 		;;
 	    h)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		echo "s=stat  status" > $t_stat
-		echo "l=log   logfile" >> $t_stat
-		echo "c=--ac" >> $t_stat
-		echo "d=switch dialog <-> text" >> $t_stat
-		echo "q=quiet" >> $t_stat
-		echo "t=halt" >> $t_stat
-		echo "x=exit" >> $t_stat
-		echo "h=this page" >> $t_stat
+		echo "s status, b +bitrate" > $t_stat
+		echo "l logfile" >> $t_stat
+		echo "c --ac" >> $t_stat
+		echo "d switch dialog <-> text" >> $t_stat
+		echo "q quiet" >> $t_stat
+		echo "t halt" >> $t_stat
+		echo "x exit" >> $t_stat
+		echo "h this page" >> $t_stat
 		if [ "$dialog" != "0" ]
 		then
 		    dialog --begin 4 10 --keep-window --no-shadow \
@@ -1473,6 +1474,16 @@ astat_key() {
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		run_stat "$log"
 		lastkey=$key
+		;;
+	    b)
+		if [ $bitrate -eq 0 ]
+		then
+		    bitrate=1
+		else
+		    bitrate=0
+		fi
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		run_stat "$log"
 		;;
 	    f)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
@@ -4369,13 +4380,13 @@ transcode() {
 			;;
 		    h)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			echo "s=stat" > $t_stat
-			echo "l=log" >> $t_stat
-			echo "d=switch dialog <-> text" >> $t_stat
-			echo "q=quiet" >> $t_stat
-			echo "t=halt" >> $t_stat
-			echo "p=suspend, r=resume" >> $t_stat
-			echo "h=this page" >> $t_stat
+			echo "s status, b +bitrate" > $t_stat
+			echo "l logfile" >> $t_stat
+			echo "d switch dialog <-> text" >> $t_stat
+			echo "q quiet" >> $t_stat
+			echo "t halt" >> $t_stat
+			echo "p suspend, r resume" >> $t_stat
+			echo "h this page" >> $t_stat
 			if [ "$dialog" != "0" ]
 			then
 			    dialog --begin 4 10 --keep-window --no-shadow \
@@ -4403,6 +4414,16 @@ transcode() {
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			run_stat "$log_c"
 			lastkey=s
+			;;
+		    b)
+			if [ $bitrate -eq 0 ]
+			then
+			    bitrate=1
+			else
+			    bitrate=0
+			fi
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			run_stat "$log_c"
 			;;
 		    q)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
