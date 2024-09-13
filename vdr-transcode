@@ -4360,12 +4360,11 @@ transcode() {
 			lastkey=l
 			;;
 		    w)
+			[ -e /proc/$PID2 ] && kill -15 $PID2
 			if [ $lastkey == "s" ]
 			then
-			    [ -e /proc/$PID2 ] && kill -15 $PID2
 			    if [ "$dialog" != "0" ]
 			    then
-				[ -e /proc/$PID2 ] && kill -15 $PID2
 				log_d "$log_c"
 			    else
 				tail -f "$log_c" &
@@ -4373,7 +4372,6 @@ transcode() {
 			    fi
 			    lastkey=l
 			else
-			    [ -e /proc/$PID2 ] && kill -15 $PID2
 			    run_stat "$log_c"
 			    lastkey=s
 			fi
