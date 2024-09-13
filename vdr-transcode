@@ -4359,6 +4359,25 @@ transcode() {
 			fi
 			lastkey=l
 			;;
+		    w)
+			if [ $lastkey == "s" ]
+			then
+			    [ -e /proc/$PID2 ] && kill -15 $PID2
+			    if [ "$dialog" != "0" ]
+			    then
+				[ -e /proc/$PID2 ] && kill -15 $PID2
+				log_d "$log_c"
+			    else
+				tail -f "$log_c" &
+				PID2=$!
+			    fi
+			    lastkey=l
+			else
+			    [ -e /proc/$PID2 ] && kill -15 $PID2
+			    run_stat "$log_c"
+			    lastkey=s
+			fi
+			;;
 		    d)
 			#[ -e /proc/$PID2 ] && kill -15 $PID2
 			#log_d "$log_c"
@@ -4382,6 +4401,7 @@ transcode() {
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			echo "s status, b +bitrate" > $t_stat
 			echo "l logfile" >> $t_stat
+			echo "w switch logfile <-> status" >> $t_stat
 			echo "d switch dialog <-> text" >> $t_stat
 			echo "q quiet" >> $t_stat
 			echo "t halt" >> $t_stat
