@@ -3672,7 +3672,7 @@ analyze() {
 	    [ $ok == 0 ] && continue
 	fi
 	
-	if [ "$typ" == "Video:" ]
+	if [ "$typ" == "Video:" -a "$codec" != "mjpeg" ]
 	then
 	    #set -x
 	    [ $str0 -gt 0 ] && continue
