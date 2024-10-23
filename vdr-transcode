@@ -4792,11 +4792,18 @@ copy_vdr() {
 	#echo "===========================================================" >> $log_c
 	echo -n "index=$is1" >> $log_c
 	sic1=$(printf "%02d" $sic1)
-	date -u -d @$si1 +" %T."$sic1 >> "$log_c"
+	printf " %s " $(date -u -d @$si1 +" %T."$sic1) >> "$log_c"
+	if [ -e info ]
+	then
+	    grep ^O info >> "$log_c"
+	else
+	    echo ""  >> "$log_c"
+	fi
     fi
     echo -n "index=$is2" >> $log_c
     sic=$(printf "%02d" $sic)
-    [ "$si" != "" ] && date -u -d @$si +" %T."$sic >> "$log_c"
+    [ "$si" != "" ] && printf " %s " $(date -u -d @$si +" %T."$sic) >> "$log_c"
+    grep ^O $dest/info >> "$log_c"
     #fi
     if [ -e $VIDEODIR ]
     then
