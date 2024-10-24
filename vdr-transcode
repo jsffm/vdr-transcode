@@ -268,6 +268,7 @@ help_Configuration_V() {
     echo " video configuration"
     echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -h264_HD <codec> # HD only"
+    echo " -h264_br_g <bitrate> # set <codec> from -h264_HD if bitrate is higher"
     echo " -hevc copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -mpeg2 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -mpeg4 copy|h264|hevc|vp8|vp9|mpeg2"
@@ -533,6 +534,9 @@ parameter() {
 	    ;;
 	"-h264_HD")
 	    h264_HD=$w2
+	    ;;
+	"-h264_br_g")
+	    h264_br_g=$2
 	    ;;
 	"-h264_br")
 	    h264_br="-b:v:0 $2"
@@ -3444,6 +3448,9 @@ analyze() {
     fi
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
     #cat $t
+    dur_line=$(grep Duration: $t)
+    read _ dur _ _ _ bitr1 _ <<< $dur_line
+    #echo $dur $bitr1
     #exit
     [ "$trace" != "" ] && >&2 cat $t
     #set -x
@@ -3811,6 +3818,11 @@ analyze() {
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
+		if [ "$h264_br_g" != "" ]
+		then
+		    [ "$h264" == "copy" -a $bitr1 -ge $h264_br_g ] && h264=$h264_HD
+		    h264_HD=
+		fi
 		[ "$h264_HD" != "" -a "$h264" == "copy" -a $vw -ge 720 ] && h264=$h264_HD
 		[ "$fpso" != "" -a "$h264" == "copy" ] && h264=h264
 		decode_cuvid="-c:v:0 h264_cuvid"
