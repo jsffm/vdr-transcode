@@ -267,7 +267,7 @@ help_Configuration_V() {
     #echo " video"
     echo " video configuration"
     echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
-    echo " -h264_HD <codec> # HD only"
+    echo " -h264_HD <codec>     # HD only"
     echo " -h264_br_g <bitrate> # set <codec> from -h264_HD if bitrate is higher"
     echo " -hevc copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -mpeg2 copy|h264|hevc|vp8|vp9|mpeg2"
