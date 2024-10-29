@@ -1459,6 +1459,7 @@ astat_key() {
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		echo "s status, b +bitrate" > $t_stat
 		echo "l logfile" >> $t_stat
+		echo "w switch logfile <-> status" >> $t_stat
 		echo "c --ac" >> $t_stat
 		echo "d switch dialog <-> text" >> $t_stat
 		echo "q quiet" >> $t_stat
@@ -1478,6 +1479,23 @@ astat_key() {
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		run_stat "$log"
 		lastkey=$key
+		;;
+	    w)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		if [ $lastkey == "s" ]
+		then
+		    if [ "$dialog" != "0" ]
+		    then
+			log_d "$log"
+		    else
+			tail -f "$log" &
+			PID2=$!
+		    fi
+			lastkey=l
+		else
+		    run_stat "$log"
+		    lastkey=s
+		fi
 		;;
 	    b)
 		if [ $bitrate -eq 0 ]
