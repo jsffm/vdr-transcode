@@ -1411,6 +1411,53 @@ ctrl_c_a() {
     exit
 }
 
+run_stat() {
+    local t=$t_stat
+    [ -e /proc/$PID2 ] && kill -15 $PID2
+    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
+    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
+    clear
+    while true
+    do 
+	#clear
+	prz=0
+	status "$1"
+	echo >> $t
+	df -h --output=avail "$1" >> $t
+	#echo -e "\n$msg" >> $t
+	#cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
+	#dialog --keep-window --begin 0 0 --no-shadow --textbox $t 15 -1
+	#dialog --keep-window --begin 0 0 --no-shadow --tailboxbg $t 15 -1; \
+	ts=$(<$t)
+	#dialog --keep-window --begin 0 0 --no-shadow --infobox "$ts" 15 -1; \
+	if [ "$dialog" != "0" ]
+	then
+	    #echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
+	    #--hline "$msg" --infobox "$ts" 11 60 \
+	    #--and-widget --begin 15 10 --keep-window --no-shadow --gauge "" 5 60 0
+	    dialog --begin 4 10 --keep-window --no-shadow \
+	    --hline "$msg" --mixedgauge "$ts" 16 60 $prz
+	else
+	    #echo -en '\033[;H'
+	    cat $t
+	    echo -e "\n$msg"
+	fi
+	sleep 2s
+    done &
+    PID2=$!
+}
+
+run_log() {
+    [ "$PID2" != "" -a -e /proc/$PID2 ] && kill -15 $PID2
+    if [ "$dialog" != "0" ]
+    then
+	log_d $1
+    else
+	echo $1
+	tail -f "$1" &
+	PID2=$!
+    fi
+}
 
 log_d() {
     local h
@@ -1431,15 +1478,7 @@ astat_key() {
 	key=$1
 	case $key in
 	    l)
-		[ -e /proc/$PID2 ] && kill -15 $PID2
-		if [ "$dialog" != "0" ]
-		then
-		    log_d $log
-		else
-		    echo $log
-		    tail -f "$log" &
-		    PID2=$!
-		fi
+		run_log "$log"
 		lastkey=$key
 		;;
 	    d)
@@ -1484,14 +1523,8 @@ astat_key() {
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		if [ $lastkey == "s" ]
 		then
-		    if [ "$dialog" != "0" ]
-		    then
-			log_d "$log"
-		    else
-			tail -f "$log" &
-			PID2=$!
-		    fi
-			lastkey=l
+		    run_log "$log"
+		    lastkey=l
 		else
 		    run_stat "$log"
 		    lastkey=s
@@ -4224,41 +4257,6 @@ ctrl_c() {
     exit
 }
 
-run_stat() {
-    local t=$t_stat
-    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
-    #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
-    clear
-    while true
-    do 
-	#clear
-	prz=0
-	status "$1"
-	echo >> $t
-	df -h --output=avail "$1" >> $t
-	#echo -e "\n$msg" >> $t
-	#cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
-	#dialog --keep-window --begin 0 0 --no-shadow --textbox $t 15 -1
-	#dialog --keep-window --begin 0 0 --no-shadow --tailboxbg $t 15 -1; \
-	ts=$(<$t)
-	#dialog --keep-window --begin 0 0 --no-shadow --infobox "$ts" 15 -1; \
-	if [ "$dialog" != "0" ]
-	then
-	    #echo $prz | dialog --begin 4 10 --keep-window --no-shadow \
-	    #--hline "$msg" --infobox "$ts" 11 60 \
-	    #--and-widget --begin 15 10 --keep-window --no-shadow --gauge "" 5 60 0
-	    dialog --begin 4 10 --keep-window --no-shadow \
-	    --hline "$msg" --mixedgauge "$ts" 16 60 $prz
-	else
-	    #echo -en '\033[;H'
-	    cat $t
-	    echo -e "\n$msg"
-	fi
-	sleep 2s
-    done &
-    PID2=$!
-}
-
 transcode() {
     #set -x
     name="$1"
@@ -4360,13 +4358,7 @@ transcode() {
 	    if [ "$out_stat" == "log" ]
 	    then
 		lastkey=l
-		if [ "$dialog" != "0" ]
-		then
-		    log_d "$log_c"
-		else
-		    tail -f "$log_c" &
-		    PID2=$!
-		fi
+		run_log "$log_c"
 	    elif [ "$out_stat" == "d" ]
 	    then
 		log_d "$log_c"
@@ -4382,28 +4374,14 @@ transcode() {
 		#echo -n $key
 		case $key in
 		    l)
-			[ -e /proc/$PID2 ] && kill -15 $PID2
-			if [ "$dialog" != "0" ]
-			then
-			    [ -e /proc/$PID2 ] && kill -15 $PID2
-			    log_d "$log_c"
-			else
-			    tail -f "$log_c" &
-			    PID2=$!
-			fi
+			run_log "$log_c"
 			lastkey=l
 			;;
 		    w)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
 			if [ $lastkey == "s" ]
 			then
-			    if [ "$dialog" != "0" ]
-			    then
-				log_d "$log_c"
-			    else
-				tail -f "$log_c" &
-				PID2=$!
-			    fi
+			    run_log "$log_c"
 			    lastkey=l
 			else
 			    run_stat "$log_c"
