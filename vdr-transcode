@@ -1413,7 +1413,7 @@ ctrl_c_a() {
 
 run_stat() {
     local t=$t_stat
-    [ -e /proc/$PID2 ] && kill -15 $PID2
+    [ "$PID2" != "" -a -e /proc/$PID2 ] && kill -15 $PID2
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
     clear
