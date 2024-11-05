@@ -4803,7 +4803,8 @@ copy_vdr() {
 	printf " %s " $(date -u -d @$si1 +" %T."$sic1) >> "$log_c"
 	if [ -e info ]
 	then
-	    grep ^O info >> "$log_c"
+	    O=$(grep ^O info)
+	    echo "$O" >> "$log_c"
 	else
 	    echo ""  >> "$log_c"
 	fi
