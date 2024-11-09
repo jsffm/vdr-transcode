@@ -2732,6 +2732,7 @@ set_video() {
     [ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
     [ "$OUTPUT" == "webm" -a "$ivcodec" != "vp9" -a "$ivcodec" != "vp8" -a "$ivcodec" != "av1" ] && c=vp9
     [ "$vcodec" != "" ] && c=$vcodec
+    [ "$OUTPUT" == "vdr" -a $c == "copy" -a "$fpso" != "" ] && c=$ivcodec
     case $c in
 	copy)
 	    video="-c:v:0 copy $aspect"
