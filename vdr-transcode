@@ -109,6 +109,7 @@ aac_6ch_br=256k
 opus_br=64 # 2ch kbit
 skip=10
 marks_mkv=0
+chapt_marks=0
 rt_port=5000
 dialog=0
 bitrate=0
@@ -925,6 +926,9 @@ parameter() {
 	    ;;
 	"-marks_mkv")
 	    marks_mkv=$2
+	    ;;
+	"-chapt_marks")
+	    chapt_marks=$2
 	    ;;
 	"-DP")
 	    OPT="$OPT -dsur_mode $2"	# 2 on
@@ -1839,6 +1843,7 @@ input_file() {
 	    info_subt=$info_name
 	    info_name=$n2
 	fi
+	#[ "$chapt_marks" == "1" ] && chapt_marks $INPUT
     fi
     #exit
 }
@@ -2463,7 +2468,7 @@ chapt_BD() {
     fi
 }
 
-chapt_marks() {
+chapt_marks_mkv() {
     # Chapter
     [[ "$marks_mkv" == "0" ]] && return
     if [ -e marks ]
@@ -2506,6 +2511,35 @@ chapt_marks() {
 	#metaf="-i ffmetadata"
 	#exit
     fi
+}
+
+chapt_marks() {
+    #set -x
+    local start
+    local n
+    local nr
+    local st
+    local ms
+    local outm
+
+    $ffprobe -hide_banner -i $1 2>&1 | grep "Chapter #" > $t
+    # Chapter #0:1: start 655.685367, end 2288.816867
+    mkdir -p $dest
+    outm=$dest/marks
+    while read _ n _ start _
+    do
+	start=${start//,/}
+	#echo $n $start
+	IFS=':' read _ nr <<< $n
+	IFS='.' read st ms <<< $start
+	ms=${ms:0:2}
+	#echo $nr $st $ms
+	m=$(date -u "+%T" -d @$st)".$ms ($start)"
+	echo $m >> $outm
+	[ $nr -gt 0 ] && echo $m >> $outm
+	#exit
+    done < $t
+    #exit
 }
 
 input_BD() {
@@ -4634,6 +4668,7 @@ copy_vdr() {
 	echo $(dirname $PWD)"/"${dest:3}"/logfile" > $vtlog
     else
 	echo "$PWD/$log_c" > $vtlog
+	[ "$chapt_marks" == "1" ] && chapt_marks $INPUT
     fi
     header
     #[ "$auto" != "1" ] && echo $d $PWD >> $logs
@@ -4713,6 +4748,7 @@ copy_vdr() {
 	    else
 		info_create
 	    fi
+	    #[ "$chapt_marks" == "1" ] && chapt_marks $INPUT
 	    ;;
     esac
     [ ! -e $dest/info ] && info_create
@@ -4856,7 +4892,7 @@ copy_file() {
 	OPT="$OPT -metadata title=$nameb"
     fi
     [ "$fmt" == "mp4" ] && OPT="$OPT -movflags faststart"
-    [ "$ifmt" == "vdr" ] && chapt_marks
+    [ "$ifmt" == "vdr" ] && chapt_marks_mkv
     if [ "$ifmt" == "vdr" -a "$fmt" == "mkv" ]
     then
 	info=
