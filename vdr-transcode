@@ -3105,7 +3105,7 @@ set_av1() {
 	"av1_vaapi")
 	    if [ "$qav1" == "" ]
 	    then
-		qav1=31
+		qav1=155
 		echo "av1_q set to $qav1" >> "$log_c"
 	    fi
 	    #rc_mode="-rc_mode ICQ"
