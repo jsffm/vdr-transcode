@@ -255,6 +255,7 @@ help_Configuration() {
     echo " -probesize <n>   # probesize"
     echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
     echo " -marks_mkv 0|1   # marks -> chapter"
+    echo " -chapt_marks 0|1 # Chapters -> marks"
     echo "No longer needed:" 
     echo " -pid_dir <pid_path>         # default /var/run"
     echo "                             # for run as user use e.g. ~"
