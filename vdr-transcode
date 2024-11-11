@@ -4055,11 +4055,8 @@ analyze() {
 		[ "$OUTPUT" == "webm" ] && aac=opus
 		[ "$OUTPUT" == "mpg" ] && aac=mp2
 		[ "$aac_decode" != "" ] && OPT_I="$OPT_I -c:$str $aac_decode"
+		[ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 -a "$aac" == "copy" ] && aac=aac
 		set_audio $aac
-		if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
-		then
-		    set_aac
-		fi
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
