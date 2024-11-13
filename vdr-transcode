@@ -2523,7 +2523,9 @@ chapt_marks() {
     local ms
     local outm
 
-    $ffprobe -hide_banner -i $1 2>&1 | grep "Chapter #" > $t
+    inp="$INPUT"
+    [ "$inp" == "dvd" ] && inp="$ffmpeg_i"
+    $ffprobe -hide_banner $inp 2>&1 | grep "Chapter #" > $t
     # Chapter #0:1: start 655.685367, end 2288.816867
     mkdir -p $dest
     outm=$dest/marks
@@ -4670,7 +4672,7 @@ copy_vdr() {
 	echo $(dirname $PWD)"/"${dest:3}"/logfile" > $vtlog
     else
 	echo "$PWD/$log_c" > $vtlog
-	[ "$chapt_marks" == "1" ] && chapt_marks $INPUT
+	[ "$chapt_marks" == "1" ] && chapt_marks
     fi
     header
     #[ "$auto" != "1" ] && echo $d $PWD >> $logs
