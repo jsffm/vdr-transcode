@@ -4166,6 +4166,10 @@ analyze() {
 		    subt="$subt -c:$stro dvdsub"
 		    #subt="$subt -c:$stro mov_text"
 		    OPT_G="$OPT_G -canvas_size:$stro "$hw"x"$vw
+		elif [ "$OUTPUT" == "vdr" ]
+		then
+		    #subt="$subt -c:$stro dvbsub"
+		    continue
 		else
 		    subt="$subt -c:$stro copy"
 		fi
