@@ -2523,9 +2523,12 @@ chapt_marks() {
     local ms
     local outm
 
-    inp="$INPUT"
-    [ "$inp" == "dvd" ] && inp="$ffmpeg_i"
-    $ffprobe -hide_banner $inp 2>&1 | grep "Chapter #" > $t
+    if [ "$INPUT" == "dvd" ]
+    then
+	$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Chapter #" > $t
+    else
+	$ffprobe -hide_banner "$INPUT" 2>&1 | grep "Chapter #" > $t
+    fi
     # Chapter #0:1: start 655.685367, end 2288.816867
     mkdir -p $dest
     outm=$dest/marks
