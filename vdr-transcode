@@ -46,6 +46,11 @@
 #exec > trace.log 2>&1
 #set -x
 
+os=$(uname)
+numfmt=numfmt
+[ "$os" == "FreeBSD" ] && numfmt=gnumfmt # coreutils
+date=date
+[ "$os" == "FreeBSD" ] && date=gdate
 OUTPUT=vdr
 INPUT=vdr
 h264=copy
@@ -356,6 +361,25 @@ help() {
     help_Configuration
     #echo "Other"
     exit
+}
+
+file_size() {
+    #set -x
+    local size
+    
+    case $os in
+	"FreeBSD")
+	    # -rw-r--r--  1 root  wheel  1139384 Jun 22  2013 index
+	    #size=$(ls -l $1|cut -d ' ' -f 5)
+	    size=$(ls -l "$1")
+	    size=$(echo $size | cut -d ' ' -f 5)
+	    ;;
+	*)
+	    size=$(stat "$1" -c "%s")
+	    ;;
+    esac
+    echo $size
+    #exit
 }
 
 add_vf() {
@@ -1318,7 +1342,7 @@ status() {
 	dur=${dur:0:8}
     fi
     durs=1
-    [ "${dur:0:3}" != "N/A" ] && durs=$(date -u "+%s" -d "1970-01-01 $dur")
+    [ "${dur:0:3}" != "N/A" ] && durs=$($date -u "+%s" -d "1970-01-01 $dur")
     durs1ms=$durs${dur:9:2}
     #fps1=$(grep "Video:" $log|head -n 1)
     fps1=$(grep "Video:" "$log"|tail -n 1)
@@ -1340,7 +1364,7 @@ status() {
     dur2=${l#*time=}
     dur2=${dur2:0:8}
     dur2s=1
-    [ "$dur2" != "N/A,’" ] && dur2s=$(date -u "+%s" -d "1970-01-01 $dur2")
+    [ "$dur2" != "N/A,’" ] && dur2s=$($date -u "+%s" -d "1970-01-01 $dur2")
     fps=${l#*fps=}
     fps=$(echo $fps|cut -d \  -f 1)
     size=${l#*size=}
@@ -1353,7 +1377,7 @@ status() {
     time=${l##*time=}
     time=$(echo $time | cut -d \  -f 1)
     [ "$time" == "N/A" ] && return
-    time2=$(date +"%s" -u -d "1970-01-01 ${time:0:8}")
+    time2=$($date +"%s" -u -d "1970-01-01 ${time:0:8}")
     bitr2=${l##*bitrate=}
     bitr2=$(echo $bitr2 | cut -d \  -f 1)
     restz=$(($durs-$time2))
@@ -1385,7 +1409,7 @@ status() {
 	    exptime=$(($restz*$fps1/$fps))
 	fi
 	#echo $prz"% exp. size="$size2" exp. time="$(date "+%T"  -u -d @$exptime)
-	exp=$(date "+%T" -u -d @$exptime)
+	exp=$($date "+%T" -u -d @$exptime)
 	przs=$(($size2*100/$oldsize))
 	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
 	echo "fps=$fps time=$dur2 $prz% $speed $drop" >> $t
@@ -1429,7 +1453,12 @@ run_stat() {
 	prz=0
 	status "$1"
 	echo >> $t
-	df -h --output=avail "$1" >> $t
+	if [ "$os" == "Linux" ]
+	then
+	    df -h --output=avail "$1" >> $t
+	else
+	    gdf -h --output=avail "$1" >> $t
+	fi
 	#echo -e "\n$msg" >> $t
 	#cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
 	#dialog --keep-window --begin 0 0 --no-shadow --textbox $t 15 -1
@@ -1448,7 +1477,7 @@ run_stat() {
 	    cat $t
 	    echo -e "\n$msg"
 	fi
-	sleep 2s
+	sleep 2
     done &
     PID2=$!
 }
@@ -1615,7 +1644,7 @@ astat() {
 	then
 	    [ -e /proc/$PID2 ] && kill -15 $PID2
 	    #run_stat "$log"
-	    sleep 2s
+	    sleep 2
 	    clear
 	    astat_key $lastkey
 	fi
@@ -1635,7 +1664,7 @@ diag() {
     #echo $v
     #exit
     vtp=$(which vdr-transcode)
-    d=$(date "+%F" -r $vtp)
+    d=$($date "+%F" -r $vtp)
     echo "vdr-transcode $d ffmpeg Version $v"
     #set -x
     os=$(grep -h PRETTY_NAME /etc/*-release)
@@ -1710,9 +1739,10 @@ diag() {
 
 ls_iso() {
     #set -x
+    #echo $1
     #[ "$1" != "" ] && mask="$1"
     e=$(readlink $(which ls))
-    if [ "$e" == "" ]
+    if [ "$e" == "" -a  "$os" != "FreeBSD" ]
     then
 	if [ "$1" != "" ]
 	then
@@ -1721,7 +1751,7 @@ ls_iso() {
 	    ls -lL --time-style long-iso
 	fi
     else
-	ls -l $1
+	ls -l "$1"
     fi
     #exit
 }
@@ -1747,7 +1777,7 @@ input_file() {
 	return
     fi
     oldsize=1
-    rec_time=$(date "+%s")
+    rec_time=$($date "+%s")
     rm -f $old
     if [ "${INPUT:0:4}" != "http" ]
     then
@@ -1763,7 +1793,8 @@ input_file() {
 	    do
 		ffmpeg_i=$ffmpeg_i$d$r
 		d="|"
-		oldsize=$(($oldsize+$(stat $r -c "%s")))
+		#oldsize=$(($oldsize+$(stat $r -c "%s")))
+		oldsize=$(($oldsize+$(file_size $r)))
 	    done
 	    unset IFS
 	    oldsize=$(($oldsize/1024))
@@ -1777,9 +1808,10 @@ input_file() {
 	    ffmpeg_i="-i \"$INPUT\""
 	    ls_iso "$INPUT" > $old
 	    # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
-	    oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
+	    #oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
+	    oldsize=$(file_size "$INPUT")
 	    oldsize=$(($oldsize/1024))
-	    rec_time=$(date "+%s" -r "$INPUT")
+	    rec_time=$($date "+%s" -r "$INPUT")
 	fi
 	#exit
 	#chapt_mediainfo "$INPUT"
@@ -1788,7 +1820,7 @@ input_file() {
 	ffmpeg_i="-i \"$INPUT\""
 	osr=$($ffprobe -i $INPUT 2>&1 | grep "Duration:")
 	osd=$(echo $osr|cut -d \  -f 2)
-	oss=$(date -u +%s -d "1970-01-01 ${osd:0:8}")
+	oss=$($date -u +%s -d "1970-01-01 ${osd:0:8}")
 	osbr=$(echo $osr|cut -d \  -f 6)
 	echo $oldsize
 	oldsize=$(($oss*$osbr/8))
@@ -1808,7 +1840,7 @@ input_file() {
 	# 2020-08-19T23:20:35.000000Z
 	c_t=${c_t//\"/}
 	c_t=${c_t:0:20}
-	rec_time=$(date "+%s" -d "$c_t")
+	rec_time=$($date "+%s" -d "$c_t")
 	#exit
     fi
     #set -x
@@ -1818,13 +1850,13 @@ input_file() {
     #[ "${vencoder:1:3}" == "Lav" ] && vencoder=$(echo $vencoder | cut -d \  -f 2)
     #exit
     [ "$odir" != "" ] && dp=$odir/$name/
-    dest=$dp$(date "+%F.%H.%M" -d @$rec_time)".3-0.rec"
+    dest=$dp$($date "+%F.%H.%M" -d @$rec_time)".3-0.rec"
     d32=0
     while [ -e $dest ]
     do
 	d32=$(($d32+1))
 	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
-	dest=$dp$(date "+%F.%H.%M" -d @$rec_time)".3-$d32.rec"
+	dest=$dp$($date "+%F.%H.%M" -d @$rec_time)".3-$d32.rec"
     done
     ifmt2="file"
     if [ "$ifmt" == "avi" ]
@@ -1855,7 +1887,7 @@ chk_skip() {
     then
 	osr=$($ffprobe $ffmpeg_i 2>&1 | grep "Duration:")
 	osd=$(echo $osr|cut -d \  -f 2)
-	oss=$(date -u +%s -d "1970-01-01 ${osd:0:8}")
+	oss=$($date -u +%s -d "1970-01-01 ${osd:0:8}")
 	[ $oss -lt $skip ] && skip=$(($oss/2))
     fi
     #exit
@@ -1882,12 +1914,14 @@ input_vdra() {
 	d="|"
     done
     # 2011-09-26.19.28.40.01.rec
+    # 2004-11-21.00:37.50.99.rec
     d1=$(basename $PWD)
     dd1=${d1:0:10}
-    dd=${d1:0:16}
+    #dd=${d1:0:16}
     dh=${d1:11:2}
     dm=${d1:14:2}
-    rec_time=$(date "+%s" -u -d "$dd1 $dh:$dm")
+    dd=${d1:0:13}"."$dm
+    rec_time=$($date "+%s" -u -d "$dd1 $dh:$dm")
     #d3=$(echo $d1 | cut -d '.' -f 4-)
     d3="1-0.rec"
     dest=../$dd.$d3
@@ -1957,7 +1991,7 @@ input_vdr() {
     dh=${d1:11:2}
     dm=${d1:14:2}
     #set -x
-    rec_time=$(date "+%s" -u -d "$dd1 $dh:$dm")
+    rec_time=$($date "+%s" -u -d "$dd1 $dh:$dm")
     if [ "$ss" != "" ]
     then
 	# ss
@@ -1966,7 +2000,7 @@ input_vdr() {
 	case $nd in
 	    0)
 		ss2=0:0:$ss
-		[ $ss -gt 59 ] && ss2=$(date -u "+%T" -d @$ss)
+		[ $ss -gt 59 ] && ss2=$($date -u "+%T" -d @$ss)
 		;;
 	    2)
 		ss2=0:$ss
@@ -1975,7 +2009,7 @@ input_vdr() {
 		ss2=$ss
 		;;
 	esac
-	ss3=$(date -u "+%s" -d "1970-01-01 $ss2")
+	ss3=$($date -u "+%s" -d "1970-01-01 $ss2")
 	if [ "$ss3" == "" ]
 	then
 	    echo "-ss $ss wrong"
@@ -1983,7 +2017,7 @@ input_vdr() {
 	fi
 	rec_time=$((rec_time+$ss3))
 	#echo $dd
-	dd=$(date -u "+%F.%H.%M" -d @$rec_time)
+	dd=$($date -u "+%F.%H.%M" -d @$rec_time)
     fi
     #exit
     d3=$(echo $d1 | cut -d '.' -f 4-)
@@ -2093,7 +2127,7 @@ do
         mm=${cht:3:2}
         ss=${cht:6:2}
         ms=${cht:9:3}
-        s=$(date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
+        s=$($date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
         #s=$(($s*1000+$ms))
         s="$s$ms"
         if [ "$cha" != "" ]
@@ -2195,7 +2229,7 @@ input_dvd() {
     name=$(basename $d)-$tr
     info_name=$(echo $(basename $d)|tr '_' ' ')	# checkme
     ifmt="dvd"
-    s=$(date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
+    s=$($date "+%s" -r $dvd_path"VTS_"$tr2"_0.IFO")
     rec_time=$s
     if [ "$OUTPUT" == "vdr" ]
     then
@@ -2211,14 +2245,14 @@ input_dvd() {
 	    rec_time=$s
 	fi
 	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
-	dest=$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
+	dest=$($date "+%F.%H.%M" -d @$s)".$tr-0.rec"
 	#exit
 	d32=0
 	while [ -e $dest ]
 	do
 	    d32=$(($d32+1))
 	    #dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
-	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
+	    dest=$($date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	done
     else
 	which mediainfo 2> /dev/null
@@ -2283,7 +2317,7 @@ input_dvdvideo() {
     #info_name=$(echo $(basename "$d")|tr '_' ' ')	# checkme
     info_name=$(basename "$d")				# checkme
     ifmt="dvd"
-    s=$(date "+%s" -r $ifofile)
+    s=$($date "+%s" -r $ifofile)
     rec_time=$s
     if [ "$OUTPUT" == "vdr" ]
     then
@@ -2298,13 +2332,13 @@ input_dvdvideo() {
 	    s=$(echo $e|cut -d \  -f 3)
 	    rec_time=$s
 	fi
-	dest=$(date "+%F.%H.%M" -d @$s)".$tr-0.rec"
+	dest=$($date "+%F.%H.%M" -d @$s)".$tr-0.rec"
 	#exit
 	d32=0
 	while [ -e $dest ]
 	do
 	    d32=$(($d32+1))
-	    dest=$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
+	    dest=$($date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
 	done
     fi
     #OPT_G="$OPT_G -fix_sub_duration"
@@ -2332,7 +2366,7 @@ chapt_tsmuxer() {
 	    #set -x
 	    # Duration: 00:26:47.055
 	    dur1=${line:10:8}
-	    durs=$(date -u "+%s" -d "1970-01-01 $dur1")
+	    durs=$($date -u "+%s" -d "1970-01-01 $dur1")
 	    dur=$(($dur+$durs))
 	    #exit
 	fi
@@ -2357,7 +2391,7 @@ chapt_tsmuxer() {
 	ss=${ma:6:2}
 	ms=${ma:9:3}
 	#s=$(($h*3600+$m*60))
-	s=$(date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
+	s=$($date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
 	s="$s$ms"
 	if [ $s -gt 0 ]
 	then
@@ -2441,7 +2475,7 @@ chapt_BD() {
 		hh=${e:3:2}
 		mm=${e:6:2}
 		ss=${e:9:2}
-		s=$(date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
+		s=$($date -u "+%s" -d "1970-01-01 $hh:$mm:$ss")
 		s=$(($s*1000))
 		if [ "$sa" != "" ]
 		then
@@ -2479,12 +2513,12 @@ chapt_marks_mkv() {
 	echo ";FFMETADATA1" > $meta
 	s1=0
 	ca=0
-	tag=$(date -u +"%s" -d 0:00:00)
+	tag=$($date -u +"%s" -d 0:00:00)
 	# 0:10:03.48
 	while read line _
 	do
 	    #echo $line
-	    c=$(date -u +"%s" -d $line)
+	    c=$($date -u +"%s" -d $line)
 	    cs=$(echo $line|cut -d '.' -f 2)
 	    ms=$(($cs*10))
 	    c=$(($c-$tag))
@@ -2540,7 +2574,7 @@ chapt_marks() {
 	IFS='.' read st ms <<< $start
 	ms=${ms:0:2}
 	#echo $nr $st $ms
-	m=$(date -u "+%T" -d @$st)".$ms ($start)"
+	m=$($date -u "+%T" -d @$st)".$ms ($start)"
 	echo $m >> $outm
 	[ $nr -gt 0 ] && echo $m >> $outm
 	#exit
@@ -2597,7 +2631,7 @@ input_BD() {
     [ ! -e $mpls ] && mpls=$(printf "$bdir/BDMV/PLAYLIST/%05d.mpl" $playlist)
     ls_iso $mpls >> $old
     #td=$(ls -l --time-style="+%Y%m%d%H%M" $mpls|cut -d \  -f 6)
-    rec_time=$(date -r $mpls "+%s")
+    rec_time=$($date -r $mpls "+%s")
     #set -x
     if [ "$OUTPUT" == "vdr" ]
     then
@@ -2612,12 +2646,12 @@ input_BD() {
 	    BD_info=$info
 	fi
 	#exit
-	dest=$name/$(date "+%F.%H.%M" -d @$rec_time)".$playlist-0.rec"
+	dest=$name/$($date "+%F.%H.%M" -d @$rec_time)".$playlist-0.rec"
 	d32=0
 	while [ -e $dest ]
 	do
 	    d32=$(($d32+1))
-	    dest=$name/$(date "+%F.%H.%M" -d @$rec_time)".$playlist-$d32.rec"
+	    dest=$name/$($date "+%F.%H.%M" -d @$rec_time)".$playlist-$d32.rec"
 	done
     else
 	[ "$nochapt" != "1" ] && chapt_BD
@@ -2730,7 +2764,7 @@ show_size_x() {
 
 show_size() {
     #echo -n "Size: "
-    numfmt --to=iec --from-unit=1024 --format=%.1f <<< $1
+    $numfmt --to=iec --from-unit=1024 --format=%.1f <<< $1
 }
 
 
@@ -4293,7 +4327,7 @@ ctrl_c() {
     #echo "ctrl_c"
     [ "$PID1" != "" ] && kill -15 $PID1
     [ "$PID2" != "" ] && kill -15 $PID2
-    sleep 1s
+    sleep 1
     [ -e /proc/$PID1 ] && kill -9 $PID1
     tset
     echo "cancelled"
@@ -4406,7 +4440,7 @@ transcode() {
 	    then
 		log_d "$log_c"
 	    else
-		sleep 2s
+		sleep 2
 		run_stat "$log_c"
 	    fi
 	    #wait $PID1
@@ -4471,14 +4505,14 @@ transcode() {
 			;;
 		    f)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			sleep 1s
+			sleep 1
 			less -S "$log_c"
 			tail -f "$log_c" &
 			PID2=$!
 			;;
 		    m)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			sleep 1s
+			sleep 1
 			mcview "$log_c"
 			tail -f "$log_c" &
 			PID2=$!
@@ -4574,7 +4608,7 @@ log_conf() {
 header() {
     read _ _ fuser _ <<< $(ls -l $vtlog)
     [ "$fuser" == "$USER" ] && chmod 666 $vtlog
-    d=`date +"%F %T"`
+    d=`$date +"%F %T"`
     v=$($ffmpeg -version)
     v=$(echo $v | cut -d \  -f 3)
     if [ "${v:0:1}" == "N" ]
@@ -4584,7 +4618,7 @@ header() {
 	ffmpeg_v=$v
     fi
     echo "Start $d vdr-transcode ffmpeg Version $v" > "$log_c"
-    sd=$(date +"%F %T" -r $0)
+    sd=$($date +"%F %T" -r $0)
     echo "script date" $sd >> "$log_c"
     #uname -n >> "$log_c"
     #uname -p >> "$log_c"
@@ -4629,7 +4663,7 @@ info_create() {
     #cat $t
     dauer1=$(grep "Duration:" $t)
     dauer2=$(echo $dauer1 | cut -d \  -f 2)
-    dauer=$(date -u "+%s" -d "1970-01-01 ${dauer2:0:8}")
+    dauer=$($date -u "+%s" -d "1970-01-01 ${dauer2:0:8}")
     sender=vdr-transcode
     if [ "${INPUT:0:4}" == "http" ]
     then
@@ -4688,7 +4722,7 @@ copy_vdr() {
 	echo "$d1" >> "$log_c"
 	d2=$(echo $d1|cut -d \  -f 2)
 	d3=${d2:0:8}
-	ds=$(date -u -d "1970-01-01 $d3" "+%s")
+	ds=$($date -u -d "1970-01-01 $d3" "+%s")
 	d=$(($ds+$video_add))
 	# -i concat:00001.ts
 	inp=$(echo $ffmpeg_i|cut -d \  -f 2)
@@ -4774,7 +4808,7 @@ copy_vdr() {
     [ -e tscheck ] && cp -p tscheck $dest
     if [ -e logfile1 ]
     then
-	fd=$(date -r logfile1 "+%Y%m%d%H%M")
+	fd=$($date -r logfile1 "+%Y%m%d%H%M")
         cp -p logfile1 $dest/logfile".$fd"
     fi
     [ -e info.txt ] && cp -p info.txt $dest
@@ -4814,7 +4848,8 @@ copy_vdr() {
         #set +x
         [ "$fpso" == "" ] && fpso=$fps
         #li=$(ls -l $dest/index|cut -d ' ' -f 5)
-        li=$(stat $dest/index -c "%s")
+        #li=$(stat $dest/index -c "%s")
+        li=$(file_size $dest/index)
         fpso=$(grep ^F $dest/info|cut -d \  -f 2)
         [ "$fpso" == "" ] && fpso=25
         #set -x
@@ -4832,8 +4867,10 @@ copy_vdr() {
     then
 	#[ -e index ] && is1=$(ls -l index|cut -d \  -f 5)
 	#[ -e index.vdr ] && is1=$(ls -l index.vdr|cut -d \  -f 5)
-	[ -e index ] && is1=$(stat index -c "%s")
-	[ -e index.vdr ] && is1=$(stat index.vdr -c "%s")
+	#[ -e index ] && is1=$(stat index -c "%s")
+	[ -e index ] && is1=$(file_size index)
+	#[ -e index.vdr ] && is1=$(stat index.vdr -c "%s")
+	[ -e index.vdr ] && is1=$(file_size index.vdr)
 	[ -e info ] && fpsi=$(grep ^F info|cut -d \  -f 2)
 	[ "$fpsi" == "" ] && fpsi=25
 	#si1=$(($is1/8/$fpsi))
@@ -4841,11 +4878,12 @@ copy_vdr() {
         si1=$(($sic1/100))
         sic1=$(($sic1-($si1*100)))
 	#is2=$(ls -l $dest/index|cut -d \  -f 5)
-	is2=$(stat $dest/index -c "%s")
+	#is2=$(stat $dest/index -c "%s")
+	is2=$(file_size $dest/index)
 	#echo "===========================================================" >> $log_c
 	echo -n "index=$is1" >> $log_c
 	sic1=$(printf "%02d" $sic1)
-	printf " %s " $(date -u -d @$si1 +" %T."$sic1) >> "$log_c"
+	printf " %s " $($date -u -d @$si1 +" %T."$sic1) >> "$log_c"
 	if [ -e info ]
 	then
 	    O=$(grep ^O info)
@@ -4856,7 +4894,7 @@ copy_vdr() {
     fi
     echo -n "index=$is2" >> $log_c
     sic=$(printf "%02d" $sic)
-    [ "$si" != "" ] && printf " %s " $(date -u -d @$si +" %T."$sic) >> "$log_c"
+    [ "$si" != "" ] && printf " %s " $($date -u -d @$si +" %T."$sic) >> "$log_c"
     grep ^O $dest/info >> "$log_c"
     #fi
     if [ -e $VIDEODIR ]
@@ -4885,7 +4923,7 @@ copy_file() {
     analyze $ffmpeg_i
     #OPT="$OPT -timestamp $(date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata \"creation_time=$(date "+%FT%T" -d @$rec_time)\""
-    OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
+    OPT="$OPT -metadata creation_time=$($date "+%FT%T" -d @$rec_time)"
     #OPT="$OPT -metadata title=\"$(basename $name)\""
     nameb=$(basename "$name")
     #if [[ "$nameb" == *" "* -o "$nameb" == *"("* ]]
@@ -4929,11 +4967,12 @@ copy_file() {
     fi
     transcode "$out"
     #newsize=$(ls -l "$out"|cut -d \  -f 5)
-    newsize=$(stat "$out" -c "%s")
+    #newsize=$(stat "$out" -c "%s")
+    newsize=$(file_size "$out")
     newsize=$(($newsize/1024))
     #set -x
-    [ "$fmt" == "ts" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
-    [ "$dold" == "1" ] && touch -d $(date "+%FT%T" -d @$rec_time) $out
+    [ "$fmt" == "ts" ] && touch -d $($date "+%FT%T" -d @$rec_time) $out
+    [ "$dold" == "1" ] && touch -d $($date "+%FT%T" -d @$rec_time) $out
     if [ "$ifmt" == "vdr" ]
     then
 	info=
@@ -5158,7 +5197,7 @@ server() {
 		    if [ ! -e $lck ]
 		    then
 			touch $lck
-			d=`date +"%F %T"`
+			d=`$date +"%F %T"`
 			echo $d $dh >> $logs
 			vdr-transcode --auto > vt.log 2> vt.err
 		    fi
@@ -5378,14 +5417,14 @@ a_check() {
 	    d1=$(echo $d1|cut -d \  -f 2)
 	    if [ "$d1" != "N/A," ]
 	    then
-		d1s=$(date -u "+%s" -d "1970-01-01 ${d1:0:8}")
+		d1s=$($date -u "+%s" -d "1970-01-01 ${d1:0:8}")
 		d1ms=$d1s${d1:9:2}
 	    else
 		d1ms=0
 	    fi
 	    d2=$(tail -n 1 $t2)
 	    d2=$(echo $d2|cut -d \  -f 2)
-	    d2s=$(date -u "+%s" -d "1970-01-01 ${d2:0:8}")
+	    d2s=$($date -u "+%s" -d "1970-01-01 ${d2:0:8}")
 	    d2ms=$d2s${d2:9:2}
 	    #echo $d2ms $d1ms
 	    echo "Diff" $(($d2ms-$d1ms))"cs"
@@ -5457,7 +5496,8 @@ auto_confr() {
 	#echo $rr
 	[ -e $rr/$vtc ] && continue
 	[ -e $rr/$vtc".rdy" ] && continue
-	si=$(stat $rr/index -c "%s")
+	#si=$(stat $rr/index -c "%s")
+	si=$(file_size $rr/index)
 	fl=$(grep ^F $rr/info)
 	read _ f _ <<< $fl
 	[ "$f" == "" ] && f=25
@@ -5475,7 +5515,8 @@ auto_confr() {
 	do
 	    [ ! -e "$r" ] && continue
 	    #s1=$(ls -l --block-size=1k $r|cut -d \  -f 5)
-	    s1=$(stat "$r" -c "%s")
+	    #s1=$(stat "$r" -c "%s")
+	    s1=$(file_size "$r")
 	    size=$(($size+$s1/1024))
 	done
 	br=$(($size*8/$s))
@@ -5516,7 +5557,8 @@ auto_confsz() {
 	[ -e $rr/$vtc".rdy" ] && continue
 	[ ! -e $rr/index ] && continue
 	[ ! -e $rr/info ] && continue
-	si=$(stat $rr/index -c "%s")
+	#si=$(stat $rr/index -c "%s")
+	si=$(file_size $rr/index)
 	fl=$(grep ^F $rr/info)
 	read _ f _ <<< $fl
 	[ "$f" == "" ] && f=25
@@ -5534,7 +5576,8 @@ auto_confsz() {
 	do
 	    [ ! -e "$r" ] && continue
 	    #s1=$(ls -l --block-size=1k $r|cut -d \  -f 5)
-	    s1=$(stat "$r" -c "%s")
+	    #s1=$(stat "$r" -c "%s")
+	    s1=$(file_size "$r")
 	    size=$(($size+$s1/1024))
 	done
 	br=$(($size*8/$s))
@@ -5655,7 +5698,7 @@ case "$INPUT" in
 esac
 set_hwacc
 
-start=$(date +"%s")
+start=$($date +"%s")
 
 #set -x
 case $TODO in
@@ -5737,7 +5780,7 @@ case $TODO in
 	;;
 esac
 
-ende=$(date +"%s")
+ende=$($date +"%s")
 sek=$(($ende-$start))
 
 [ -e $vtc ] && mv $vtc $vtc.rdy
@@ -5770,7 +5813,7 @@ dur=$(grep "Duration:" $t|head -n 1)
 dur=$(echo $dur|cut -d \  -f 2)
 if [ "$dur" != "N/A," ]
 then
-    durs1=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    durs1=$($date -u "+%s" -d "1970-01-01 ${dur:0:8}")
     brv=$(($videos*8/$durs1))
     bra=$(($audios*8/$durs1))
 fi
@@ -5783,7 +5826,7 @@ then
     durs1ms=$durs1${dur:9:2}
     dur=$(grep "Duration:" $t|tail -n 1)
     dur=$(echo $dur|cut -d \  -f 2)
-    durs2=$(date -u "+%s" -d "1970-01-01 ${dur:0:8}")
+    durs2=$($date -u "+%s" -d "1970-01-01 ${dur:0:8}")
     durs2ms=$durs2${dur:9:2}
     echo "Diff:" $(($durs2ms-$durs1ms))"cs" >> "$log_c"
 fi
@@ -5804,8 +5847,8 @@ then
 	$postproc $(realpath $dest) $vcodec
 fi
 echo -n "Duration " >> "$log_c"
-date -u -d @$sek "+%T" >> "$log_c"
-d=`date +"%F %T"`
+$date -u -d @$sek "+%T" >> "$log_c"
+d=`$date +"%F %T"`
 echo "End" $d >> "$log_c"
 rm -f $lck
 rm $runvt
