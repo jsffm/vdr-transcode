@@ -3327,6 +3327,7 @@ set_aac() {
 	audio_t="-c:$stro $aaclib $aac_profile $br $ar"
     fi
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:$stro handler_name=$aaclib"
+    aencoder=$aaclib
 }
 
 set_opus() {
@@ -3498,7 +3499,7 @@ set_audio() {
 	    ;;
     esac
     [ "$upm" != "" ] && audio_t="$audio_t $upm"
-    [ "$check" != "" ] && echo $str": $slang $codec -> "$stro": $codec1 $ab" >> "$log_c.2"
+    [ "$check" != "" ] && echo $str": $slang $codec -> "$stro": $codec1 $aencoder $ab" >> "$log_c.2"
     #exit
     }
 
@@ -3885,6 +3886,7 @@ analyze() {
 	if [ "$typ" == "Audio:" ]
 	then
 	    #set -x
+	    aencoder=
 	    echo $line >> "$log_c"
 	    atyp1=${line2#*Hz*}
 	    atyp=$(echo $atyp1 | cut -d ' ' -f 1)
