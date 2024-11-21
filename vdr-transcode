@@ -1924,6 +1924,7 @@ input_vdra() {
     rec_time=$($date "+%s" -u -d "$dd1 $dh:$dm")
     #d3=$(echo $d1 | cut -d '.' -f 4-)
     d3="1-0.rec"
+    dp=".."
     dest=../$dd.$d3
     d30=$(echo $d3|cut -d '.' -f 1)
     #d31=$(echo $d30|cut -d '-' -f 1)
@@ -1942,7 +1943,8 @@ input_vdra() {
     [ "$name" == "_" ] && name=video
     OPT="$OPT -copyts -start_at_zero"
     #OPT_G="$OPT_G -f mpeg"
-    name=../$name
+    [ "$odir" != "" ] && dp=$odir
+    name=$dp/$name
     chk_skip
     ifmt="vdr"
     #exit
