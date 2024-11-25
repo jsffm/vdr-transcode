@@ -1945,7 +1945,8 @@ input_vdra() {
     name=$(basename $d2)
     [ ${name:0:1} == "%" ] && name=${name:1}
     [ "$name" == "_" ] && name=video
-    OPT="$OPT -copyts -start_at_zero"
+    #OPT="$OPT -copyts -start_at_zero"
+    OPT="$OPT -start_at_zero"
     #OPT_G="$OPT_G -f mpeg"
     [ "$odir" != "" ] && dp=$odir
     name=$dp/$name
