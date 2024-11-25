@@ -2887,7 +2887,7 @@ set_h264() {
 	"libx264")
 	    #parameter --nohw
 	    hwdownload
-	    [ "$crf" == "" ] && crf=21
+	    [ "$crf" == "" ] && crf=27
 	    #preset="fast"
 	    #preset="veryfast"
 	    #preset="superfast"
