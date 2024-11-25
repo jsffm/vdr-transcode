@@ -1046,6 +1046,10 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    ;;
+	"--ac_del")
+	    TODO=$1
+	    INPUT=none
+	    ;;
 	"--aplay")
 	    TODO=$1
 	    INPUT=none
@@ -5398,6 +5402,71 @@ auto_play() {
     exit
 }
 
+auto_check_del() {
+    local loga
+    declare -a loga
+    
+    dialog=0
+    noff=1
+    t=/tmp/vtc
+    t2=/tmp/vtc2
+    i=0
+    while read line
+    do
+	#read _ _ d1 _ <<< $line
+	d1=$(echo $line|cut -d \  -f 3)
+	[ ! -e "$d1" ] && continue
+	ext=${d1##*.}
+	[ "$ext" != "rec" ] && continue
+	[ ! -e $d1/dest ] && continue
+	loga[$i]="$line"
+	i=$(($i+1))
+    done < $logs
+    nl=${#loga[*]}
+    #set -x
+    #for (( i=0; i<$nl; i++ ))
+    nl=$((nl-1))
+    for (( i=$nl; i>=0; i-- ))
+    do
+	line=${loga[$i]}
+	#echo $line
+	#exit
+	d1=$(echo $line|cut -d \  -f 3)
+	echo $d1
+	#exit
+	[ ! -e "$d1" ] && continue
+	#set -x
+	ext=${d1##*.}
+	[ "$ext" != "rec" ] && continue
+	[ ! -e $d1/dest ] && continue
+	[ ! -e $d1/index ] && continue
+	#echo $line
+	d2=$(<$d1/dest)
+	[ ! -e $d2 ] && continue
+	#echo $d2
+	#set -x
+	tail -n 20 $d2
+	echo $d1
+	#a_check $d2
+	#echo
+	read answer
+	[ "$answer" == "" ] && continue
+	if [ "$answer" == "d" ]
+	then
+	    echo $d1
+	    echo delete
+	    #rm $d1/*
+	    #rmdir $d1
+	    mv $d1 ${d1:0: -3}"del"
+	fi
+	#set -x
+	#read answer
+	#exit
+    done
+    #done < $logs
+    exit
+}
+
 a_check() {
 	    local c2
 	    local d1
@@ -5748,6 +5817,11 @@ case $TODO in
 	dialog=0
 	noff=1
 	auto_check
+	;;
+    "--ac_del")
+	dialog=0
+	noff=1
+	auto_check_del
 	;;
     "--aplay")
 	auto_play
