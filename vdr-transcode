@@ -1746,13 +1746,15 @@ ls_iso() {
     #echo $1
     #[ "$1" != "" ] && mask="$1"
     e=$(readlink $(which ls))
-    if [ "$e" == "" -a  "$os" != "FreeBSD" ]
+    if [ "$e" == "" ]
     then
+	local ls=ls
+	[ "$os" == "FreeBSD" ] && ls=gls
 	if [ "$1" != "" ]
 	then
-	    ls -lL --time-style long-iso "$1"
+	    $ls -lL --time-style long-iso "$1"
 	else
-	    ls -lL --time-style long-iso
+	    $ls -lL --time-style long-iso
 	fi
     else
 	ls -l "$1"
@@ -2878,7 +2880,7 @@ set_video() {
 
 set_h264() {
     #set -x
-    [ "$hwaccel" == "vulkan" & "$h264enc" != "h264_vulkan" ] && hwdownload
+    [ "$hwaccel" == "vulkan" -a "$h264enc" != "h264_vulkan" ] && hwdownload
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     #h264_profile=main
