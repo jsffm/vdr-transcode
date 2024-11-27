@@ -2734,7 +2734,7 @@ set_hwacc() {
 	    ;;
 	"vulkan")
 	    #export DISPLAY=:0.0
-	    HWACC="-hwaccel vulkan -hwaccel_output_format vulkan"
+	    HWACC="-init_hw_device vulkan -hwaccel vulkan -hwaccel_output_format vulkan"
 	    deinterlace="bwdif_vulkan"
 	    [ "$scale" != "" ] && add_vf scale_vulkan=$scale
 	    ;;
@@ -2878,7 +2878,7 @@ set_video() {
 
 set_h264() {
     #set -x
-    [ "$hwaccel" == "vulkan" ] && hwdownload
+    [ "$hwaccel" == "vulkan" & "$h264enc" != "h264_vulkan" ] && hwdownload
     # maxr="-maxrate "$br"k -bufsize 1835k"
     h264_profile=high
     #h264_profile=main
@@ -2914,6 +2914,15 @@ set_h264() {
 	    [ "$crf" == "" ] && crf=21
 	    #preset="-profile:v $hevc_profile $level -global_quality $crf $opt_r"
 	    preset="-profile:v:0 $hevc_profile $level -q:v:0 $crf $opt_r"
+	    ;;
+	"h264_vulkan")
+	    # under progress
+	    #[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
+	    [ "$crf" == "" ] && crf=30
+	    opt="-usage transcode"
+	    preset="-profile:v:0 $h264_profile $level $rc_mode -qp $crf $quality $opt $maxr"
+	    #[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vulkan" && add_vf 'format=nv12,hwupload'
 	    ;;
 	"h264_omx")
 	    preset="-profile:v:0 high"
@@ -3006,6 +3015,16 @@ set_hevc() {
 	    #preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
 	    preset="-profile:v:0 $hevc_profile -preset $hevc_preset -q:v:0 $hevc_cq $load_plugin $opt_r"
 	    #preset="$preset -adaptive_i 1 -adaptive_b 1"
+	    ;;
+	"hevc_vulkan")
+	    # under progress
+	    #[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
+	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
+	    [ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
+	    [ "$hevc_cq" == "" ] && hevc_cq=32
+	    preset="-profile:v:0 $hevc_profile $level $rc_mode -qp $hevc_cq $opt_r"
+	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vulkan" && add_vf 'format=nv12,hwupload'
 	    ;;
 	"libkvazaar")
 	    #parameter --nohw
