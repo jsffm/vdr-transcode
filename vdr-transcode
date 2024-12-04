@@ -1416,14 +1416,13 @@ status() {
 	#if [[ "$fps1" == *.* ]]
 	[ "$fps" == "0.0" ] && return
 	[[ "$fps1" == *.* ]] && p1=1
-	[[ "$fps" == *.* ]] && p2=1
 	if [ "$fps" == "1" ]
 	then
 	    sp=$(echo $speed)
 	    #fps=$(($fps1*${sp:0: -1}))
 	    fps=$(echo "$fps1*${sp:0: -1}"|bc)
-	    p2=1
 	fi
+	[[ "$fps" == *.* ]] && p2=1
 	if [ "$p1" == "1" -o "$p2" == 1 ]
 	then
 	    exptime=$(echo "$restz*$fps1/$fps"|bc)
