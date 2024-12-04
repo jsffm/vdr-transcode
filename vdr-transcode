@@ -1360,17 +1360,28 @@ status() {
     echo "Duration: $dur, fps=$fps1 $sender" >> $t
     # frame=15001 fps=11331 q=-1.0 Lsize=  173773kB time=00:04:59.98 bitrate=4745.4kbits/s speed= 227x
     # frame= 1739 fps=1739 q=34.0 size=    2560KiB time=00:00:44.92 bitrate= 466.9kbit
+    # size=   28160kB time=00:01:22.70 bitrate=2789.4kbits/s speed=81.7x
+    # size=   43264kB time=00:02:04.00 bitrate=2858.2kbits/s speed=  82x
     #l=$(grep "^frame=" $(cat $vtlog) | tr '\r' '\n'| tail -n 1)
     # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
     #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
     l=$(tr '\r' '\n' < "$log" | grep -a "^frame=" | tail -n 1)
+    if [ "$l" == "" ]
+    then
+	l=$(tr '\r' '\n' < "$log" | grep -a "^size=" | tail -n 1)
+    fi
     #echo $l
     dur2=${l#*time=}
     dur2=${dur2:0:8}
     dur2s=1
     [ "$dur2" != "N/A,’" ] && dur2s=$($date -u "+%s" -d "1970-01-01 $dur2")
     fps=${l#*fps=}
-    fps=$(echo $fps|cut -d \  -f 1)
+    if [ "$fps" != "$l" ]
+    then
+	fps=$(echo $fps|cut -d \  -f 1)
+    else
+	fps=1
+    fi
     size=${l#*size=}
     [ "$size" == "" ] && return
     size=$(echo $size|cut -d \  -f 1)
@@ -1406,6 +1417,13 @@ status() {
 	[ "$fps" == "0.0" ] && return
 	[[ "$fps1" == *.* ]] && p1=1
 	[[ "$fps" == *.* ]] && p2=1
+	if [ "$fps" == "1" ]
+	then
+	    sp=$(echo $speed)
+	    #fps=$(($fps1*${sp:0: -1}))
+	    fps=$(echo "$fps1*${sp:0: -1}"|bc)
+	    p2=1
+	fi
 	if [ "$p1" == "1" -o "$p2" == 1 ]
 	then
 	    exptime=$(echo "$restz*$fps1/$fps"|bc)
