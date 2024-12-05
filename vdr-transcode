@@ -1366,10 +1366,7 @@ status() {
     # t=$(tr '\r' '\n' < $l | grep -a "^frame=" | tail -n 1)
     #l=$(grep "^frame=" $log | tr '\r' '\n'| tail -n 1)
     l=$(tr '\r' '\n' < "$log" | grep -a "^frame=" | tail -n 1)
-    if [ "$l" == "" ]
-    then
-	l=$(tr '\r' '\n' < "$log" | grep -a "^size=" | tail -n 1)
-    fi
+    [ "$l" == "" ] && l=$(tr '\r' '\n' < "$log" | grep -a "^size=" | tail -n 1)
     #echo $l
     dur2=${l#*time=}
     dur2=${dur2:0:8}
