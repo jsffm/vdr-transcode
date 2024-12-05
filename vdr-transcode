@@ -217,6 +217,8 @@ help_Audio() {
     echo " -def <lang>                       # -disposition defaut @ <lang>"
     echo " -ch 2                             # 5.1 -> stereo"
     echo " -dsur [<str>=]2                   # mark as Dolby Surround Encoded ac3, eac3"
+    echo " --dpl                             # -dsur 2 -acodec eac3"
+    echo " -dpl <str>                        # -dsur <str>=2 -acodec <str>=eac3"
     echo " -skip <n> # default 10, inf() and analyze(): skip first <n> seconds"
 }
 
