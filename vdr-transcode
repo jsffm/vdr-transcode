@@ -260,6 +260,7 @@ help_Configuration() {
     echo " -mark <mark>     # mark at the end of transcoded recordings"
     echo " -odir <path>     # output directory"
     echo " -probesize <n>   # probesize"
+    echo " -analyzeduration <n>"
     echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
     echo " -marks_mkv 0|1   # marks -> chapter"
     echo " -chapt_marks 0|1 # Chapters -> marks"
@@ -946,7 +947,7 @@ parameter() {
 	"-probesize")
 	    OPT_G="$OPT_G -probesize $2"
 	    ;;
-	"-anal")
+	"-anal"|"-analyzeduration")
 	    OPT_G="$OPT_G -analyzeduration $2"
 	    ;;
 	"--q")
