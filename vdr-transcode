@@ -378,7 +378,7 @@ file_size() {
 	    size=$(echo $size | cut -d ' ' -f 5)
 	    ;;
 	*)
-	    size=$(stat "$1" -c "%s")
+	    size=$(stat -L "$1" -c "%s")
 	    ;;
     esac
     echo $size
@@ -783,6 +783,7 @@ parameter() {
 	"--dpl")
 	    acodec=eac3
 	    OPT="$OPT -dsur_mode 2"
+	    #OPT="$OPT -dsur_mode 2 -metadata:s:a encoder=eac3_Dolby_Surround"
 	    ;;
 	"-dpl")
 	    acodeca[$2]=eac3
