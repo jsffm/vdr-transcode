@@ -784,10 +784,12 @@ parameter() {
 	    acodec=eac3
 	    OPT="$OPT -dsur_mode 2"
 	    #OPT="$OPT -dsur_mode 2 -metadata:s:a encoder=eac3_Dolby_Surround"
+	    dpl=99
 	    ;;
 	"-dpl")
 	    acodeca[$2]=eac3
 	    OPT="$OPT -dsur_mode:$2 2"
+	    dpl=$2
 	    ;;
 	"-ch")
 	    achannels=$2
@@ -4118,6 +4120,8 @@ analyze() {
 		map="$map -map 0:$str"
 		[ "$OUTPUT" == "mpg" ] && eac3=mp2
 		[ "$OUTPUT" == "webm" ] && eac3=opus
+		[ "$dpl" == "99" -a "$eac3" == "copy" ] && eac3=eac3
+		[ "$dpl" == "$str" -a "$eac3" == "copy" ] && eac3=eac3
 		set_audio $eac3
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
