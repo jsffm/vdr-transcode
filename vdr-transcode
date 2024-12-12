@@ -263,7 +263,7 @@ help_Configuration() {
     echo " -analyzeduration <n>"
     echo " --dold                      # for output file (mp4 etc) set date of old file for new file"
     echo " -marks_mkv 0|1              # marks -> chapter"
-    echo " -chapt_marks 0|1            # Chapters -> marks"
+    echo " -chapt_marks 0|1|logfile    # Chapters -> marks"
     echo "No longer needed:" 
     echo " -pid_dir <pid_path>         # default /var/run"
     echo "                             # for run as user use e.g. ~"
@@ -964,6 +964,7 @@ parameter() {
 	    ;;
 	"-chapt_marks")
 	    chapt_marks=$2
+	    [ "$2" == "logfile" ] && TODO=$1
 	    ;;
 	"-DP")
 	    OPT="$OPT -dsur_mode $2"	# 2 on
@@ -2594,6 +2595,10 @@ chapt_marks() {
     if [ "$INPUT" == "dvd" ]
     then
 	$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Chapter #" > $t
+    elif [ "$chapt_marks" == "logfile" ]
+    then
+	grep "Chapter #" logfile > $t
+	dest=.
     else
 	$ffprobe -hide_banner "$INPUT" 2>&1 | grep "Chapter #" > $t
     fi
@@ -5901,6 +5906,10 @@ case $TODO in
 	;;
     "--rtsk")
 	rt_server_k
+	;;
+    "-chapt_marks")
+	chapt_marks
+	exit
 	;;
     *)
 	copy
