@@ -374,7 +374,7 @@ file_size() {
 	"FreeBSD")
 	    # -rw-r--r--  1 root  wheel  1139384 Jun 22  2013 index
 	    #size=$(ls -l $1|cut -d ' ' -f 5)
-	    size=$(ls -l "$1")
+	    size=$(ls -lL "$1")
 	    size=$(echo $size | cut -d ' ' -f 5)
 	    ;;
 	*)
@@ -2247,7 +2247,8 @@ input_dvd() {
     do
 	r=$dvd_path"VTS_"$tr2"_$i.VOB"
         #echo $r
-	s=$(ls -l $r|cut -d \  -f 5)
+	#s=$(ls -l $r|cut -d \  -f 5)
+	s=$(file_size $r)
 	sum=$(($sum+$s))
         ffmpeg_i=$ffmpeg_i$del$r
         del="|"
