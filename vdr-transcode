@@ -2597,6 +2597,11 @@ chapt_marks() {
 	$ffprobe -hide_banner $ffmpeg_i 2>&1 | grep "Chapter #" > $t
     elif [ "$chapt_marks" == "logfile" ]
     then
+	if [ ! -e logfile ]
+	then
+	    echo logfile not found
+	    exit
+	fi
 	grep "Chapter #" logfile > $t
 	dest=.
     else
@@ -2605,6 +2610,12 @@ chapt_marks() {
     # Chapter #0:1: start 655.685367, end 2288.816867
     mkdir -p $dest
     outm=$dest/marks
+    if [ -e $outm ]
+    then
+	echo "overwrite $outm? (y/N)"
+	read answer
+	[ "$answer" != "y" ] && exit
+    fi
     while read _ n _ start _
     do
 	start=${start//,/}
