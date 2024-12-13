@@ -2904,9 +2904,9 @@ set_video() {
     esac
     if [ "$OUTPUT" == "vdr" ]
     then
-	video="$video $gop_vdr"
+	[ "$c" != "copy" ] && video="$video $gop_vdr"
     else
-	video="$video $gop_file"
+	[ "$c" != "copy" ] && video="$video $gop_file"
     fi
     if [ "$check" != "" ]
     then
