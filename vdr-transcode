@@ -4876,26 +4876,6 @@ copy_vdr() {
 	cat $marks >> $log_c
 	echo "======== marks ========" >> $log_c
     fi
-    [ -e messages ] && cp -p messages $dest
-    [ -e logfile ] && cp -p logfile $dest/logfile1
-    [ -e tscheck ] && cp -p tscheck $dest
-    if [ -e logfile1 ]
-    then
-	fd=$($date -r logfile1 "+%Y%m%d%H%M")
-        cp -p logfile1 $dest/logfile".$fd"
-    fi
-    [ -e info.txt ] && cp -p info.txt $dest
-    if [ "$apply_codec" == "1" ]
-    then
-	#set -x
-	if [ -e info.txt ]
-	then
-	    i=$(<info.txt)
-	    echo "$i $vcodec" > $dest/info.txt
-	else
-	    echo $vcodec > $dest/info.txt
-	fi
-    fi
     #vdr=$VDRDIR/vdr
     which vdr 2> /dev/null
     if [ $? -eq 0 ]
@@ -4934,6 +4914,32 @@ copy_vdr() {
         #date -u -d @$si +"index %T" >> $log_c
     else
 	echo $vdr "not found" >> $log_c
+    fi
+    [ -e messages ] && cp -p messages $dest
+    [ -e logfile ] && cp -p logfile $dest/logfile1
+    [ -e tscheck ] && cp -p tscheck $dest
+    [ -e revision ] && cp -p revision $dest
+    if [ -e logfile1 ]
+    then
+	fd=$($date -r logfile1 "+%Y%m%d%H%M")
+        cp -p logfile1 $dest/logfile".$fd"
+    fi
+    [ -e info.txt ] && cp -p info.txt $dest
+    if [ "$apply_codec" == "1" ]
+    then
+	#set -x
+	if [ -e info.txt ]
+	then
+	    i=$(<info.txt)
+	    echo "$i $vcodec" > $dest/info.txt
+	else
+	    echo $vcodec > $dest/info.txt
+	fi
+	d=`$date +"%F %T"`
+	echo $d $oldsize >> $dest/revision
+	s=$(du $dest)
+	read s _ <<< $s
+	echo $d $s >> $dest/revision
     fi
     echo "===========================================================" >> $log_c
     if [ "$ifmt" == "vdr" ]
