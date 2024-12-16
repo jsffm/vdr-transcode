@@ -2001,8 +2001,7 @@ input_vdr() {
 	d=$(date "+%F %T" -r dir.txt)
 	read _ os <<< $(head -n 1 dir.txt)
 	echo $d $os >> revision
-	read s _ <<< $(du -L)
-	echo $d $s >> revision
+	echo $d $oldsize >> revision
     fi
     input=00001.ts
     # 2018-06-09.14.01.50-0.rec
