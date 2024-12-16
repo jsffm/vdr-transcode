@@ -1996,6 +1996,14 @@ input_vdr() {
     s=$(du -L)
     oldsize=$(echo $s|cut -d \  -f 1)
     echo "oldsize="$oldsize >> $old
+    if [ ! -e revision -a -e dir.txt -a "$apply_codec" == "1" ]
+    then
+	d=$(date "+%F %T" -r dir.txt)
+	read _ os <<< $(head -n 1 dir.txt)
+	echo $d $os >> revision
+	read s _ <<< $(du -L)
+	echo $d $s >> revision
+    fi
     input=00001.ts
     # 2018-06-09.14.01.50-0.rec
     #set -x
