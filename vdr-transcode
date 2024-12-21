@@ -1993,8 +1993,9 @@ input_vdr() {
     fi
     #ls -l --time-style long-iso * > $old
     ls_iso > $old
-    s=$(du -L)
-    oldsize=$(echo $s|cut -d \  -f 1)
+    #s=$(du -L)
+    #oldsize=$(echo $s|cut -d \  -f 1)
+    read oldsize _ <<< $(du -L)
     echo "oldsize="$oldsize >> $old
     if [ ! -e revision -a -e dir.txt -a "$apply_codec" == "1" ]
     then
@@ -4943,10 +4944,10 @@ copy_vdr() {
 	    echo $vcodec > $dest/info.txt
 	fi
 	d=`$date +"%F %T"`
-	echo $d $oldsize >> $dest/revision
+	echo $d $oldsize $ivcodec >> $dest/revision
 	s=$(du $dest)
 	read s _ <<< $s
-	echo $d $s >> $dest/revision
+	echo $d $s $vcodec >> $dest/revision
     fi
     echo "===========================================================" >> $log_c
     if [ "$ifmt" == "vdr" ]
