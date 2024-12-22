@@ -2333,26 +2333,26 @@ input_dvdvideo() {
     fi
     i=1
     sum=0
-    while [ -e $dvd_path"VTS_"$tr2"_$i.VOB" ]
+    while [ -e "$dvd_path""VTS_"$tr2"_$i.VOB" ]
     do
-	r=$dvd_path"VTS_"$tr2"_$i.VOB"
+	r="$dvd_path""VTS_"$tr2"_$i.VOB"
         #echo $r
-	s=$(ls -l $r|cut -d \  -f 5)
+	s=$(ls -l "$r"|cut -d \  -f 5)
 	sum=$(($sum+$s))
         i=$(($i+1))
     done
     oldsize=$(($sum/1024))
     if [ $oldsize -eq 0 ]
     then
-	olds=$(du $dvd_path)
+	olds=$(du "$dvd_path")
 	read oldsize _ <<< $olds
     fi
     echo "oldsize="$oldsize >> $old
-    ls_iso $dvd_path >> $old
+    ls_iso "$dvd_path" >> $old
     #OPT_G="$OPT_G -f dvdvideo -title $tr"
     ffmpeg_i="-f dvdvideo -title $tr -i $dvd_path"
-    ifofile=$dvd_path"VTS_"$tr2"_0.IFO"
-    [ ! -e $ifofile ] && ifofile=$dvd_path"VTS_01_0.IFO"
+    ifofile="$dvd_path""VTS_"$tr2"_0.IFO"
+    [ ! -e "$ifofile" ] && ifofile=$dvd_path"VTS_01_0.IFO"
     d="$PWD"
     d=$(echo "$d"|tr ' ' '_')
     name="$(basename "$d")-$tr"
@@ -2360,14 +2360,14 @@ input_dvdvideo() {
     #info_name=$(echo $(basename "$d")|tr '_' ' ')	# checkme
     info_name=$(basename "$d")				# checkme
     ifmt="dvd"
-    s=$($date "+%s" -r $ifofile)
+    s=$($date "+%s" -r "$ifofile")
     rec_time=$s
     if [ "$OUTPUT" == "vdr" ]
     then
 	#set -x
 	[ -e ../info.vdr ] && info=../info.vdr
 	[ -e info.vdr ] && info=info.vdr
-	[ -e $(dirname $dvd_path)/info.vdr ] && info=$(dirname $dvd_path)/info.vdr
+	[ -e "$(dirname "$dvd_path")/info.vdr" ] && info=$(dirname "$dvd_path")/info.vdr
 	#if [ -e ../info.vdr ]
 	if [ "$info" != "" ]
 	then
