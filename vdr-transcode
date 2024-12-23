@@ -2001,8 +2001,9 @@ input_vdr() {
     then
 	d=$(date "+%F %T" -r dir.txt)
 	read _ os <<< $(head -n 1 dir.txt)
+	O=$(grep ^O info)
 	echo $d $os >> revision
-	echo $d $oldsize >> revision
+	echo $d $oldsize $O >> revision
     fi
     input=00001.ts
     # 2018-06-09.14.01.50-0.rec
@@ -4933,22 +4934,6 @@ copy_vdr() {
         cp -p logfile1 $dest/logfile".$fd"
     fi
     [ -e info.txt ] && cp -p info.txt $dest
-    if [ "$apply_codec" == "1" ]
-    then
-	#set -x
-	if [ -e info.txt ]
-	then
-	    i=$(<info.txt)
-	    echo "$i $vcodec" > $dest/info.txt
-	else
-	    echo $vcodec > $dest/info.txt
-	fi
-	d=`$date +"%F %T"`
-	echo $d $oldsize $ivcodec >> $dest/revision
-	s=$(du $dest)
-	read s _ <<< $s
-	echo $d $s $vcodec >> $dest/revision
-    fi
     echo "===========================================================" >> $log_c
     if [ "$ifmt" == "vdr" ]
     then
@@ -4990,6 +4975,23 @@ copy_vdr() {
     fi
     s=$(du $dest)
     newsize=$(echo $s|cut -d \  -f 1)
+    if [ "$apply_codec" == "1" ]
+    then
+	#set -x
+	if [ -e info.txt ]
+	then
+	    i=$(<info.txt)
+	    echo "$i $vcodec" > $dest/info.txt
+	else
+	    echo $vcodec > $dest/info.txt
+	fi
+	d=`$date +"%F %T"`
+	echo $d $oldsize $ivcodec $O >> $dest/revision
+	s=$(du $dest)
+	read s _ <<< $s
+	O=$(grep ^O $dest/info)
+	echo $d $s $vcodec $O >> $dest/revision
+    fi
 }
 
 copy_file() {
