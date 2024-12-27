@@ -4986,7 +4986,8 @@ copy_vdr() {
 	    echo $vcodec > $dest/info.txt
 	fi
 	d=`$date +"%F %T"`
-	echo $d $oldsize $ivcodec $O >> $dest/revision
+	ds=`$date +"%F %T" -d @$start`
+	echo $ds $oldsize $ivcodec $O >> $dest/revision
 	s=$(du $dest)
 	read s _ <<< $s
 	O=$(grep ^O $dest/info)
@@ -5943,9 +5944,6 @@ case $TODO in
 	;;
 esac
 
-ende=$($date +"%s")
-sek=$(($ende-$start))
-
 [ -e $vtc ] && mv $vtc $vtc.rdy
 #set -x
 #cp -p "$log_c" $t
@@ -6009,6 +6007,8 @@ if [ "$postproc" != "" ]
 then
 	$postproc $(realpath $dest) $vcodec
 fi
+ende=$($date +"%s")
+sek=$(($ende-$start))
 echo -n "Duration " >> "$log_c"
 $date -u -d @$sek "+%T" >> "$log_c"
 d=`$date +"%F %T"`
