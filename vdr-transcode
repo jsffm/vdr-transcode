@@ -1168,6 +1168,9 @@ parameter() {
 	    rt_client=1
 	    rt_server=$2
 	    ;;
+	"--2pass")
+	    pass="-pass 2"
+	    ;;
 	*)
 	    echo $1 wrong
 	    [ "$2" == "" -a "${1:1:1}" != "-" ] && echo "try -"$1
@@ -2956,6 +2959,11 @@ set_h264() {
 	    #preset="$preset -spatial-aq 1"
 	    #preset="$preset -coder 2"
 	    #preset="$preset -b_adapt 0"
+	    if [ "$pass" != "" ]
+	    then
+		preset="$preset -2pass 1"
+		pass=
+	    fi
 	    ;;
 	"h264_vaapi")
 	    #[ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
@@ -3048,6 +3056,11 @@ set_hevc() {
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
 	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
+	    if [ "$pass" != "" ]
+	    then
+		preset="$preset -2pass 1"
+		pass=
+	    fi
 	    #preset="$preset -init_qpB 25"
 	    ;;
 	"hevc_vaapi")
@@ -4489,8 +4502,10 @@ transcode() {
 	#exit
 	#set +x
     fi
-    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $audio $disp $subt $OPT $metal $name"
+    opt="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $map $video $pass $audio $disp $subt $OPT $metal $name"
+    opt1="-hide_banner $OPT_G $HWACC $OPT_I $ffmpeg_i $video -pass 1 -an -f rawvideo -y /dev/null"
     [ "$auto" == "1" ] && opt="-nostdin $opt"
+    [ "$pass" != "" ] && echo $ffmpeg $opt1 >> "$log_c"
     echo $ffmpeg $opt >> "$log_c"
     if [ "$sim" != "" ]
     then
@@ -4532,6 +4547,13 @@ transcode() {
 	    #set -x
 	    #[ ${ffmpeg_i:${#ffmpeg_i}-1:1} == \" ] && x=eval
 	    [ ${ffmpeg_i: -1} == \" ] && x=eval
+	    if [ "$pass" != "" ]
+	    then
+		echo "pass 1" >> "$log_c"
+		$x nice $ffmpeg $opt1 2>&1 | tee -a "$log_c"
+		#$x nice $ffmpeg $opt1
+		echo "pass 2" >> "$log_c"
+	    fi
 	    $x nice $ffmpeg $opt 2>> "$log_c" &
 	    PID1=$!
 	    #tail -f $log_c &
