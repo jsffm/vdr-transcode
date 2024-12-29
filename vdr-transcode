@@ -2906,6 +2906,9 @@ set_video() {
 	vvc)
 	    set_vvc
 	    ;;
+	flv)
+	    set_flv
+	    ;;
 	*)
 	    echo "-$ivcodec $1 wrong"
 	    exit 8
@@ -3344,6 +3347,32 @@ set_xvid() {
     #video="-c:v libxvid -flags aic -ssim_acc 0"
     video="-c:v:0 libxvid -flags aic"
     [ "$mpeg4_b" != "" ] && video="$video -b:v:0 $mpeg4_b"
+}
+
+set_h263() {
+    # in progress
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    codec="h263p"
+    video="-c:v:0 $codec"
+}
+
+set_flv() {
+    # in progress
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
+    then
+	hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    opt="-mpv_flags qp_rd -mbd rd"
+    codec="flv"
+    #codec="h263p"
+    #codec="flashsv"
+    #codec="flashsv2"
+    video="-c:v:0 $codec $opt"
 }
 
 set_aac() {
@@ -5222,6 +5251,11 @@ copy() {
 	    copy_file $OUTPUT
 	    ;;
 	"avi")
+	    #OPT="$OPT -bsf:v h264_mp4toannexb"
+	    copy_file $OUTPUT
+	    ;;
+	"flv")
+	    #OPT="$OPT -strict -1"
 	    copy_file $OUTPUT
 	    ;;
 	"mp3")
