@@ -788,7 +788,7 @@ parameter() {
 	    ;;
 	"-dpl")
 	    acodeca[$2]=eac3
-	    OPT="$OPT -dsur_mode:$2 2"
+	    #OPT="$OPT -dsur_mode:$2 2"
 	    dpl=$2
 	    ;;
 	"-ch")
@@ -4042,6 +4042,7 @@ analyze() {
 		fi
 		#exit
 	    fi
+	    [ "$dpl" == "$str" ] && OPT="$OPT -dsur_mode:$stro 2"
 	fi
 	if [ "$typ" == "Subtitle:" ]
 	then
@@ -4842,7 +4843,7 @@ copy_vdr() {
 	echo $(dirname $PWD)"/"${dest:3}"/logfile" > $vtlog
     else
 	echo "$PWD/$log_c" > $vtlog
-	[ "$chapt_marks" == "1" ] && chapt_marks
+	[ "$chapt_marks" == "1" -a "$sim" == "" ] && chapt_marks
     fi
     header
     #[ "$auto" != "1" ] && echo $d $PWD >> $logs
