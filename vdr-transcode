@@ -5239,7 +5239,8 @@ copy_aac() {
     then
 	audio="-c copy"
     else
-	audio="-c $aaclib $mp3_b"
+	[ "$acodec" == "aac_v2" ] && mp3_b="-b:a 32k" && opt="-profile:a aac_he_v2"
+	audio="-c $aaclib $opt $mp3_b "
     fi
     #exit
     map="-map a:0"
