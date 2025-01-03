@@ -138,6 +138,9 @@ declare -a langa
 declare -a chan_sel
 declare -a chan_sel_id
 chan_sel_i=0
+declare -a volumea
+declare -a dispa
+declare -a dsura
 
 log=vdr-transcode.log
 logs=/var/log/vdr-transcode.log
@@ -777,7 +780,8 @@ parameter() {
 	    then
 		OPT="$OPT -dsur_mode $dsur"
 	    else
-		OPT="$OPT -dsur_mode:$str $dsur"
+		#OPT="$OPT -dsur_mode:$str $dsur"
+		dsura[$str]=$dsur
 	    fi
 	    ;;
 	"--dpl")
@@ -819,7 +823,8 @@ parameter() {
 	    then
 		OPT="$OPT -filter:a volume=$vol"
 	    else
-		OPT="$OPT -filter:$str volume=$vol"
+		#OPT="$OPT -filter:$str volume=$vol"
+		volumea[$str]=$vol
 	    fi
 	    #exit
 	    ;;
@@ -1248,7 +1253,8 @@ set_disposition() {
     do
 	str=${s%=*}
 	disp=${s#*=}
-	OPT="$OPT -disposition:$str $disp"
+	#OPT="$OPT -disposition:$str $disp"
+	dispa[$str]=$disp
     done
     #unset IFS
     IFS=$IFS_save
@@ -4043,6 +4049,9 @@ analyze() {
 		#exit
 	    fi
 	    [ "$dpl" == "$str" ] && OPT="$OPT -dsur_mode:$stro 2"
+	    [ "${volumea[$str]}" != "" ] && OPT="$OPT -filter:$stro volume=${volumea[$str]}"
+	    [ "${dispa[$str]}" != "" ] && OPT="$OPT -disposition:$stro ${dispa[$str]}"
+	    [ "${dsura[$str]}" != "" ] && OPT="$OPT -dsur_mode:$stro ${dsura[$str]}"
 	fi
 	if [ "$typ" == "Subtitle:" ]
 	then
