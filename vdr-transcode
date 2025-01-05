@@ -5155,60 +5155,32 @@ copy_audio() {
     echo "$PWD/$log_c" > $vtlog
     header
     #analyze $ffmpeg_i
+    # Stream #0:1[0x101](deu): Audio: aac (LC) ([15][0][0][0] / 0x000F), 48000 Hz, stereo, fltp, 99 kb/s'
+    r=$($x $ffprobe -hide_banner "$ffmpeg_i" 2>&1 | grep "Audio:" | head -n 1)
+    typ=$(echo $r | cut -d \  -f 4)
     video="-vn"
     map="-map a:0"
     [ "$select_str" != "" ] && map="-map $str0:$select_str"
     audio="-c copy"
-    [ "$fmt" == "mp3" ] && audio="-c mp3 $mp3_b"
-    [ "$fmt" == "wav" ] && audio=""
-    OPT_V=
-    transcode "$out"
-    #exit
-}
-
-copy_mp3() {
-    #set -x
-    fmt=mp3
-    out=$name.mp3
-    oldsize=1
-    i=1
-    while [ -e $out ]
-    do
-	i=$(($i+1))
-	out=$name-$i.mp3
-    done
-    log_c=$out.log
-    echo "$PWD/$log_c" > $vtlog
-    header
-    #analyze $ffmpeg_i
-    video="-vn"
-    map="-map a:0"
-    [ "$select_str" != "" ] && map="-map $str0:$select_str"
-    audio="-c mp3 $mp3_b"
-    OPT_V=
-    transcode "$out"
-    #exit
-}
-
-copy_wav() {
-    #set -x
-    fmt=wav
-    out=$name.wav
-    oldsize=1
-    i=1
-    while [ -e $out ]
-    do
-	i=$(($i+1))
-	out=$name-$i.wav
-    done
-    log_c=$out.log
-    echo "$PWD/$log_c" > $vtlog
-    header
-    #analyze $ffmpeg_i
-    video="-vn"
-    map="-map a:0"
-    [ "$select_str" != "" ] && map="-map $str0:$select_str"
-    audio=""
+    #[ "$fmt" == "mp3" ] && audio="-c mp3 $mp3_b"
+    #[ "$fmt" == "wav" ] && audio=""
+    case "$fmt" in
+	"mp3")
+	    audio="-c mp3 $mp3_b"
+	    ;;
+	"wav")
+	    audio=""
+	    ;;
+	"aac"|"m4a")
+	    if [ "$typ" == "aac" ]
+	    then
+		audio="-c copy"
+	    else
+		[ "$acodec" == "aac_v2" ] && mp3_b="-b:a 32k" && opt="-profile:a aac_he_v2"
+		audio="-c $aaclib $opt $mp3_b "
+	    fi
+	    ;;
+    esac
     OPT_V=
     transcode "$out"
     #exit
@@ -5299,12 +5271,13 @@ copy() {
 	    # copy_wav $OUTPUT
 	    copy_audio $OUTPUT
 	    ;;
-	"aac")
-	    copy_aac $OUTPUT
+	"aac"|"m4a")
+	    #copy_aac $OUTPUT
+	    copy_audio $OUTPUT
 	    ;;
-	"m4a")
-	    copy_aac $OUTPUT
-	    ;;
+	#"m4a")
+	#    copy_aac $OUTPUT
+	#    ;;
 	"m2t"|"mka")
 	    copy_audio $OUTPUT
 	    ;;
