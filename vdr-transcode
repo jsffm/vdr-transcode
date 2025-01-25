@@ -5597,7 +5597,7 @@ a_check() {
 	    c2="$1"
 	    status $c2
 	    c2=$(dirname $c2)
-	    [ ! -e $c2/logfile ] && continue
+	    [ ! -e $c2/logfile ] && return
 	    #s=$(ls -l $c/index|cut -d \  -f 5)
 	    #echo "index" $s
 	    #s=$(ls -l $c2/index|cut -d \  -f 5)
