@@ -1339,6 +1339,8 @@ status() {
     #log=$(cat $vtlog)
     #log="$1"
     log="$@"
+    CEOL=""
+    [ "$dialog" == "0" ] && CEOL="\033[K"
     [ ! -e "$log" ] && exit 8
     [ "$dialog" == "0" -a "$noff" == "" ] && echo -en '\033[;H'
     logo=$log
@@ -1451,11 +1453,12 @@ status() {
 	exp=$($date "+%T" -u -d @$exptime)
 	przs=$(($size2*100/$oldsize))
 	#printf "%3d%% exp.size=%d exp.time=%s compr=%d%%\n" $prz $size2 $exp $przs
-	echo "fps=$fps time=$dur2 $prz% $speed $drop" >> $t
-	[ $bitrate -gt 0 ] && echo "$bitr1 -> $bitr2" >> $t
+	echo -e "fps=$fps time=$dur2 $prz% $speed $drop$CEOL" >> $t
+	[ $bitrate -gt 0 ] && echo -e "$bitr1 -> $bitr2$CEOL" >> $t
 	#echo "Size: $oldsize -> $size2 $przs%"
-	echo "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%   " >> $t
-	[ $restz -gt 0 ] && echo "Est: $exp" >> $t
+	#echo -e "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%$CEOL" >> $t
+	echo -e "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%$CEOL" >> $t
+	[ $restz -gt 0 ] && echo -e "Est: $exp$CEOL" >> $t
 	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
 	#date -u -d @$exptime
 	#echo
@@ -1494,6 +1497,7 @@ run_stat() {
 	echo >> $t
 	if [ "$os" == "Linux" ]
 	then
+	    echo -en "$CEOL"
 	    df -h --output=avail "$1" >> $t
 	else
 	    gdf -h --output=avail "$1" >> $t
@@ -1671,9 +1675,10 @@ astat() {
     [ ! -e "$log" ] && exit
     #exit
     trap ctrl_c_a SIGINT
-    #msg="s=\e[1ms\e[0mtat, l=\e[1ml\e[0mog, q=\e[1mq\e[0muiet, h=\e[1mh\e[0malt, x=e\e[1mx\e[0mit"
+    #msg="s=\033[1ms\033[0mtat, l=\033[1ml\033[0mog, q=\033[1mq\033[0muiet, h=\033[1mh\033[0malt, x=e\033[1mx\033[0mit"
     #msg="s=stat, l=log, q=quiet, h=halt, x=exit"
     msg="s=stat, l=log, h=help, x=exit"
+    #msg="s=stat, l=log, h=help, x=e\033[1mx\033[0mit"
     run_stat "$log"
     lastkey=s
     while true
