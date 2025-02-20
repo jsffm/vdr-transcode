@@ -1456,7 +1456,6 @@ status() {
 	echo -e "fps=$fps time=$dur2 $prz% $speed $drop$CEOL" >> $t
 	[ $bitrate -gt 0 ] && echo -e "$bitr1 -> $bitr2$CEOL" >> $t
 	#echo "Size: $oldsize -> $size2 $przs%"
-	#echo -e "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%$CEOL" >> $t
 	echo -e "Size: $(show_size $oldsize) -> $(show_size $size2) $przs%$CEOL" >> $t
 	[ $restz -gt 0 ] && echo -e "Est: $exp$CEOL" >> $t
 	#[ -e $olddir/vt.lck ] && echo "Est: $exp"
