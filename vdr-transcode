@@ -4720,6 +4720,9 @@ transcode() {
     fi
     rm -f ffmetadata
     echo "===========================================================" >> "$log_c"
+    chk_msg="Packet corrupt"
+    nerror=$(grep -c "$chk_msg" $log_c)
+    echo "$chk_msg $nerror" >> $log_c
     which mediainfo 2> /dev/null
     [ $? -eq 0 -a "$OUTPUT" == "vdr" ] && mediainfo --Inform="Video;%Format_Profile%" $name >> "$log_c"
     if [[ "$name" == *"("* ]]
@@ -4974,6 +4977,8 @@ copy_vdr() {
         #echo $PID
         grep "\[$PID\]" /var/log/messages | grep "H."
         #set +x
+        cp -p $dest/info $dest/info.s2
+        sed -i "s/^O.*/O $nerror/" $dest/info
         [ "$fpso" == "" ] && fpso=$fps
         #li=$(ls -l $dest/index|cut -d ' ' -f 5)
         #li=$(stat $dest/index -c "%s")
@@ -5034,7 +5039,6 @@ copy_vdr() {
     sic=$(printf "%02d" $sic)
     [ "$si" != "" ] && printf " %s " $($date -u -d @$si +" %T."$sic) >> "$log_c"
     grep ^O $dest/info >> "$log_c"
-    #fi
     if [ -e $VIDEODIR ]
     then
         /usr/bin/touch $VIDEODIR/.update
