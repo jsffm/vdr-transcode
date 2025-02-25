@@ -201,6 +201,7 @@ help_Video() {
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
     echo " -vb <n>          # constant bitrate for h264_omx"
     echo " -vq|-qv <n>      # video quality"
+    echo " --chk_error      # for already transcoded with older version"
 }
 
 help_Audio() {
@@ -1176,6 +1177,9 @@ parameter() {
 	    ;;
 	"--2pass")
 	    pass="-pass 2"
+	    ;;
+	"--chk_error")
+	    TODO=$1
 	    ;;
 	*)
 	    echo $1 wrong
@@ -5065,6 +5069,15 @@ copy_vdr() {
     fi
 }
 
+chk_error() { # for already transcoded with older version
+    [ -e info.s2 ] && echo "Already done?" && read answer
+    cp -p info info.s2
+    chk_msg="Packet corrupt"
+    nerror=$(grep -c "$chk_msg" logfile)
+    echo "$chk_msg $nerror"
+    sed -i "s/^O.*/O $nerror/" info
+}
+
 copy_file() {
     #set -x
     fmt=$1
@@ -5986,6 +5999,10 @@ case $TODO in
 	;;
     "-chapt_marks")
 	chapt_marks
+	exit
+	;;
+    "--chk_error")
+	chk_error
 	exit
 	;;
     *)
