@@ -282,6 +282,7 @@ help_Configuration() {
 help_Configuration_V() {
     #echo " video"
     echo " video configuration"
+    echo " -chk_error 0|1       # Check on msg Packet corrupt"
     echo " -h264 copy|h264|hevc|vp8|vp9|mpeg2"
     echo " -h264_HD <codec>     # HD only"
     echo " -h264_br_g <bitrate> # set <codec> from -h264_HD if bitrate is higher"
@@ -1180,6 +1181,9 @@ parameter() {
 	    ;;
 	"--chk_error")
 	    TODO=$1
+	    ;;
+	"-chk_error")
+	    chk_error=$2
 	    ;;
 	*)
 	    echo $1 wrong
@@ -4981,8 +4985,11 @@ copy_vdr() {
         #echo $PID
         grep "\[$PID\]" /var/log/messages | grep "H."
         #set +x
-        cp -p $dest/info $dest/info.s2
-        sed -i "s/^O.*/O $nerror/" $dest/info
+	if [ "$chk_error" == "1" ]
+	then
+	    cp -p $dest/info $dest/info.s2
+	    sed -i "s/^O.*/O $nerror/" $dest/info
+	fi
         [ "$fpso" == "" ] && fpso=$fps
         #li=$(ls -l $dest/index|cut -d ' ' -f 5)
         #li=$(stat $dest/index -c "%s")
