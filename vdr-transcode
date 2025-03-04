@@ -118,6 +118,7 @@ chapt_marks=0
 rt_port=5000
 dialog=0
 bitrate=0
+chk_error=1
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
