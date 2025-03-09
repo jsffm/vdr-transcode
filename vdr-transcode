@@ -32,6 +32,7 @@
 #
 # Todo:
 #
+# timestamp discontinuity
 # local
 # info series detect
 # grep | tail -> grep -m
@@ -203,6 +204,7 @@ help_Video() {
     echo " -vb <n>          # constant bitrate for h264_omx"
     echo " -vq|-qv <n>      # video quality"
     echo " --chk_error      # for already transcoded with older version"
+    echo " -fps_mode <param> # passthrough|cfr|vfr|auto"
 }
 
 help_Audio() {
@@ -489,6 +491,9 @@ parameter() {
 	    OPT="$OPT -r $2"
 	    #add_vf fps=$2
 	    fpso=$2
+	    ;;
+	"-fps_mode")
+	    OPT="$OPT -fps_mode $2"
 	    ;;
 	"-b")
 	    OPT_V="$OPT_V -b:v:0 $2"
@@ -4732,6 +4737,10 @@ transcode() {
     chk_msg="Packet corrupt"
     nerror=$(grep -c "$chk_msg" $log_c)
     echo "$chk_msg $nerror" >> $log_c
+    chk_msg="timestamp discontinuity"
+    nerror2=$(grep -c "$chk_msg" $log_c)
+    echo "$chk_msg $nerror2" >> $log_c
+    nerror=$(($nerror+$nerror2))
     which mediainfo 2> /dev/null
     [ $? -eq 0 -a "$OUTPUT" == "vdr" ] && mediainfo --Inform="Video;%Format_Profile%" $name >> "$log_c"
     if [[ "$name" == *"("* ]]
