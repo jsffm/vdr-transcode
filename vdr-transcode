@@ -3703,7 +3703,12 @@ analyze() {
     [ "${ffmpeg_i: -1}" == \" ] && x=eval
     if [ "$INPUTA" != "" ]
     then
-	ffmpeg_i="$ffmpeg_i -i \"$INPUTA\""
+	if [ "$ifmt" != "vdr" ]
+	then
+	    ffmpeg_i="$ffmpeg_i -i \"$INPUTA\""
+	else
+	    ffmpeg_i="$ffmpeg_i -i $INPUTA"
+	fi
 	#map="$map -map 1:a"
 	#audio="$audio -c:a copy"
 	#[ "${lang[2]}" != "" ] && OPT="$OPT -metadata:s:2 language=${lang[2]}"
