@@ -1874,15 +1874,18 @@ input_file() {
 	fi
 	#exit
 	#chapt_mediainfo "$INPUT"
-    else
+    else # http
 	#set -x
 	ffmpeg_i="-i \"$INPUT\""
 	osr=$($ffprobe -i $INPUT 2>&1 | grep "Duration:")
 	osd=$(echo $osr|cut -d \  -f 2)
-	oss=$($date -u +%s -d "1970-01-01 ${osd:0:8}")
-	osbr=$(echo $osr|cut -d \  -f 6)
-	echo $oldsize
-	oldsize=$(($oss*$osbr/8))
+	if [ "$osd" != "N/A," ]
+	then
+	    oss=$($date -u +%s -d "1970-01-01 ${osd:0:8}")
+	    osbr=$(echo $osr|cut -d \  -f 6)
+	    #echo $oldsize
+	    oldsize=$(($oss*$osbr/8))
+	fi
 	#exit
     fi
     echo "oldsize="$oldsize >> $old
@@ -4439,6 +4442,9 @@ analyze() {
 			fi
 			audio="$audio $audio_t"
 			stro1=$(($stro1+1))
+			;;
+		    "Data:")
+			continue
 			;;
 		    *)
 			msg="Codec $codec unknown"
