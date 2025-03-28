@@ -461,6 +461,10 @@ parameter() {
 	"-tr")
 	    track=$2
 	    ;;
+	"-chn")
+	    IFS=':' read chn start1 <<< $2
+	    INPUT=chn
+	    ;;
 	"-attach")
 	    attach_file=$2
 	    ;;
@@ -1940,6 +1944,45 @@ input_file() {
 	fi
 	#[ "$chapt_marks" == "1" ] && chapt_marks $INPUT
     fi
+    #exit
+}
+
+input_chn() {
+    #set -x
+    #echo $chn $start1
+    start=${start1:0:2}":"${start1:2:2}
+    starts=$(date "+%s" -d "$start")
+    epg=/tmp/$$"_epg"
+    svdrpsend lste $chn at $starts | grep ^215 | cut -c5- > $epg
+    #cat $epg
+    read _ title <<< $(grep ^T $epg)
+    echo $title
+    oldsize=1
+    out_stat=
+    chapt_marks=
+    wdir=$VIDEODIR/${title//' '/_}
+    echo $wdir
+    mkdir -p $wdir
+    cd $wdir
+    #pwd
+    ffmpeg_i="-i http://localhost:3000/$chn"
+    # E 58389 1741979700 5400 4E 1D
+    read _ _ rec_start rec_length _ <<< $(grep "^E " $epg)
+    #rec_time=$($date "+%s")
+    rec_time=$(($rec_start-300))
+    #to=$(($rec_start+$rec_length+1200))
+    to=$(($rec_length+1500))
+    dest=$dp$($date "+%F.%H.%M" -d @$rec_time)".$chn-1.rec"
+    d32=0
+    while [ -e $dest ]
+    do
+	d32=$(($d32+1))
+	#dest="../"$(date "+%F.%H.%M" -d @$s)".$tr-$d32.rec"
+	dest=$dp$($date "+%F.%H.%M" -d @$rec_time)".$chn-$d32.rec"
+    done
+    #OPT="$OPT -to $to+"
+    OPT="$OPT -to "$(date -u "+%T" -d @$to)
+    ifmt=chn
     #exit
 }
 
@@ -5927,6 +5970,9 @@ case "$INPUT" in
 	#set -x
 	input_BD $track
 	#exit
+	;;
+    "chn")
+	input_chn $chn $start1
 	;;
     "none")
 	none=
