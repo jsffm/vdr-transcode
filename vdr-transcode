@@ -32,6 +32,10 @@
 #
 # Todo:
 #
+# number of reference frames?
+# Missing reference picture?
+# reference picture missing?
+# unref short failure?
 # timestamp discontinuity
 # local
 # info series detect
@@ -2910,7 +2914,8 @@ inf() {
 	#sender=$(grep ^C $info|cut -d \  -f 3-)
 	read _ chn_id sender <<< $(grep ^C $info)
 	echo $sender
-	[ "$chn_id" != "" ] && grep $chn_id $conf
+	[ -e $conf ] && [ "$chn_id" != "" ] && grep $chn_id $conf
+	grep ^O $info
     fi
     echo -n "Size: "
     show_size $oldsize
