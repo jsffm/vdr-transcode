@@ -4800,6 +4800,10 @@ transcode() {
     nerror2=$(grep -c "$chk_msg" $log_c)
     echo "$chk_msg $nerror2" >> $log_c
     nerror=$(($nerror+$nerror2))
+    chk_msg="Missing reference picture"
+    nerror2=$(grep -c "$chk_msg" $log_c)
+    echo "$chk_msg $nerror2" >> $log_c
+    nerror=$(($nerror+$nerror2))
     which mediainfo 2> /dev/null
     [ $? -eq 0 -a "$OUTPUT" == "vdr" ] && mediainfo --Inform="Video;%Format_Profile%" $name >> "$log_c"
     if [[ "$name" == *"("* ]]
@@ -5057,7 +5061,8 @@ copy_vdr() {
 	if [ "$chk_error" == "1" ]
 	then
 	    cp -p $dest/info $dest/info.s2
-	    sed -i "s/^O.*/O $nerror/" $dest/info
+	    read _ error_i <<< $(grep ^O $dest/info)
+	    [ $nerror -gt $error_i ] && sed -i "s/^O.*/O $nerror/" $dest/info
 	fi
         [ "$fpso" == "" ] && fpso=$fps
         #li=$(ls -l $dest/index|cut -d ' ' -f 5)
