@@ -2913,9 +2913,9 @@ inf() {
     then
 	#sender=$(grep ^C $info|cut -d \  -f 3-)
 	read _ chn_id sender <<< $(grep ^C $info)
-	echo $sender
+	O=$(grep ^O $info)
+	echo $sender $O
 	[ -e $conf ] && [ "$chn_id" != "" ] && grep $chn_id $conf
-	grep ^O $info
     fi
     echo -n "Size: "
     show_size $oldsize
