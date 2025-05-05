@@ -1509,7 +1509,8 @@ run_stat() {
     [ "$PID2" != "" -a -e /proc/$PID2 ] && kill -15 $PID2
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\ns=stat, l=log"; done &
     #while true; do sleep 2s; clear; status "$log_c"; echo -e "\n$msg"; done &
-    clear
+    #clear
+    printf "\033c"
     while true
     do 
 	#clear
@@ -1667,7 +1668,8 @@ astat_key() {
 		;;
 	    q)
 		[ -e /proc/$PID2 ] && kill -15 $PID2
-		clear
+		#clear
+		printf "\033c"
 		echo -e $msg
 		;;
 	    t)
@@ -1710,7 +1712,8 @@ astat() {
 	    [ -e /proc/$PID2 ] && kill -15 $PID2
 	    #run_stat "$log"
 	    sleep 2
-	    clear
+	    #clear
+	    printf "\033c"
 	    astat_key $lastkey
 	fi
 	read -t 2 -n 1 key
@@ -4755,7 +4758,8 @@ transcode() {
 			;;
 		    q)
 			[ -e /proc/$PID2 ] && kill -15 $PID2
-			clear
+			#clear
+			printf "\033c"
 			echo "$msg"
 			;;
 		    t)
