@@ -4549,6 +4549,25 @@ ctrl_c() {
     exit
 }
 
+chk_for_error() {
+    chk_msg=$1
+    nerror1=$(grep -c "$chk_msg" $log_t)
+    echo "$chk_msg $nerror1" >> $log_c
+    nerror=$(($nerror+$nerror1))
+}
+
+chk_for_errors() {
+    n1=$(grep -n "Output #0" $log_c)
+    IFS=: read n _ <<< $n1
+    log_t=/tmp/vt_log_temp
+    tail -n +$n $log_c > $log_t
+    nerror=0
+    chk_for_error "Packet corrupt"
+    chk_for_error "timestamp discontinuity"
+    chk_for_error "Missing reference picture"
+    rm $log_t
+}
+
 transcode() {
     #set -x
     name="$1"
@@ -4797,17 +4816,7 @@ transcode() {
     fi
     rm -f ffmetadata
     echo "===========================================================" >> "$log_c"
-    chk_msg="Packet corrupt"
-    nerror=$(grep -c "$chk_msg" $log_c)
-    echo "$chk_msg $nerror" >> $log_c
-    chk_msg="timestamp discontinuity"
-    nerror2=$(grep -c "$chk_msg" $log_c)
-    echo "$chk_msg $nerror2" >> $log_c
-    nerror=$(($nerror+$nerror2))
-    chk_msg="Missing reference picture"
-    nerror2=$(grep -c "$chk_msg" $log_c)
-    echo "$chk_msg $nerror2" >> $log_c
-    nerror=$(($nerror+$nerror2))
+    chk_for_errors
     which mediainfo 2> /dev/null
     [ $? -eq 0 -a "$OUTPUT" == "vdr" ] && mediainfo --Inform="Video;%Format_Profile%" $name >> "$log_c"
     if [[ "$name" == *"("* ]]
