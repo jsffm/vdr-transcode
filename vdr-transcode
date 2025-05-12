@@ -4819,7 +4819,12 @@ transcode() {
     fi
     rm -f ffmetadata
     echo "===========================================================" >> "$log_c"
-    chk_for_errors $log_c
+    if [ "$vcodec" != "" ]
+    then
+	chk_for_errors $log_c
+    else
+	read _ nerror <<< $(grep ^O info)
+    fi
     which mediainfo 2> /dev/null
     [ $? -eq 0 -a "$OUTPUT" == "vdr" ] && mediainfo --Inform="Video;%Format_Profile%" $name >> "$log_c"
     if [[ "$name" == *"("* ]]
