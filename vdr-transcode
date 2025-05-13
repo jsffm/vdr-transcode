@@ -338,6 +338,7 @@ help_Configuration_A() {
     echo " -eac3 <acodec>"
     echo " -dts <acodec>"
     echo " -mp2 <acodec>"
+    echo " -mp2_128 <acodec>   # mp2 with 128kb/s"
     echo " -mp3 <acodec>"
     echo " -opus <acodec>"
     echo " -pcm <acodec>"
@@ -679,6 +680,9 @@ parameter() {
 	    ;;
 	"-mp2")
 	    mp2=$2
+	    ;;
+	"-mp2_128")
+	    mp2_128=$2
 	    ;;
 	"-mp3")
 	    mp3=$2
@@ -4324,6 +4328,7 @@ analyze() {
 	    "mp2"|"mp1")
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
+		[ "$bra" == 128 ] && [ "$mp2_128" != "" ] && mp2=$mp2_128
 		[ "$OUTPUT" == "webm" ] && mp2=opus
 		[ "$OUTPUT" == "mpg" ] && mp2=copy
 		set_audio $mp2
