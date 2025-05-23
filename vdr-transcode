@@ -5089,6 +5089,7 @@ copy_vdr() {
 	    cp -p $dest/info $dest/info.s2
 	    read _ error_i <<< $(grep ^O $dest/info)
 	    [ $nerror -gt $error_i ] && sed -i "s/^O.*/O $nerror/" $dest/info
+	    [ $nerror -ne $error_i ] && echo "Errors: vdr $error_i, chk_error $nerror" >> $log_c
 	fi
         [ "$fpso" == "" ] && fpso=$fps
         #li=$(ls -l $dest/index|cut -d ' ' -f 5)
