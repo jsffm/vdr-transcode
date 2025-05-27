@@ -3488,7 +3488,7 @@ set_aac() {
 	#aac_profile="-profile:a aac_he -latm 1"
 	aac_profile="-profile:$stro aac_he -latm:$stro 1"
 	#aac_profile="-profile:a aac_he"
-	[ "$aac_vbr" == "" ] && aac_vbr=3
+	[ "$aac_vbr" == "" ] && aac_vbr=2
 	#[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -strict 2 -mpegts_flags latm -flags:a +global_header" && aac_opt=1
 	[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -mpegts_flags latm -flags:a +global_header" && aac_opt=1
     fi
