@@ -306,16 +306,19 @@ help_Configuration_V() {
     echo " -quality <n>     # vaapi h264 quality"
     echo " -hevc_q|-cq <n>  # quality hevc default 28, < better, > smaller"
     echo "                    for hevc_nvenc default 36"
+    echo " -hevcenc hevc_nvenc|hevc_vaapi|hevc_qsv|libx265|libkvazaar"
+    echo " -hevc_level <level>"
+    echo " -hevc_profile <profile>     # main|main10"
+    echo " -hevc_preset <preset>       # if you know, what you are doing"
+    echo " -hevc_vaapi_preset \"par1 par2 etc\" # replaces every parameter"
+    echo " -hevc_qsv_preset \"par1 par2 etc\"   # replaces every parameter"
+    echo " -x265_preset \"par1 par2 etc\"       # replaces every parameter"
     echo " -vp9_q|-gq <n>   # quality vp8/9 default 30, < better, > smaller"
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_qsv|h264_omx"
     echo " -h264_level <level>"
     echo " -x264_preset <preset> # default fast"
     echo " -h264_br         # bitrate for h264_omx, -b works too"
-    echo " -hevcenc hevc_nvenc|hevc_vaapi|hevc_qsv|libx265|libkvazaar"
-    echo " -hevc_level <level>"
-    echo " -hevc_profile <profile>     # main|main10"
-    echo " -hevc_preset <preset>       # if you know, what you are doing"
     echo " -b_ref_mode <int>           # hevc_nvenc, 0=disabled, 1=each, 2=middle"
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
     echo " -nvenc_rc vbr|constqp       # default vbr"
@@ -435,6 +438,7 @@ hwdownload() {
 parameter() {
     w2=$2
     [ "$w2" == "-" ] && w2=
+    [ "${2:0:1}" == '"' ] && w2=${2:1} && w2=${w2:0: -1}
     case $1 in
 	"-h")
 	    TODO=$1
@@ -594,6 +598,15 @@ parameter() {
 	    ;;
 	"-hevc")
 	    hevc=$2
+	    ;;
+	"-hevc_vaapi_preset")
+	    hevc_vaapi_preset="$w2"
+	    ;;
+	"-hevc_qsv_preset")
+	    hevc_qsv_preset="$w2"
+	    ;;
+	"-x265_preset")
+	    x265_preset="$w2"
 	    ;;
 	"-mpeg2")
 	    mpeg2=$2
@@ -1222,7 +1235,9 @@ read_configuration() {
 	    [ "$line" == "" ] && continue
 	    #line=$(echo $line|cut -d '#' -f 1)
 	    IFS=# read line _ <<< $line
-	    parameter $line
+	    read p1 p2 <<< $line
+	    parameter $p1 "$p2"
+	    #parameter $line
 	done < $1
     fi
     #set +x
@@ -3124,15 +3139,20 @@ set_hevc() {
 	    #HWACC=
 	    #deinterlace="yadif"
 	    hwdownload
-	    [ "$hevc_preset" == "" ] && hevc_preset=ultrafast
-	    [ "$hevc_cq" == "" ] && hevc_cq=28
-	    #x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
-	    x265_params="-x265-params crf=$hevc_cq"
-	    [ "$hevc_level" != "" ] && x265_params="$x265_params:level-idc=$hevc_level"
-	    [ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
-	    #preset="-preset veryfast $level_hevc -crf $crf $maxr"
-	    #preset="-preset veryfast $h265_level -crf $hevc_cq $maxr"
-	    preset="-preset $hevc_preset $x265_params -crf $hevc_cq $maxr"
+	    if [ "$x265_preset" != "" ]
+	    then
+		preset="$x265_preset"
+	    else
+		[ "$hevc_preset" == "" ] && hevc_preset=ultrafast
+		[ "$hevc_cq" == "" ] && hevc_cq=28
+		#x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
+		x265_params="-x265-params crf=$hevc_cq"
+		[ "$hevc_level" != "" ] && x265_params="$x265_params:level-idc=$hevc_level"
+		[ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
+		#preset="-preset veryfast $level_hevc -crf $crf $maxr"
+		#preset="-preset veryfast $h265_level -crf $hevc_cq $maxr"
+		preset="-preset $hevc_preset $x265_params -crf $hevc_cq $maxr"
+	    fi
 	    ;;
 	"hevc_nvenc")
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
@@ -3150,22 +3170,32 @@ set_hevc() {
 	    #LIBVA_DRIVER_NAME=iHD
 	    #export LIBVA_DRIVER_NAME=i965
 	    #[ "$LIBVA_DRIVER_NAME" != "" ] && echo "LIBVA_DRIVER_NAME=$LIBVA_DRIVER_NAME" >> "$log_c"
-	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
-	    #[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
-	    [ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
-	    [ "$hevc_cq" == "" ] && hevc_cq=32
-	    preset="-profile:v:0 $hevc_profile $level $rc_mode -qp $hevc_cq $opt_r"
-	    #preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
+	    if [ "$hevc_vaapi_preset" != "" ]
+	    then
+		preset="$hevc_vaapi_preset"
+	    else
+		[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
+		#[ "${v:0:3}" ">" "4.2" ] && rc_mode="-rc_mode ICQ"
+		[ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
+		[ "$hevc_cq" == "" ] && hevc_cq=32
+		preset="-profile:v:0 $hevc_profile $level $rc_mode -qp $hevc_cq $opt_r"
+		#preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
+	    fi
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"hevc_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
-	    [ "$hevc_cq" == "" ] && hevc_cq=26
-	    [ "$hevc_preset" == "" ] && hevc_preset=medium
-	    load_plugin="-load_plugin hevc_hw"
-	    #preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
-	    preset="-profile:v:0 $hevc_profile -preset $hevc_preset -q:v:0 $hevc_cq $load_plugin $opt_r"
-	    #preset="$preset -adaptive_i 1 -adaptive_b 1"
+	    if [ "$hevc_qsv_preset" != "" ]
+	    then
+		preset="$hevc_qsv_preset"
+	    else
+		[ "$hevc_cq" == "" ] && hevc_cq=26
+		[ "$hevc_preset" == "" ] && hevc_preset=medium
+		load_plugin="-load_plugin hevc_hw"
+		#preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
+		preset="-profile:v:0 $hevc_profile -preset $hevc_preset -q:v:0 $hevc_cq $load_plugin $opt_r"
+		#preset="$preset -adaptive_i 1 -adaptive_b 1"
+	    fi
 	    ;;
 	"hevc_vulkan")
 	    # under progress
