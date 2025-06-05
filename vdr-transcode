@@ -115,6 +115,7 @@ deinterlace="yadif"
 #OPT_G="-hwaccel cuvid"
 dnorm="-21"
 aac_stereo_br=96k
+ac3_stereo_level=192
 aac_6ch_br=256k
 opus_br=64 # 2ch kbit
 skip=10
@@ -338,6 +339,7 @@ help_Configuration_A() {
     echo " audio configuration"
     echo " -ac3 <acodec>"
     echo " -ac3_stereo aac|aac_he|eac3|-"
+    echo " -ac3_stereo_level <level>      # Standard 192"
     echo " -eac3 <acodec>"
     echo " -dts <acodec>"
     echo " -mp2 <acodec>"
@@ -658,6 +660,9 @@ parameter() {
 	    ;;
 	"-ac3_stereo")
 	    ac3_stereo=$w2
+	    ;;
+	"-ac3_stereo_level")
+	    ac3_stereo_level=$2
 	    ;;
 	"-eac3")
 	    eac3=$2
@@ -3678,7 +3683,7 @@ set_audio() {
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && codec1=aac
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && codec1=aac_he
 	#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$s
-	    [ $bra -gt 192 -a "$ac3_stereo" != "" ] && codec1=$ac3_stereo
+	    [ $bra -gt $ac3_stereo_level -a "$ac3_stereo" != "" ] && codec1=$ac3_stereo
 	fi
     fi
     [ "$acodec" != "" ] && codec1=$acodec
