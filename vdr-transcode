@@ -3679,12 +3679,14 @@ set_audio() {
     fi
     if [ "$codec" == "ac3" -a "$codec1" == "copy" ]
     then
-	if [ "$atyp" == "stereo" ]
+	if [ "$atyp" == "stereo" -a "$ac3_stereo" != "" ]
 	then
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && codec1=aac
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && codec1=aac_he
 	#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$s
-	    [ $bra -gt $ac3_stereo_level -a "$ac3_stereo" != "" ] && codec1=$ac3_stereo
+	    [ $bra -gt $ac3_stereo_level ] && codec1=$ac3_stereo
+	    [ $bra -eq $ac3_stereo_level -a "$ac3_1" == "stereo" ] && codec1=$ac3_stereo
+	    [ $bra -eq $ac3_stereo_level -a "$atyp_1" == "stereo" ] && codec1=$ac3_stereo
 	fi
     fi
     [ "$acodec" != "" ] && codec1=$acodec
@@ -4135,6 +4137,7 @@ analyze() {
 	    atyp1=${line2#*Hz*}
 	    atyp=$(echo $atyp1 | cut -d ' ' -f 1)
 	    atyp=${atyp//,/}
+	    [ "$str" == 1 ] && atyp_1=$atyp
 	    bra1=${line%kb/s*}
 	    if [ ${#line} -ne ${#bra1} ]
 	    then
@@ -4302,6 +4305,7 @@ analyze() {
 		;;
 	    "ac3"|"truehd")
 		#set -x
+		[ "$str" == 1 ] && ac3_1=$atyp
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
 		[ "$acodec" != "" ] && ac3=$acodec
