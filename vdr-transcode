@@ -1915,7 +1915,7 @@ input_file() {
 	while [ -e "$nname" ]
 	do
 	    ffmpeg_i="$ffmpeg_i|$nname"
-	    oldsize=$(file_size "$nname")
+	    oldsize=$(($oldsize+$(file_size "$nname")))
 	    i=$(($i+1))
 	    nname="$name-$i.$ifmt"
 	done
