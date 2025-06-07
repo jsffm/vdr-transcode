@@ -1853,7 +1853,7 @@ ls_iso() {
 input_file() {
     #set -x
     #ls -l --time-style long-iso $INPUT > $old
-    name=${INPUT%.*}
+    name="${INPUT%.*}"
     ifmt=${INPUT##*.}
     if [ "$ifmt" == "rec" ]
     then
@@ -1905,6 +1905,21 @@ input_file() {
 	unset IFS
 	oldsize=$(($oldsize/1024))
 	INPUT=$I1
+    elif [ -e "$name-1.$ifmt" ]	# in progress
+    then
+	#set -x
+	ffmpeg_i="-i concat:$INPUT"
+	oldsize=$(file_size "$INPUT")
+	i=1
+	nname="$name-$i.$ifmt"
+	while [ -e "$nname" ]
+	do
+	    ffmpeg_i="$ffmpeg_i|$nname"
+	    oldsize=$(file_size "$nname")
+	    i=$(($i+1))
+	    nname="$name-$i.$ifmt"
+	done
+	#exit
     else
 	if [ ! -e "$INPUT" ]
 	then
