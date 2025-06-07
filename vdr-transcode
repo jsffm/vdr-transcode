@@ -1853,6 +1853,7 @@ ls_iso() {
 input_file() {
     #set -x
     #ls -l --time-style long-iso $INPUT > $old
+    name=${INPUT%.*}
     ifmt=${INPUT##*.}
     if [ "$ifmt" == "rec" ]
     then
@@ -1873,43 +1874,8 @@ input_file() {
     oldsize=1
     rec_time=$($date "+%s")
     rm -f $old
-    if [ "${INPUT:0:4}" != "http" ]
+    if [ "${INPUT:0:4}" == "http" ]
     then
-	#set -x
-	if [[ "$INPUT" == *+* ]]
-	then
-	    ffmpeg_i="-i concat:"
-	    oldsize=0
-	    d=
-	    IFS="+"
-	    read I1 _ <<< $INPUT
-	    for r in $INPUT
-	    do
-		ffmpeg_i=$ffmpeg_i$d$r
-		d="|"
-		#oldsize=$(($oldsize+$(stat $r -c "%s")))
-		oldsize=$(($oldsize+$(file_size $r)))
-	    done
-	    unset IFS
-	    oldsize=$(($oldsize/1024))
-	    INPUT=$I1
-	else
-	    if [ ! -e "$INPUT" ]
-	    then
-		echo "\"$INPUT\" not found."
-		exit 8
-	    fi
-	    ffmpeg_i="-i \"$INPUT\""
-	    ls_iso "$INPUT" > $old
-	    # -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
-	    #oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
-	    oldsize=$(file_size "$INPUT")
-	    oldsize=$(($oldsize/1024))
-	    rec_time=$($date "+%s" -r "$INPUT")
-	fi
-	#exit
-	#chapt_mediainfo "$INPUT"
-    else # http
 	#set -x
 	ffmpeg_i="-i \"$INPUT\""
 	osr=$($ffprobe -i $INPUT 2>&1 | grep "Duration:")
@@ -1922,10 +1888,39 @@ input_file() {
 	    oldsize=$(($oss*$osbr/8))
 	fi
 	#exit
+    elif [[ "$INPUT" == *+* ]]
+    then
+	ffmpeg_i="-i concat:"
+	oldsize=0
+	d=
+	IFS="+"
+	read I1 _ <<< $INPUT
+	for r in $INPUT
+	do
+	    ffmpeg_i=$ffmpeg_i$d$r
+	    d="|"
+	    #oldsize=$(($oldsize+$(stat $r -c "%s")))
+	    oldsize=$(($oldsize+$(file_size $r)))
+	done
+	unset IFS
+	oldsize=$(($oldsize/1024))
+	INPUT=$I1
+    else
+	if [ ! -e "$INPUT" ]
+	then
+	    echo "\"$INPUT\" not found."
+	    exit 8
+	fi
+	ffmpeg_i="-i \"$INPUT\""
+	ls_iso "$INPUT" > $old
+	# -rw-r--r-- 1 ftp ftp 4084731329 13. Mai 2014  exq-12years-720p.mkv
+	#oldsize=$(ls -lL "$INPUT"|cut -d \  -f 5)
+	oldsize=$(file_size "$INPUT")
+	oldsize=$(($oldsize/1024))
+	rec_time=$($date "+%s" -r "$INPUT")
     fi
     echo "oldsize="$oldsize >> $old
     input="$INPUT"
-    name=${INPUT%.*}
     name=$(basename "$name")
     #[ "${ffmpeg_i:${#ffmpeg_i}-1:1}" == \" ] && x=eval
     [ "${ffmpeg_i: -1}" == \" ] && x=eval
