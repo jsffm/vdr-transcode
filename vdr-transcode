@@ -3696,7 +3696,7 @@ set_audio() {
 	#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$s
 	    [ $bra -gt $ac3_stereo_level ] && codec1=$ac3_stereo
 	    #[ $bra -eq $ac3_stereo_level -a "$ac3_1" == "stereo" ] && codec1=$ac3_stereo
-	    [ "$str" -gt 1 ] && [ $bra -eq $ac3_stereo_level -a "$atyp_1" == "stereo" ] && codec1=$ac3_stereo
+	    [ "$str" -gt 1 ] && [ $bra -eq $ac3_stereo_level -a "$atyp_1" == "stereo" -a "$ac3_stereo" != "ac3" ] && codec1=$ac3_stereo
 	fi
     fi
     [ "$acodec" != "" ] && codec1=$acodec
