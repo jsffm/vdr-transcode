@@ -1438,6 +1438,8 @@ status() {
     l=$(tr '\r' '\n' < "$log" | grep -a "^frame=" | tail -n 1)
     [ "$l" == "" ] && l=$(tr '\r' '\n' < "$log" | grep -a "^size=" | tail -n 1)
     #echo $l
+    frame1=${l#*frame=}
+    read frame _ <<< $frame1
     dur2=${l#*time=}
     dur2=${dur2:0:8}
     dur2s=1
@@ -1446,10 +1448,8 @@ status() {
     then
 	dur2s=$($date -u "+%s" -d "1970-01-01 $dur2")
     else
-	frame1=${l#*frame=}
-	read frame _ <<< $frame1
 	dur2s=$(($frame/$fps1))
-	dur2=
+	dur2=$($date "+%T" -u -d @$dur2s)
     fi
     fps=${l#*fps=}
     if [ "$fps" != "$l" ]
@@ -1470,8 +1470,6 @@ status() {
     #[ "$time" == "N/A" ] && return
     if [ "$time" == "N/A" ]
     then
-	frame1=${l#*frame=}
-	read frame _ <<< $frame1
 	time2=$(($frame/$fps1))
     else
 	time2=$($date +"%s" -u -d "1970-01-01 ${time:0:8}")
