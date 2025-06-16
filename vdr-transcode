@@ -1920,7 +1920,8 @@ input_file() {
 	unset IFS
 	oldsize=$(($oldsize/1024))
 	INPUT=$I1
-    elif [ -e "$name-1.$ifmt" ]	# in progress
+    #elif [ -e "$name-1.$ifmt" ]	# in progress
+    elif [ 1 -eq 2 ]
     then
 	#set -x
 	ffmpeg_i="-i concat:$INPUT"
