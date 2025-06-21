@@ -5221,6 +5221,15 @@ copy_vdr() {
     then
         /usr/bin/touch $VIDEODIR/.update
     fi
+    if [ -e $confs -a "$auto" == "" ]
+    then
+	while read line
+	do
+	    [ "$line" == "" ] && continue
+	    [ ${line:0:1} == '#' ] && line=${line:1}
+	    [ ${PWD:0:${#line}} == $line ] && [ -e $line/.update ] && touch $line/.update
+	done < $confs
+    fi
     s=$(du $dest)
     newsize=$(echo $s|cut -d \  -f 1)
     if [ "$apply_codec" == "1" ]
@@ -5540,6 +5549,7 @@ server() {
 			d=`$date +"%F %T"`
 			echo $d $dh >> $logs
 			vdr-transcode --auto > vt.log 2> vt.err
+			[ -e $line/.update ] && touch $line/.update
 		    fi
 		    cd $wd
 		done
