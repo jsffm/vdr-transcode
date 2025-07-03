@@ -1993,7 +1993,7 @@ input_file() {
     if [ "$OUTPUT" == "vdr" ]
     then
 	info_name=$(basename "$PWD")
-	n2=$(basename $(dirname "$PWD"))
+	n2=$(basename "$(dirname "$PWD")")
 	if [ "$n2" != "video" ]
 	then
 	    info_subt=$info_name
