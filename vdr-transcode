@@ -6270,7 +6270,7 @@ then
     #echo "Save" $S $(show_size $S) >> "$log_c"
     printf "Save %8d %8s\n" $S $(show_size $S) >> "$log_c"
 fi
-if [ "$postproc" != "" ]
+if [ "$postproc" != "" -a "$OUTPUT" == "vdr" -a "$ifmt" == "vdr" ]
 then
 	$postproc $(realpath $dest) $vcodec
 fi
