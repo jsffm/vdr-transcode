@@ -3143,6 +3143,9 @@ set_h264() {
 	    #q=$h264_br
 	    preset="-usage $usage -quality $quality -rc $rc $q"
 	    ;;
+	"h264_v4l2m2m")
+	    preset=
+	    ;;
     esac
     #video="-c:v:0 $h264enc $preset $gop $deinterlace $crop $aspect"
     video="$preenc -c:v:0 $h264enc $preset $aspect $h264_br"
