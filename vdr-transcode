@@ -2008,7 +2008,7 @@ input_chn() {
     #set -x
     #echo $chn $start1
     start=${start1:0:2}":"${start1:2:2}
-    starts=$(date "+%s" -d "$start")
+    starts=$($date "+%s" -d "$start")
     epg=/tmp/$$"_epg"
     svdrpsend lste $chn at $starts | grep ^215 | cut -c5- > $epg
     #cat $epg
@@ -2130,7 +2130,7 @@ input_vdr() {
     echo "oldsize="$oldsize >> $old
     if [ ! -e revision -a -e dir.txt -a "$apply_codec" == "1" ]
     then
-	d=$(date "+%F %T" -r dir.txt)
+	d=$($date "+%F %T" -r dir.txt)
 	read _ os <<< $(head -n 1 dir.txt)
 	O=$(grep ^O info)
 	echo $d $os >> revision
