@@ -1559,9 +1559,13 @@ run_stat() {
 	if [ "$os" == "Linux" ]
 	then
 	    echo -en "$CEOL"
-	    df -h --output=avail "$1" >> $t
+	    #df -h --output=avail "$1" >> $t
+	    avail=$(df --output=avail "$1"|tail -n 1)
+	    echo "Avail: $(show_size $avail) need: $(show_size $(($size2-$size))) " >> $t
 	else
-	    gdf -h --output=avail "$1" >> $t
+	    #gdf -h --output=avail "$1" >> $t
+	    avail=$(gdf --output=avail "$1"|tail -n 1)
+	    echo "Avail: $(show_size $avail) need: $(show_size $(($size2-$size))) " >> $t
 	fi
 	#echo -e "\n$msg" >> $t
 	#cat $t | dialog --keep-window --begin 0 0 --no-shadow --progressbox 15 -1; \
