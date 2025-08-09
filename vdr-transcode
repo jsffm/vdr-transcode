@@ -568,6 +568,12 @@ parameter() {
 	"-test")
 	    OPT="$OPT $2"
 	    ;;
+	"-testg")
+	    OPT_G="$OPT_G $2"
+	    ;;
+	"-testi")
+	    OPT_I="$OPT_I $2"
+	    ;;
 	"-test2")
 	    OPT="$OPT $2 $3"
 	    #shift
@@ -2987,7 +2993,8 @@ inf() {
     then
 	set_pid
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration"
-	$x $ffmpeg -ss $skip -t 60 $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
+	#$x $ffmpeg -ss $skip -t 60 $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep -E "Stream|Chapter"
+	$x $ffmpeg -ss $skip -t $(($skip+5)) $OPT_G $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -f mpegts -i - 2>&1 | grep -E "Stream|Chapter"
     else
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     fi
