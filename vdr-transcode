@@ -95,6 +95,8 @@ gop_vdr="-g $gop_vdr_w"
 #h264_level=4.2
 #hevc_level=4.0
 x264_preset=fast
+h264_profile=high
+#h264_profile=main
 #hevc_level=4.1
 hevc_profile=main
 h264enc=libx264
@@ -318,7 +320,9 @@ help_Configuration_V() {
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_qsv|h264_omx"
     echo " -h264_level <level>"
-    echo " -x264_preset <preset> # default fast"
+    echo " -h264_profile <profile>     # main|high"
+    echo " -x264_preset <preset>       # default fast"
+    echo " -tier <tier>                # main|high"
     echo " -h264_br         # bitrate for h264_omx, -b works too"
     echo " -b_ref_mode <int>           # hevc_nvenc, 0=disabled, 1=each, 2=middle"
     echo " -nvenc_preset <preset>      # if you know, what you are doing"
@@ -879,6 +883,9 @@ parameter() {
 	"-h264_level")
 	    h264_level=$2
 	    ;;
+	"-h264_profile")
+	    h264_profile=$2
+	    ;;
 	"-x264_preset")
 	    x264_preset=$2
 	    ;;
@@ -894,6 +901,9 @@ parameter() {
 	    ;;
 	"-profile")
 	    profile=$2
+	    ;;
+	"-tier")
+	    tier=$2
 	    ;;
 	"-hevc_preset")
 	    hevc_preset=$2
@@ -3078,8 +3088,6 @@ set_h264() {
     #set -x
     [ "$hwaccel" == "vulkan" -a "$h264enc" != "h264_vulkan" ] && hwdownload
     # maxr="-maxrate "$br"k -bufsize 1835k"
-    h264_profile=high
-    #h264_profile=main
     [ "$h264_level" != "" ] && level="-level $h264_level"
     case $h264enc in
 	"libx264")
@@ -3094,8 +3102,10 @@ set_h264() {
 	    ;;
 	"h264_nvenc")
 	    [ "$crf" == "" ] && crf=32
+	    [ "$profile" != "" ] && h264_profile=$profile
 	    preset="-preset $nvenc_preset -profile:v:0 $h264_profile $level -cq $crf $nvenc_b $maxr"
 	    preset="$preset -rc $nvenc_rc"
+	    [ "$tier" != "" ] && preset="$preset -tier $tier"
 	    #preset="$preset -spatial-aq 1"
 	    #preset="$preset -coder 2"
 	    #preset="$preset -b_adapt 0"
@@ -3110,13 +3120,15 @@ set_h264() {
 	    [ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
 	    [ "$crf" == "" ] && crf=21
 	    preset="-profile:v:0 $h264_profile $level $rc_mode -qp $crf $quality $maxr"
+	    [ "$tier" != "" ] && preset="$preset -tier $tier"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"h264_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
 	    [ "$crf" == "" ] && crf=21
 	    #preset="-profile:v $hevc_profile $level -global_quality $crf $opt_r"
-	    preset="-profile:v:0 $hevc_profile $level -q:v:0 $crf $opt_r"
+	    preset="-profile:v:0 $h264_profile $level -q:v:0 $crf $opt_r"
+	    [ "$tier" != "" ] && preset="$preset -tier $tier"
 	    ;;
 	"h264_vulkan")
 	    # under progress
@@ -3203,7 +3215,9 @@ set_hevc() {
 	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
+	    [ "$profile" != "" ] && hevc_profile=$profile
 	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
+	    [ "$tier" != "" ] && preset="$preset -tier $tier"
 	    if [ "$pass" != "" ]
 	    then
 		preset="$preset -2pass 1"
@@ -3224,6 +3238,7 @@ set_hevc() {
 		[ "$hevc_cq" == "" -a "$vga" == "DG2" ] && hevc_cq=28
 		[ "$hevc_cq" == "" ] && hevc_cq=32
 		preset="-profile:v:0 $hevc_profile $level $rc_mode -qp $hevc_cq $opt_r"
+		[ "$tier" != "" ] && preset="$preset -tier $tier"
 		#preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
 	    fi
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
@@ -3239,6 +3254,7 @@ set_hevc() {
 		load_plugin="-load_plugin hevc_hw"
 		#preset="-profile:v $hevc_profile -preset $hevc_preset $level_hevc -q:v $hevc_cq $load_plugin $opt_r"
 		preset="-profile:v:0 $hevc_profile -preset $hevc_preset -q:v:0 $hevc_cq $load_plugin $opt_r"
+		[ "$tier" != "" ] && preset="$preset -tier $tier"
 		#preset="$preset -adaptive_i 1 -adaptive_b 1"
 	    fi
 	    ;;
