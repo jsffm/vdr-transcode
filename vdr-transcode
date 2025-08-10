@@ -32,6 +32,7 @@
 #
 # Todo:
 #
+# x265_preset
 # number of reference frames?
 # Missing reference picture?
 # reference picture missing?
@@ -315,17 +316,18 @@ help_Configuration_V() {
     echo " -hevc_preset <preset>       # if you know, what you are doing"
     echo " -hevc_vaapi_preset \"par1 par2 etc\" # replaces every parameter"
     echo " -hevc_qsv_preset \"par1 par2 etc\"   # replaces every parameter"
-    echo " -x265_preset \"par1 par2 etc\"       # replaces every parameter"
+    echo " -libx265_preset \"par1 par2 etc\"    # replaces every parameter"
     echo " -vp9_q|-gq <n>   # quality vp8/9 default 30, < better, > smaller"
     echo "                    for vp9_vaapi try 120"
     echo " -h264enc libx264|h264_nvenc|h264_vaapi|h264_qsv|h264_omx"
     echo " -h264_level <level>"
     echo " -h264_profile <profile>     # main|high"
     echo " -x264_preset <preset>       # default fast"
+    echo " -x265_preset <preset>       # default ultrafast"
     echo " -tier <tier>                # main|high"
     echo " -h264_br         # bitrate for h264_omx, -b works too"
     echo " -b_ref_mode <int>           # hevc_nvenc, 0=disabled, 1=each, 2=middle"
-    echo " -nvenc_preset <preset>      # if you know, what you are doing"
+    echo " -nvenc_preset <preset>      # default medium"
     echo " -nvenc_rc vbr|constqp       # default vbr"
     echo " -vp9enc libvpx-vp9|vp9_vaapi|vp9_qsv"
     echo " -av1enc libsvtav1|av1_qsv|librav1e|libaom-av1 # default libsvtav1"
@@ -619,6 +621,9 @@ parameter() {
 	    ;;
 	"-x265_preset")
 	    x265_preset="$w2"
+	    ;;
+	"-libx265_preset")
+	    libx265_preset="$w2"
 	    ;;
 	"-mpeg2")
 	    mpeg2=$2
@@ -3196,11 +3201,12 @@ set_hevc() {
 	    #HWACC=
 	    #deinterlace="yadif"
 	    hwdownload
-	    if [ "$x265_preset" != "" ]
+	    if [ "$libx265_preset" != "" ]
 	    then
-		preset="$x265_preset"
+		preset="$libx265_preset"
 	    else
-		[ "$hevc_preset" == "" ] && hevc_preset=ultrafast
+		[ "$x265_preset" == "" ] && x265_preset=$hevc_preset
+		[ "$x265_preset" == "" ] && x265_preset=ultrafast
 		[ "$hevc_cq" == "" ] && hevc_cq=28
 		#x265_params="-x265-params crf=$hevc_cq:level-idc=$hevc_level"
 		x265_params="-x265-params crf=$hevc_cq"
@@ -3208,15 +3214,15 @@ set_hevc() {
 		[ "$threads" != "" ] && x265_params="-threads $threads "$x265_params":pools=$threads"
 		#preset="-preset veryfast $level_hevc -crf $crf $maxr"
 		#preset="-preset veryfast $h265_level -crf $hevc_cq $maxr"
-		preset="-preset $hevc_preset $x265_params -crf $hevc_cq $maxr"
+		preset="-preset $x265_preset $x265_params -crf $hevc_cq $maxr"
 	    fi
 	    ;;
 	"hevc_nvenc")
-	    [ "$hevc_preset" == "" ] && hevc_preset=$nvenc_preset
+	    [ "$hevc_preset" != "" ] && nvenc_preset=$hevc_preset
 	    [ "$hevc_cq" == "" ] && hevc_cq=36
 	    #hevc_preset=slow
 	    [ "$profile" != "" ] && hevc_profile=$profile
-	    preset="-preset $hevc_preset -profile:v:0 $hevc_profile $level -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
+	    preset="-preset $nvenc_preset -profile:v:0 $hevc_profile $level -rc $nvenc_rc -cq $hevc_cq $b_ref_mode $opt_r"
 	    [ "$tier" != "" ] && preset="$preset -tier $tier"
 	    if [ "$pass" != "" ]
 	    then
