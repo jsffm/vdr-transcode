@@ -3288,6 +3288,11 @@ set_hevc() {
 	    #preset="-kvazaar-params preset=ultrafast,qp=$hevc_cq,input-bitdepth=10,transfer=bt2020-10"
 	    preset="-kvazaar-params preset=$hevc_preset,qp=$hevc_cq"
 	    [ "$hevc_level" == "" ] && set_hevc_level
+	    if [ "$tier" == "high" ]
+	    then
+		[ ${hevc_level:0:1} -lt 4 ] && hevc_level=4
+		hevc_level="$hevc_level,high-tier"
+	    fi
 	    [ "$hevc_level" != "" ] && preset="$preset,level=$hevc_level"
 	    #[ "$OUTPUT" == "vdr" ] && preset="$preset,gop=$gop_vdr_w"
 	    #[ "$OUTPUT" == "vdr" ] && preset="$preset,gop=16"
