@@ -1486,6 +1486,7 @@ status() {
     [ "$e" == "kB" ] && size=${size:0:-2}
     [ "$e" == "iB" ] && size=${size:0:-3}
     speed=${l#*speed=}
+    read speed _ <<< $speed
     time=${l##*time=}
     time=$(echo $time | cut -d \  -f 1)
     #[ "$time" == "N/A" ] && return
