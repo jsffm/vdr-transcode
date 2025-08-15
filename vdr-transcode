@@ -1169,6 +1169,12 @@ parameter() {
 	"-ffpath")
 	    ffmpeg="$2"/ffmpeg
 	    ffprobe="$2"/ffprobe
+	    if [ -e "$2"/.libpath ]
+	    then
+		libpath=$(<"$2"/.libpath)
+		[ ${libpath:0:1} != '/' ] && libpath="$2/$libpath"
+		export LD_LIBRARY_PATH=$libpath
+	    fi
 	    ;;
 	"-odir")
 	    odir=$2
