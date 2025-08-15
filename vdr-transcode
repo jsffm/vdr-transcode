@@ -3467,6 +3467,10 @@ set_av1() {
 	    video="-c:v:0 av1_vaapi -profile:v:0 main $rc_mode -q:v:0 $qav1 $aspect"
 	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
+	"av1_vulkan")
+	    video="-c:v:0 av1_vulkan -usage transcode"
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vulkan" && add_vf 'format=nv12,hwupload'
+	    ;;
 	*)
 	    echo "-av1enc=$av1enc wrong"
 	    exit 8
