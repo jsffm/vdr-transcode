@@ -4658,7 +4658,8 @@ analyze() {
 	mv $log_c $dest/logfile
 	log_c=$dest/logfile
     fi
-    [ "$auto" != "1" ] && echo $d $PWD >> $logs
+    #[ "$auto" != "1" ] && echo $d $PWD >> $logs
+    echo $d $PWD >> $logs
     #exit
 }
 
@@ -5602,7 +5603,7 @@ server() {
 		    then
 			touch $lck
 			d=`$date +"%F %T"`
-			echo $d $dh >> $logs
+			#echo $d $dh >> $logs
 			vdr-transcode --auto > vt.log 2> vt.err
 			[ -e $line/.update ] && touch $line/.update
 		    fi
