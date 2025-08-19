@@ -3875,6 +3875,7 @@ analyze() {
     #eval $sss
     #[ "${ffmpeg_i:${#ffmpeg_i}-1:1}" == \" ] && x=eval
     [ "${ffmpeg_i: -1}" == \" ] && x=eval
+    #[ "$auto" != "" ] && x="nohup $x"
     if [ "$INPUTA" != "" ]
     then
 	if [ "$ifmt" != "vdr" ]
@@ -3892,10 +3893,10 @@ analyze() {
 	if [ "$ifmt" == "vdr" -a $skip -gt 0 ]
 	then
 	    set_pid
-	    $x $ffprobe -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Duration" > $t
-	    $x $ffmpeg -hide_banner -ss $skip -t 60 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" >> $t
+	    $x $ffprobe -nostdin -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Duration" > $t
+	    $x $ffmpeg -nostdin -hide_banner -ss $skip -t 60 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" >> $t
 	else
-	    $x $ffprobe -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep -E "Stream|Duration" > $t
+	    $x $ffprobe -nostdin -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep -E "Stream|Duration" > $t
 	fi
     fi
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
@@ -5505,6 +5506,8 @@ copy() {
 	fi
     fi
     echo $$ > $runvt
+    stat=$(ps -o stat= -p $$)
+    [[ $stat != *+* ]] && auto=1
     #exit
     rm -f $t
     case $OUTPUT in
