@@ -156,6 +156,7 @@ log=vdr-transcode.log
 logs=/var/log/vdr-transcode.log
 runs=/var/run/vt_server.pid
 runvt=/var/run/vt.pid
+runvtf=/var/run/vtf.pid
 runrts=/var/run/vt_rts.pid
 rtlog=/tmp/rt_log
 t_stat=/tmp/vt-stat
@@ -1646,6 +1647,7 @@ log_d() {
 }
 
 astat_key() {
+	PID1=$(<$runvtf)
 	key=$1
 	case $key in
 	    l)
@@ -1750,13 +1752,38 @@ astat_key() {
 		[ -e /proc/$PID2 ] && kill -15 $PID2
 		exit
 		;;
-	    #k)
-		#kill -15 $(<$runvt)
-		#kill -15 $(pidof ffmpeg)
-		#pid=$(pidof ffmpeg)
-		#cat /proc/$pid/cmdline
-		#kill -15 $pid
-		#;;
+	    p)
+		kill -STOP $PID1
+		kill -15 $PID2
+		echo " resume with r"
+		;;
+	    r)
+		kill -CONT $PID1
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		run_stat "$log"
+		;;
+	    +)
+		renice --relative +5 -p $PID1
+		;;
+	    -)
+		renice --relative -5 -p $PID1
+		;;
+	    k)
+		[ -e /proc/$PID2 ] && kill -15 $PID2
+		echo "Abbruch? n/j"
+		lastkey=k
+		;;
+	    n)
+		lastkey=
+		run_log "$log"
+		;;
+	    j)
+		if [ "$lastkey" == "k" ]
+		then
+		    kill -15 $PID1
+		    run_log "$log"
+		fi
+		;;
 	esac
 	#lastkey=$key
 }
@@ -4795,6 +4822,7 @@ transcode() {
 	    fi
 	    $x nice $ffmpeg $opt 2>> "$log_c" &
 	    PID1=$!
+	    echo $PID1 > $runvtf
 	    #tail -f $log_c &
 	    #sleep 1s
 	    trap ctrl_c SIGINT
@@ -4915,15 +4943,35 @@ transcode() {
 			;;
 		    p)
 			kill -STOP $PID1
+			kill -15 $PID2
+			echo " resume with r"
 			;;
 		    r)
 			kill -CONT $PID1
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			run_log "$log_c"
 			;;
 		    +)
 			renice --relative +5 -p $PID1
 			;;
 		    -)
 			renice --relative -5 -p $PID1
+			;;
+		    k)
+			[ -e /proc/$PID2 ] && kill -15 $PID2
+			echo "Abbruch? n/j"
+			lastkey=k
+			;;
+		    n)
+			lastkey=
+			run_log "$log_c"
+			;;
+		    j)
+			if [ "$lastkey" == "k" ]
+			then
+			    kill -15 $PID1
+			    run_log "$log_c"
+			fi
 			;;
 		esac
 		[ ! -e /proc/$PID1 ] && break
@@ -4933,7 +4981,10 @@ transcode() {
 	elif [ "$auto" != "" ]
 	then
 	    [ ${ffmpeg_i: -1} == \" ] && x=eval
-	    $x nice $ffmpeg $opt 2>> "$log_c"
+	    $x nice $ffmpeg $opt 2>> "$log_c" &
+	    PID1=$!
+	    echo $PID1 > $runvtf
+	    wait $PID1
 	else
 	    #nice $ffmpeg $opt 2>&1 | tee -a $log_c
 	    #sss="nice $ffmpeg $opt"
@@ -5194,7 +5245,7 @@ copy_vdr() {
     fi
     if [ -x "$vdr" ]
     then
-	echo genindex
+	[ "$auto" == "" ] && echo genindex
         #nice $vdr --genindex="./$dest"
         #set -x
         [ -e $dest/info ] && cp -p $dest/info $dest/info.s
