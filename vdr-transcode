@@ -1519,7 +1519,7 @@ status() {
     fi
     #echo "fps=$fps, size=$size, time=$dur2, speed=$speed"
     #printf "fps=%3d, size=%d, time=%s, speed=%s\n" $fps $size $dur2 $speed
-    if [ $prz -gt 0 ]
+    if [ $prm -gt 0 ]
     then
 	#set -x
 	size2=$(($size*1000/$prm))
