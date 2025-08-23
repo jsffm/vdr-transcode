@@ -3465,6 +3465,7 @@ set_av1() {
 	    #[ "$h264_br" != "" ] && video="$video "
 	    ;;
 	"libsvtav1")
+	    [ "$hwaccel" != "" ] && hwdownload
 	    [ "$av1preset" == "" ] && av1preset=8
 	    #if [ ${ffmpeg_v:0:1} -lt 5 ]
 	    #then
@@ -3515,9 +3516,10 @@ set_av1() {
 }
 
 set_vvc() {
+    [ "$hwaccel" != "" ] && hwdownload
     if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" -a "$crop" == "" ]
     then
-	hwdownload
+	#hwdownload
 	OPT_I="$decode_cuvid"
     fi
     
