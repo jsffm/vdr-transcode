@@ -4732,6 +4732,7 @@ transcode() {
     #[ "$auto" == "1" ] && echo $(<$vtlog) > dest
     #[ "$OUTPUT" == "vdr" ] && echo $(<$vtlog) > dest
     [ "$INPUT" == "vdr" ] && echo $(<$vtlog) > dest
+    [ "$OUTPUT" == "vdr" ] && echo "vdr-transcode@$HOSTNAME" > $dest/.timer
     if [ "$OUTPUT" == "vdr" -a "$vencoder" != "" ]
     then
 	OPT="$OPT -metadata service_name=vdr-transcode_$vencoder"
@@ -5358,6 +5359,7 @@ copy_vdr() {
 	O=$(grep ^O $dest/info)
 	echo $d $s $vcodec $O >> $dest/revision
     fi
+    rm -f $dest/.timer
 }
 
 chk_error() { # for already transcoded with older version
