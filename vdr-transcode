@@ -3101,6 +3101,9 @@ set_video() {
 	flv)
 	    set_flv
 	    ;;
+	ffv1)
+	    set_ffv1
+	    ;;
 	*)
 	    echo "-$ivcodec $1 wrong"
 	    exit 8
@@ -3611,6 +3614,17 @@ set_flv() {
     #codec="flashsv"
     #codec="flashsv2"
     video="-c:v:0 $codec $opt"
+}
+
+set_ffv1() {
+    [ "$hwaccel" != "" ] && hwdownload
+    if [ "$hwaccel" == "cuvid" -a "$decode_cuvid" != "" ]
+    then
+	#hwdownload
+	OPT_I="$decode_cuvid"
+    fi
+    opt=
+    video="-c:v:0 ffv1 $opt"
 }
 
 set_aac() {
