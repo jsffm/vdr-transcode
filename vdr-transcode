@@ -3937,10 +3937,10 @@ analyze() {
 	if [ "$ifmt" == "vdr" -a $skip -gt 0 ]
 	then
 	    set_pid
-	    $x $ffprobe $optp -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Duration" > $t
+	    $x $ffprobe -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep "Duration" > $t
 	    $x $ffmpeg $optp -hide_banner -ss $skip -t 60 $ffmpeg_i -c copy -map 0 $pids -f mpegts - 2> /dev/null | $ffprobe -hide_banner -i - 2>&1 | grep "Stream" >> $t
 	else
-	    $x $ffprobe $optp -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep -E "Stream|Duration" > $t
+	    $x $ffprobe -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep -E "Stream|Duration" > $t
 	fi
     fi
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
