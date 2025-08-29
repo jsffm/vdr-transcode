@@ -5067,6 +5067,7 @@ header() {
     echo "Start $d vdr-transcode ffmpeg Version $v" > "$log_c"
     sd=$($date +"%F %T" -r $0)
     echo "script date" $sd >> "$log_c"
+    [ "$auto" != "" ] && echo "running in background" >> "$log_c"
     #uname -n >> "$log_c"
     #uname -p >> "$log_c"
     echo $(uname -n) $USER >> "$log_c"
