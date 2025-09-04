@@ -768,6 +768,9 @@ parameter() {
 	"-vf")
 	    add_vf $2
 	    ;;
+	"-filter_complex")
+	    OPT="$OPT $2"
+	    ;;
 	"--8bit")
 	    s8bit=1
 	    ;;
@@ -4118,6 +4121,7 @@ analyze() {
     [ "$trace" != "" ] && >&2 cat $t
     map="-map 0:v:0"
     stro1=1
+    str_s=-1
     bras=0
     while read line
     do
@@ -4161,6 +4165,8 @@ analyze() {
 	#exit
 	[ "$ifmt" == "avi" ] && str=${str1%%:*}
 	#exit
+
+	[ "$typ" == "Subtitle:" ] && str_s=$(($str_s+1))
 
 	#if [ "$select_str2" != "" -a "$typ" != "Video:" ]
 	if [ "$select_str2" != "" -a "$select_str0" == "$str0" -a "$typ" != "Video:" ]
@@ -4567,12 +4573,25 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "subrip")
-		[ "$OUTPUT" == "vdr" ] && continue
 		[ "$OUTPUT" == "webm" ] && continue
+		#[ "$OUTPUT" == "vdr" ] && continue
+		if [ "$OUTPUT" == "vdr" ]
+		then
+		    #OPT="$OPT -filter_complex \"[0:v:0][0:s:$str]overlay[v]\""
+		    #map="$map -map 0:$str"
+		    hwdownload
+		    if [ $str_s > 0 ]
+		    then
+			add_vf "subtitles=\"$INPUT\":si=$str_s"
+		    else
+			add_vf "subtitles=\"$INPUT\""
+		    fi
+		    #add_vf "ass=\"$INPUT\""
+		    continue
+		fi
 		map="$map -map 0:$str"
 		subt1="-c:$stro copy"
 		[ "$fmt" == "mp4" ] && subt1="-c:$stro mov_text" # checkme
-		#subt="$subt -c:$stro dvd_subtitle"
 		subt="$subt $subt1"
 		stro1=$(($stro1+1))
 		;;
