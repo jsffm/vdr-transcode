@@ -771,6 +771,18 @@ parameter() {
 	"-filter_complex")
 	    OPT="$OPT $2"
 	    ;;
+	"-overlay")
+	    #echo $INPUT
+	    in=$INPUT
+	    #[ "$in" == "vdr" ] && in=00001.ts
+	    hwdownload
+	    add_vf "subtitles=\"$in\":si=$2"
+	    #add_vf "subtitles=$in:si=$2"
+	    #OPT_G="$OPT_G -canvas_size:$stro "$hw"x"$vw
+	    #OPT_G2="$OPT_G2 -canvas_size 1920x1080"
+	    #OPT="$OPT -sn"
+	    #exit
+	    ;;
 	"--8bit")
 	    s8bit=1
 	    ;;
@@ -3946,6 +3958,7 @@ analyze() {
 	    $x $ffprobe -hide_banner $OPT_G $ffmpeg_i 2>&1 | grep -E "Stream|Duration" > $t
 	fi
     fi
+    OPT_G="$OPT_G $OPT_G2"
     [ "$INPUTC" != "" ] && ffmpeg_i="$ffmpeg_i -i \"$INPUTC\""
     #cat $t
     dur_line=$(grep Duration: $t)
