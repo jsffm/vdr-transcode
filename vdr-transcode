@@ -945,6 +945,12 @@ parameter() {
 		    vp9enc=vp9_vaapi
 		    av1enc=av1_vaapi
 		    ;;
+		"vaapih")
+		    h264enc=h264_vaapi
+		    hevcenc=hevc_vaapi
+		    vp9enc=vp9_vaapi
+		    av1enc=av1_vaapi
+		    ;;
 		"qsv")
 		    h264enc=h264_qsv
 		    hevcenc=hevc_qsv
@@ -2941,6 +2947,19 @@ set_hwacc() {
 	    #export LIBVA_DRIVER_NAME=i965
 	    [ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
 	    VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
+	    HWACC="-hwaccel vaapi $VAAPI"
+	    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
+	    #deinterlace="-vf deinterlace_vaapi"
+	    deinterlace="deinterlace_vaapi"
+	    [ "$scale" != "" ] && add_vf scale_vaapi=$scale
+	    #h264enc=h264_vaapi
+	    #hevcenc=hevc_vaapi
+	    #vp9enc=vp9_vaapi
+	    ;;
+	"vaapih")
+	    #export LIBVA_DRIVER_NAME=i965
+	    [ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
+	    VAAPI="-init_hw_device vaapi=/dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
 	    HWACC="-hwaccel vaapi $VAAPI"
 	    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
 	    #deinterlace="-vf deinterlace_vaapi"
