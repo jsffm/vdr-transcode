@@ -2955,7 +2955,8 @@ set_hwacc() {
 	"vaapi")
 	    #export LIBVA_DRIVER_NAME=i965
 	    [ "$libva" != "" ] && export LIBVA_DRIVER_NAME=$libva
-	    VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
+	    #VAAPI="-vaapi_device /dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
+	    VAAPI="-init_hw_device vaapi=/dev/dri/renderD"$((128+$gpu))" -hwaccel_output_format vaapi"
 	    HWACC="-hwaccel vaapi $VAAPI"
 	    #deinterlace="-vf 'deinterlace_vaapi=rate=field:auto=1'"
 	    #deinterlace="-vf deinterlace_vaapi"
