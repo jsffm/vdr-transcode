@@ -972,7 +972,7 @@ parameter() {
 		    vp9enc=vp9_qsv
 		    av1enc=av1_qsv
 		    ;;
-		"vdpau"|"-"|"vulkan")
+		"vdpau"|"-"|"vulkan"|"drm"|"opencl"|"none")
 		    ;;
 		*)
 		    echo "-hwaccel" $2 "wrong"
@@ -2995,6 +2995,9 @@ set_hwacc() {
 	    HWACC="-init_hw_device vulkan -hwaccel vulkan -hwaccel_output_format vulkan"
 	    deinterlace="bwdif_vulkan"
 	    [ "$scale" != "" ] && add_vf scale_vulkan=$scale
+	    ;;
+	"drm"|"opencl"|"none")
+	    HWACC="-hwaccel $hwaccel"
 	    ;;
 	*)
 	    [ "$scale" != "" ] && add_vf scale=$scale
