@@ -32,6 +32,7 @@
 #
 # Todo:
 #
+# $preset
 # x265_preset
 # number of reference frames?
 # Missing reference picture?
@@ -922,6 +923,9 @@ parameter() {
 	    ;;
 	"-profile")
 	    profile=$2
+	    ;;
+	"-preset")
+	    preset=$2
 	    ;;
 	"-tier")
 	    tier=$2
@@ -3123,6 +3127,9 @@ set_video() {
 	ffv1)
 	    set_ffv1
 	    ;;
+	apv)
+	    set_apv
+	    ;;
 	*)
 	    echo "-$ivcodec $1 wrong"
 	    exit 8
@@ -3645,6 +3652,15 @@ set_ffv1() {
     opt=
     video="-c:v:0 ffv1 $opt"
 }
+
+set_apv() {
+    opt=
+    [ "$preset" != "" ] && opt="$opt -preset $preset"
+    [ "$qv" != "" ] && opt="$opt -qp $qv"
+    video="-c:v:0 apv $opt"
+}
+
+# Audio
 
 set_aac() {
     if [ "$aaclib" != "libfdk_aac" ]
