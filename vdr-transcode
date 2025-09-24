@@ -149,6 +149,9 @@ declare -a langa
 declare -a chan_sel
 declare -a chan_sel_id
 chan_sel_i=0
+declare -a chan_set
+declare -a chan_set_id
+chan_set_i=0
 declare -a volumea
 declare -a dispa
 declare -a dsura
@@ -446,7 +449,7 @@ hwdownload() {
 }
 
 parameter() {
-    w2=$2
+    local w2=$2
     [ "$w2" == "-" ] && w2=
     [ "${2:0:1}" == '"' ] && w2=${2:1} && w2=${w2:0: -1}
     case $1 in
@@ -1024,6 +1027,13 @@ parameter() {
 	    chan_sel_id[$chan_sel_i]=${2%=*}
 	    chan_sel[$chan_sel_i]=${2#*=}
 	    chan_sel_i=$(($chan_sel_i+1))
+	    #exit
+	    ;;
+	"-chan_set")
+	    #set -x
+	    chan_set_id[$chan_set_i]=${2%=*}
+	    chan_set[$chan_set_i]="${2#*=}"
+	    chan_set_i=$(($chan_set_i+1))
 	    #exit
 	    ;;
 	"--info")
@@ -2326,6 +2336,16 @@ input_vdr() {
 	    [ "$id" == ${chan_sel_id[$i]} ] && select_str2=${chan_sel[$i]}
 	done
 	[ "$select_str2" != "" ] && chan_sel_msg="chan_sel=$select_str2"
+    fi
+    #if [ $chan_set_i -gt 0 -a $vers == 0 -a ! -e logfile -a -e info ]
+    if [ $chan_set_i -gt 0 -a $vers == 0 -a -e info ]
+    then
+	C=$(grep ^C info)
+	read _ id _ <<< $C
+	for (( i=0; i<$chan_set_i; i++ ))
+	do
+	    [ "$id" == ${chan_set_id[$i]} ] && parameter ${chan_set[$i]} && chan_set_msg="chan_set=${chan_set[$i]}"
+	done
     fi
     #exit
     [ ${name:0:1} == "%" ] && name=${name:1}
@@ -5156,6 +5176,7 @@ header() {
     echo "PWD:" $PWD >> "$log_c"
     cat $old >> "$log_c"
     [ "$chan_sel_msg" != "" ] && echo $chan_sel_msg >> "$log_c"
+    [ "$chan_set_msg" != "" ] && echo $chan_set_msg >> "$log_c"
 }
 
 info_create() {
