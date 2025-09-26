@@ -370,6 +370,8 @@ help_Configuration_A() {
     echo " -latm 0|1"
     echo " -opus_br <kbit>     # 2ch br in kbit default 64"
     echo " -chan_sel <chan_id>=<str>[,<str>]"
+    echo " -chan_set <chan_id>=<param>"
+    echo " -title_set <title>=<param>"
 }
 
 help() {
