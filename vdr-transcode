@@ -152,6 +152,9 @@ chan_sel_i=0
 declare -a chan_set
 declare -a chan_set_id
 chan_set_i=0
+declare -a title_set
+declare -a title_set_id
+title_set_i=0
 declare -a volumea
 declare -a dispa
 declare -a dsura
@@ -1034,6 +1037,13 @@ parameter() {
 	    chan_set_id[$chan_set_i]=${2%=*}
 	    chan_set[$chan_set_i]="${2#*=}"
 	    chan_set_i=$(($chan_set_i+1))
+	    #exit
+	    ;;
+	"-title_set")
+	    #set -x
+	    title_set_id[$title_set_i]=${2%=*}
+	    title_set[$title_set_i]="${2#*=}"
+	    title_set_i=$(($title_set_i+1))
 	    #exit
 	    ;;
 	"--info")
@@ -2345,6 +2355,16 @@ input_vdr() {
 	for (( i=0; i<$chan_set_i; i++ ))
 	do
 	    [ "$id" == ${chan_set_id[$i]} ] && parameter ${chan_set[$i]} && chan_set_msg="chan_set=${chan_set[$i]}"
+	done
+    fi
+    if [ $title_set_i -gt 0 -a $vers == 0 -a -e info ]
+    then
+	T=$(grep ^T info)
+	title=${T:2}
+	title=${title//' '/_}
+	for (( i=0; i<$title_set_i; i++ ))
+	do
+	    [[ "$title" == *${title_set_id[$i]}* ]] && parameter ${title_set[$i]} && chan_set_msg="title_set=${title_set[$i]}"
 	done
     fi
     #exit
