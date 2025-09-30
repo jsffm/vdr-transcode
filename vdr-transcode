@@ -3233,7 +3233,8 @@ set_h264() {
 	    [ "$crf" == "" ] && crf=21
 	    preset="-profile:v:0 $h264_profile $level $rc_mode -qp $crf $quality $maxr"
 	    [ "$tier" != "" ] && preset="$preset -tier $tier"
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    #[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vaapi=/dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"h264_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
@@ -3354,7 +3355,8 @@ set_hevc() {
 		[ "$tier" != "" ] && preset="$preset -tier $tier"
 		#preset="-rc_mode:v CQP -global_quality:v $hevc_cq"
 	    fi
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    #[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vaapi=/dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"hevc_qsv")
 	    #LIBVA_DRIVER_NAME=iHD
@@ -3485,7 +3487,8 @@ set_vp9() {
 	    fi
 	    video="-c:v:0 vp9_vaapi -rc_mode:v:0 CQP -global_quality:v:0 $gq $aspect"
 	    #video="-c:v vp9_vaapi -rc_mode:v CQP -global_quality:v $gq -bf -1 -threads $(nproc) $gop $vf $aspect"
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    #[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vaapi=/dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"vp9_qsv")
 	    #export LIBVA_DRIVER_NAME=iHD
@@ -3573,7 +3576,8 @@ set_av1() {
 	    #rc_mode="-rc_mode ICQ"
 	    rc_mode="-rc_mode CQP"
 	    video="-c:v:0 av1_vaapi -profile:v:0 main $rc_mode -q:v:0 $qav1 $aspect"
-	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    #[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
+	    [ "$hwaccel" == "" ] && OPT_G="$OPT_G -init_hw_device vaapi=/dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
 	    ;;
 	"av1_vulkan")
 	    video="-c:v:0 av1_vulkan -usage transcode"
