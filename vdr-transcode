@@ -3865,7 +3865,8 @@ set_audio() {
 	    #upm="-af:$stro surround -ac:$stro 6"
 	    if [ "$win_func" == "" ]
 	    then
-		upm="-filter:$stro surround -ac:$stro 6"
+		#upm="-filter:$stro surround -ac:$stro 6"
+		upm="-filter:$stro surround=flx=4:frx=4:fc_out=1.3 -ac:$stro 6"
 	    else
 		upm="-filter:$stro surround=win_func=$win_func -ac:$stro 6"
 	    fi
