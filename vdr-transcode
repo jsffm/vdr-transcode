@@ -3826,6 +3826,10 @@ set_mp3() {
     audio_t="-c:$stro mp3 $mp3_b"
 }
 
+set_mlp() {
+    audio_t="-c:$stro mlp -strict -2"
+}
+
 core(){
     case $codec in
 	"dts")
@@ -3929,6 +3933,9 @@ set_audio() {
 	    ;;
 	"vorbis")
 	    set_vorbis
+	    ;;
+	"mlp")
+	    set_mlp
 	    ;;
 	*)
 	    msg="$codec1 wrong"
