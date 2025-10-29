@@ -3830,6 +3830,10 @@ set_mlp() {
     audio_t="-c:$stro mlp -strict -2"
 }
 
+set_truehd() {
+    audio_t="-c:$stro truehd -strict -2"
+}
+
 core(){
     case $codec in
 	"dts")
@@ -3936,6 +3940,9 @@ set_audio() {
 	    ;;
 	"mlp")
 	    set_mlp
+	    ;;
+	"truehd")
+	    set_truehd
 	    ;;
 	*)
 	    msg="$codec1 wrong"
