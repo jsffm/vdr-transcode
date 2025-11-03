@@ -5295,6 +5295,7 @@ copy_vdr() {
     OPT="$OPT -map_chapters -1"
     #OPT="$OPT -metadata creation_time=$(date "+%FT%T" -d @$rec_time)"
     OPT="$OPT $pids"
+    [ "$ifmt" == "mp4" -a "$ivcodec" == "hevc" ] && OPT="$OPT -bsf:v hevc_mp4toannexb" # checkme
     transcode $dest/00001.ts
     #if [ -e info ]
     #then
