@@ -4485,7 +4485,7 @@ analyze() {
 		;;
 	    "vp8")
 		decode_cuvid="-c:v:0 vp8_cuvid"
-		decode_cuvid="-c:v:0 vp8_qsv"
+		decode_qsv="-c:v:0 vp8_qsv"
 		video="-c:v:0 copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
 		[ "$OUTPUT" == "vdr" -a "$vp8" == "copy" ] && vp8=h264
