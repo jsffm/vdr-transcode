@@ -5715,6 +5715,9 @@ copy() {
 	"webm")
 	    copy_file $OUTPUT
 	    ;;
+	"asf"|"wmv")	# Advanced Systems Format
+	    copy_file $OUTPUT
+	    ;;
 	"avi")
 	    #OPT="$OPT -bsf:v h264_mp4toannexb"
 	    copy_file $OUTPUT
