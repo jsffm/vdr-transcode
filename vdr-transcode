@@ -229,10 +229,10 @@ help_Audio() {
     echo " -sel [<file>:]<n[-n][,n]>   # audio, subtitle stream select"
     echo " --selb           # select best audio track"
     echo " --sel_eac3       # select eac3"
-    echo " -vol [<str>=]<factor> # Volume"
+    echo " -vol [<str>=]<factor>    # Volume"
     #echo " -b <n>           # constant bitrate for mp3, h264_omx"
-    echo " -ab <n>          # constant bitrate for mp3, aac_stereo"
-    echo " -ar <n>          # audio bitrate"
+    echo " -ab [<str>=]<br>         # bitrate for mp3, aac_stereo"
+    echo " -ar <sampling frequency> # audio sampling frequency"
     echo " -lang <str[-str]>=<lang>[,<str[-str]>=<lang>]"
     echo " -stro <str>=<ostr>[,<str>=<ostr>] # Streamorder"
     echo "       Sample: -stro 1=2,2=1 this should be a seperate step"
@@ -533,13 +533,21 @@ parameter() {
 	    hevc_cq=0
 	    ;;
 	"-ab")
-	    ab=$2
-	    mp3_b="-b:a $2"
-	    aac_stereo_br=$2
-	    opus_br=$2
-	    dts_br=$2
+	    #set -x
+	    str=${2%=*}
+	    ab=${2#*=}
+	    if [ "$str" != "$ab" ]
+	    then
+		ab_str=$str
+	    fi
+	    #ab=$2
+	    mp3_b="-b:a $ab"
+	    aac_stereo_br=$ab
+	    opus_br=$ab
+	    dts_br=$ab
 	    #[ "${opus_br:${#opus_br}-1:1}" == "k" ] && opus_br=${opus_br:0:${#opus_br}-1}
 	    [ "${opus_br: -1}" == "k" ] && opus_br=${opus_br:0:-1}
+	    #exit
 	    ;;
 	"-vb")
 	    OPT_V="$OPT_V -b:v:0 $2"
@@ -3760,7 +3768,12 @@ set_aac() {
 	[ "$brv" != "" ] && br=$brv
 	audio_t="-c:$stro $aaclib $aac_profile $br -ac:$stro 6"
     else
-	br="-b:$stro $aac_stereo_br"
+	if [ "$ab_str" == "$stro" ]
+	then
+	    br="-b:$ab_str $ab"
+	else
+	    [ "$ab_str" == "" ] && br="-b:$stro $aac_stereo_br"
+	fi
 	[ "$brv" != "" ] && br=$brv
 	audio_t="-c:$stro $aaclib $aac_profile $br $ar"
     fi
