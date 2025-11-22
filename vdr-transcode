@@ -4511,7 +4511,12 @@ analyze() {
 		decode_qsv="-c:v:0 vp9_qsv"
 		video="-c:v:0 copy"
 		#[ "$OUTPUT" == "vdr" ] && set_h264
-		[ "$OUTPUT" == "vdr" -a "$vp9" == "copy" ] && vp9=hevc
+		if [ "$OUTPUT" == "vdr" -a "$vp9" == "copy" ]
+		then
+		     #vp9=hevc
+		     vp9=h264
+		     [ $vw -ge 720 ] && vp9=hevc
+		fi
 		#[ "$vp9" == "h264" ]  && set_h264
 		#[ "$vp9" == "hevc" ]  && set_hevc
 		set_video $vp9
