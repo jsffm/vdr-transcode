@@ -3250,7 +3250,7 @@ set_h264() {
 	"h264_vulkan")
 	    # under progress
 	    #[ "${v:0:3}" ">" "4.1" ] && rc_mode="-rc_mode CQP"
-	    [ "$crf" == "" ] && crf=30
+	    [ "$crf" == "" ] && crf=35
 	    opt="-usage transcode"
 	    preset="-profile:v:0 $h264_profile $level $rc_mode -qp $crf $quality $opt $maxr"
 	    #[ "$hwaccel" == "" ] && OPT_G="$OPT_G -vaapi_device /dev/dri/renderD"$((128+$gpu)) && add_vf 'format=nv12,hwupload'
