@@ -351,6 +351,8 @@ help_Configuration_V() {
 
 help_Configuration_A() {
     echo " audio configuration"
+    echo " -aac <acodec>"
+    echo " -aac_6 <acodec>     # only 6ch"
     echo " -ac3 <acodec>"
     echo " -ac3_stereo aac|aac_he|eac3|-"
     echo " -ac3_stereo_level <level>      # Standard 192"
@@ -699,6 +701,9 @@ parameter() {
 	    ;;
 	"-eac3")
 	    eac3=$2
+	    ;;
+	"-aac_6")
+	    aac_6=$2
 	    ;;
 	"-aac")
 	    aac=$2
@@ -4608,6 +4613,7 @@ analyze() {
 		[ "$OUTPUT" == "mpg" ] && aac=mp2
 		[ "$OUTPUT" == "webm" ] && aac=opus
 		set_audio $aac
+		[ "$aac_6" != "" -a "$atyp" != "stereo" ] && set_audio $aac_6
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
 		;;
