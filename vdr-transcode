@@ -3637,13 +3637,21 @@ set_mpeg2() {
 	#add_vf format=nv12
 	OPT_I="$decode_cuvid"
     fi
-    add_vf tinterlace=4
-    video="-c:v:0 mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $aspect"
+    if [ $vw -gt 720 ]
+    then
+	video="-c:v:0 mpeg2video $br $aspect"
+    else
+	video="-c:v:0 mpeg2video $br -dc 9 -flags +ilme+ildct -alternate_scan 1 -top 1 -r 25 $aspect"
+	add_vf tinterlace=4
+    fi
     #HWACC=
     #[ "$hwaccel" == "cuvid" ] && OPT_I="$OPT_I $decode_cuvid"
-    [ "$aac" == "copy" ] && aac=mp2
-    [ "$eac3" == "copy" ] && eac3=mp2
-    [ "$mp3" == "copy" ] && mp3=mp2
+    if [ "$OUTPUT" == "vdr" ]
+    then
+	[ "$aac" == "copy" ] && aac=mp2
+	[ "$eac3" == "copy" ] && eac3=ac3
+	[ "$mp3" == "copy" ] && mp3=mp2
+    fi
 }
 
 set_mpeg4() {
