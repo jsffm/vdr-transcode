@@ -5419,7 +5419,7 @@ copy_vdr() {
         #echo $PID
         grep "\[$PID\]" /var/log/messages | grep "H."
         #set +x
-	if [ "$chk_error" == "1" ]
+	if [ "$chk_error" == "1" -a "$ifmt" == "vdr" ]
 	then
 	    cp -p $dest/info $dest/info.s2
 	    read _ error_i <<< $(grep ^O $dest/info)
