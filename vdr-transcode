@@ -3759,12 +3759,7 @@ set_aac() {
     [ "$aac_vbr" != "" ] && brv="-vbr $aac_vbr"
     #[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -mpegts_flags latm -flags:a +global_header" && aac_opt=1
     #[ "$OUTPUT" == "vdr" -a "$aac_opt" == "" ] && OPT="$OPT -latm 1 -mpegts_flags latm -flags:a +global_header" && aac_opt=1
-#    if [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ]
-#    then
-#	ar="-ar:$stro 48000"
-#	#audio_t="-c:$stro $aaclib -b:$stro $aac_stereo_br $ar"
-#    fi
-    [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ] && ar="-ar:$stro 48000"
+    #[ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ] && ar="-ar:$stro 48000"
     if [ "$aac_vbr" != "" ]
     then
 	[ "$aaclib" == "libfdk_aac" ] && brv="-vbr $aac_vbr"
@@ -3788,7 +3783,7 @@ set_aac() {
 	    [ "$ab_str" == "" ] && br="-b:$stro $aac_stereo_br"
 	fi
 	[ "$brv" != "" ] && br=$brv
-	audio_t="-c:$stro $aaclib $aac_profile $br $ar"
+	audio_t="-c:$stro $aaclib $aac_profile $br"
     fi
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:$stro handler_name=$aaclib"
     aencoder=$aaclib
@@ -3894,6 +3889,7 @@ set_audio() {
     [ ${codec1:0:1} == "+" ] && set_audio_plus
     [ "$achannels" != "" ] && atyp=stereo
     #[ "$achannels" == "2" ] && OPT="$OPT -filter:$stro pan=stereo|c0=FL|c1=FR"
+    [ "$OUTPUT" == "vdr" -a $ar1 -ne 48000 ] && ar="-ar:$stro 48000"
     if [ "$upmix" != "" ]
     then
 	if [ "$atyp" == "stereo" ]
@@ -3981,6 +3977,7 @@ set_audio() {
     esac
     [ "$upm" != "" ] && audio_t="$audio_t $upm"
     [ "$check" != "" ] && echo $str": $slang $codec -> "$stro": $codec1 $aencoder $ab" >> "$log_c.2"
+    audio_t="$audio_t $ar"
     #exit
     }
 
