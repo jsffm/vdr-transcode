@@ -129,6 +129,7 @@ rt_port=5000
 dialog=0
 bitrate=0
 chk_error=1
+dur2sa=0
 
 #aaclib="libfaac"
 #aaclib="libfdk_aac" # Fraunhofer Library - bessere Qualität
@@ -202,6 +203,7 @@ help_Output() {
     echo " --diag"
     echo " --p          # streams preview"
     echo "              # answer n=cancel, a=add vt.conf incl. paramters"
+    echo " -copy|-cp    # copy for every track"
 }
 
 help_Video() {
@@ -227,6 +229,7 @@ help_Audio() {
     echo "Audio"
     echo " -ac|-acodec [<str>=]<codec> # Audio Codec copy|ac3|eac3|aac|aac_he|aac_he_v2|opus"
     echo " -sel [<file>:]<n[-n][,n]>   # audio, subtitle stream select"
+    echo " -sell lang1[,lang2]...      # select for language"
     echo " --selb           # select best audio track"
     echo " --sel_eac3       # select eac3"
     echo " -vol [<str>=]<factor>    # Volume"
@@ -519,6 +522,18 @@ parameter() {
 	    ;;
 	"-o")
 	    OUTPUT=$2
+	    ;;
+	"-copy"|"-cp")
+	    OUTPUT=$2
+	    h264=copy
+	    h264_HD=
+	    mpeg2=copy
+	    vc1=copy
+	    ac3_stereo=
+	    mp2=copy
+	    dts=copy
+	    pcm=copy
+	    dold=1
 	    ;;
 	"-r")
 	    OPT="$OPT -r $2"
@@ -1032,6 +1047,9 @@ parameter() {
 	    fi
 	    #exit
 	    ;;
+	"-sell")
+	    sell=$2
+	    ;;
 	"--selb")
 	    select_str0=0
 	    sel_best=1
@@ -1526,13 +1544,27 @@ status() {
     dur2=${dur2:0:8}
     dur2s=1
     #if [ "$dur2" != "N/A,’" ]
+    #set -x
     if [ "$dur2" != "N/A bitr" ]
     then
 	dur2s=$($date -u "+%s" -d "1970-01-01 $dur2")
+	if [ $dur2s -eq $dur2sa -a 0 -eq 1 ]
+	then
+	    #set -x
+	    #dur2s=$(($frame/$fps1))
+	    dur2s=$(bc <<< "$frame/$fps1")
+	    dur2=$($date "+%T" -u -d @$dur2s)
+	    #exit
+	else
+	    dur2sa=$dur2s
+	fi
+	[ "$dur2sa" == "" ] && dur2sa=$dur2s
     else
-	dur2s=$(($frame/$fps1))
+	#dur2s=$(($frame/$fps1))
+	dur2s=$(bc <<< "$frame/$fps1")
 	dur2=$($date "+%T" -u -d @$dur2s)
     fi
+    #exit
     fps=${l#*fps=}
     if [ "$fps" != "$l" ]
     then
@@ -3916,7 +3948,7 @@ set_audio() {
 	#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$s
 	    [ $bra -gt $ac3_stereo_level ] && codec1=$ac3_stereo
 	    #[ $bra -eq $ac3_stereo_level -a "$ac3_1" == "stereo" ] && codec1=$ac3_stereo
-	    [ "$str" -gt 1 ] && [ $bra -eq $ac3_stereo_level -a "$atyp_1" == "stereo" -a "$ac3_stereo" != "ac3" ] && codec1=$ac3_stereo
+	    [ "$str" -gt 1 ] && [ $bra -eq $ac3_stereo_level -a "$atyp_1" == "stereo" -a "$ac3_stereo" != "ac3" ] && codec1=$ac3_stereo # checkme
 	fi
     fi
     [ "$acodec" != "" ] && codec1=$acodec
@@ -3928,6 +3960,9 @@ set_audio() {
 	    ;;
 	"pcm")
 	    audio_t="-c:$stro pcm_s16le"
+	    ;;
+	"pcm_s16be")
+	    audio_t="-c:$stro pcm_s16be"
 	    ;;
 	"core")
 	    core
@@ -4296,6 +4331,15 @@ analyze() {
 	    [ $ok == 0 ] && continue
 	fi
 	
+	if [ "$sell" != "" -a "$slang" != "" ]
+	then
+	    #set -x
+	    #echo $sell
+	    #echo $slang
+	    [[ ! "$sell" == *$slang* ]] && continue
+	    #exit
+	fi
+
 	if [ "$typ" == "Video:" -a "$codec" != "mjpeg" ]
 	then
 	    #set -x
@@ -4636,6 +4680,7 @@ analyze() {
 		;;
 	    "pcm_dvd"|"pcm_s16le"|"pcm_s16be"|"pcm_bluray")
 		map="$map -map $str0:$str"
+		[ "$pcm" == "copy" -a "$codec" == "pcm_dvd" ] && pcm=pcm_s16be
 		#[ "$acodec" != "" ] && set_audio $acodec
 		#[ "$OUTPUT" == "webm" ] && set_opus
 		[ "$OUTPUT" == "webm" ] && pcm=opus
@@ -5610,7 +5655,7 @@ copy_file() {
     newsize=$(($newsize/1024))
     #set -x
     [ "$fmt" == "ts" ] && touch -d $($date "+%FT%T" -d @$rec_time) $out
-    [ "$dold" == "1" ] && touch -d $($date "+%FT%T" -d @$rec_time) $out
+    [ "$dold" == "1" ] && touch -d $($date "+%FT%T" -d @$rec_time) "$out"
     if [ "$ifmt" == "vdr" ]
     then
 	info=
