@@ -279,7 +279,7 @@ help_Configuration() {
     echo "                       # s=stat, l=log, q=quiet, h=halt, p=suspend, r=resume"
     echo " -dialog 1             # status output by dialog"
     echo " -dvdvideo 1           # -f dvdvideo"
-    echo " -vdr <path_to_vdr>"
+    echo " -vdr <path_to_vdr_dir>"
     echo " -ffpath <ffmpeg_dir>"
     echo " -ffmpeg <path_to_ffmpeg>    # deprecated, use -ffpath"
     echo " -ffprobe <path_to_ffprobe>  # deprecated, use -ffpath"
@@ -1033,7 +1033,7 @@ parameter() {
 	    #OPT_G=
 	    ;;
 	"-vdr")
-	    vdr=$2
+	    VDRDIR=$2
 	    ;;
 	"-sel")
 	    #set -x
