@@ -473,7 +473,12 @@ parameter() {
 	    INPUT=$2
 	    ;;
 	"-ia")
-	    INPUTA=$2
+	    if [[ "$INPUTA" == *" "* ]]
+	    then
+		INPUTA="$INPUTA -i \"$2\""
+	    else
+		INPUTA="$INPUTA -i $2"
+	    fi
 	    ;;
 	"-ic")
 	    INPUTC=$2
@@ -3148,7 +3153,7 @@ inf() {
     #eval $sss
     #[ "${ffmpeg_i:${#ffmpeg_i}-1:1}" == \" ] && x=eval
     [ "${ffmpeg_i: -1}" == \" ] && x=eval
-    [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i -i $INPUTA"
+    [ "$INPUTA" != "" ] && ffmpeg_i="$ffmpeg_i $INPUTA"
     #$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     if [ "$ifmt" == "vdr" -a $skip -gt 0 ]
     then
@@ -4077,9 +4082,10 @@ analyze() {
     then
 	if [ "$ifmt" != "vdr" ]
 	then
-	    ffmpeg_i="$ffmpeg_i -i \"$INPUTA\""
+	    #ffmpeg_i="$ffmpeg_i -i \"$INPUTA\""
+	    ffmpeg_i="$ffmpeg_i $INPUTA"
 	else
-	    ffmpeg_i="$ffmpeg_i -i $INPUTA"
+	    ffmpeg_i="$ffmpeg_i $INPUTA"
 	fi
 	#map="$map -map 1:a"
 	#audio="$audio -c:a copy"
