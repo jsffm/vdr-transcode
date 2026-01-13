@@ -473,7 +473,7 @@ parameter() {
 	    INPUT=$2
 	    ;;
 	"-ia")
-	    if [[ "$INPUTA" == *" "* ]]
+	    if [[ "$2" == *" "* ]]
 	    then
 		INPUTA="$INPUTA -i \"$2\""
 	    else
