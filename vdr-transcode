@@ -3654,6 +3654,9 @@ set_vvc() {
     #opt="$opt -vvenc-params InternalBitDepth=8"
     #opt="$opt -vvenc-params OutputBitDepth=8"
     opt="$opt -vvenc-params Sdr=sdr709"
+    opt="$opt:version=1"
+    #opt="$opt:Threads=$(nproc)"
+    #opt="$opt:Verbosity=4"
     opt="$opt -threads $(nproc)"
     [ "$qv" != "" ] && opt="$opt -qp $qv"
     video="-c:v:0 libvvenc $opt"
@@ -5457,7 +5460,7 @@ copy_vdr() {
     then
 	vdr=$VDRDIR/vdr
     fi
-    if [ -x "$vdr" ]
+    if [ -x "$vdr" -a "$vcodec" != "vvc" ]
     then
 	[ "$auto" == "" ] && echo genindex
         #nice $vdr --genindex="./$dest"
