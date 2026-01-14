@@ -4405,9 +4405,17 @@ analyze() {
 		# ffprobe -hide_banner -show_streams
 		# Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709), 1920x1080 [SAR 1:1 DAR 16:9], 7296 kb/s, 50 fps, 50 tbr, 12800 tbn, 100 tbc (default)
 		# Stream #0:0(und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709), 1920x1080, 5531 kb/s, 50 fps, 50 tbr, 12800 tbn, 100 tbc (default)
+		# Stream #0:0(eng): Video: av1 (Main), none, 1280x720, SAR 1:1 DAR 16:9, 25 fps, 25 tbr, 1k tbn, 1k tbc (default)
+		# Stream #0:0(eng): Video: vp9 (Profile 0), yuv420p(tv, bt709), 1920x1080, SAR 1:1 DAR 16:9, 23.98 fps, 23.98 tbr, 1k tbn (default)
 		hw=${line%%[SAR*}	# checkme
 		nw=$(echo $hw|wc -w)
 		hw=$(echo $hw|cut -d \  -f $nw)
+		if [[ ! "$hw" == *x* ]]
+		then
+		    hw=${line%%, SAR*}
+		    nw=$(echo $hw|wc -w)
+		    hw=$(echo $hw|cut -d \  -f $nw)
+		fi
 		#vw=$(echo $hw|cut -d 'x' -f 2)
 		#hw=$(echo $hw|cut -d 'x' -f 1)
 		IFS=x read hw vw <<< $hw
