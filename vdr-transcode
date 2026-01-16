@@ -5501,6 +5501,12 @@ copy_vdr() {
         si=$(($sic1/100))
         sic=$(($sic1-($si*100)))
         #date -u -d @$si +"index %T" >> $log_c
+	if [ "$ifmt" == "file" -a "$apply_codec" == "1" ]
+	then
+	    # F 25 720 576 p -
+	    read _ _ hw vw type _ <<< $(grep ^F $dest/info)
+	    echo $vw$type > info.txt
+	fi
     else
 	echo $vdr "not found" >> $log_c
     fi
