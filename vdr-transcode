@@ -203,7 +203,8 @@ help_Output() {
     echo " --diag"
     echo " --p          # streams preview"
     echo "              # answer n=cancel, a=add vt.conf incl. paramters"
-    echo " -copy|-cp    # copy for every track"
+    echo " -copy|-cp <o> # copy for every track"
+    echo " --rni        # at work on remote fs no genindex"
 }
 
 help_Video() {
@@ -1325,6 +1326,9 @@ parameter() {
 	    ;;
 	"-chk_error")
 	    chk_error=$2
+	    ;;
+	"--rni")
+	    rni=1
 	    ;;
 	*)
 	    echo $1 wrong
@@ -5468,6 +5472,8 @@ copy_vdr() {
     then
 	vdr=$VDRDIR/vdr
     fi
+    dest2=$(realpath $dest)
+    [ "$rni" == "1" -a "${dest2:0:4}" == "/mnt" ] && vdr=
     if [ -x "$vdr" -a "$vcodec" != "vvc" ]
     then
 	[ "$auto" == "" ] && echo genindex
@@ -5508,7 +5514,7 @@ copy_vdr() {
 	    echo $vw$type > info.txt
 	fi
     else
-	echo $vdr "not found" >> $log_c
+	[ "$rni" = "" ] && echo vdr=$vdr "not found" >> $log_c
     fi
     [ -e messages ] && cp -p messages $dest
     [ -e logfile ] && cp -p logfile $dest/logfile1
