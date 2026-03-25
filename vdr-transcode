@@ -5473,7 +5473,9 @@ copy_vdr() {
 	vdr=$VDRDIR/vdr
     fi
     dest2=$(realpath $dest)
-    [ "$rni" == "1" -a "${dest2:0:4}" == "/mnt" ] && vdr=
+    read _ destfs _ <<< $(df -T $dest2 | tail -n1)
+    #[ "$rni" == "1" -a "${dest2:0:4}" == "/mnt" ] && vdr=
+    [ "$rni" == "1" -a "${destfs:0:3}" == "nfs" ] && vdr=
     if [ -x "$vdr" -a "$vcodec" != "vvc" ]
     then
 	[ "$auto" == "" ] && echo genindex
