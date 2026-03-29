@@ -6594,7 +6594,7 @@ case $TODO in
 	;;
 esac
 
-[ -e $vtc ] && mv $vtc $vtc.rdy
+[ -e $vtc -a "$OUTPUT" != "chk" ] && mv $vtc $vtc.rdy
 #set -x
 #cp -p "$log_c" $t
 cp "$log_c" $t
