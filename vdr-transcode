@@ -6292,7 +6292,7 @@ auto_confr() {
     for rr in `find . -mount -type d -name "*0.rec"`
     do
 	#echo $rr
-	[ -e $rr/".timer" ] && continue
+	[ -e $rr"/.timer" ] && continue
 	[ -e $rr/$vtc ] && continue
 	[ -e $rr/$vtc".rdy" ] && continue
 	#si=$(stat $rr/index -c "%s")
