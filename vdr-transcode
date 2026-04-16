@@ -6335,6 +6335,7 @@ auto_confr() {
 		[ "$p1" == "-confr" ] && continue
 		echo $p >> $rr/$vtc
 	    done
+	    unset IFS
 	    cat $rr/$vtc
 	    #exit
 	fi
