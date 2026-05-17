@@ -258,6 +258,7 @@ help_Automation() {
     echo " --confr [parameter] # mark recursiv gt min_bitrate"
     echo " -confr <min_br> [parameter] # mark recursiv gt min_bitrate"
     echo " -min_br <min_br>"
+    echo " -pat <pattern>     # for -confr"
     echo " -confsz <min_size>[M|G] [parameter] # find recursiv gt min_size for marking"
     echo " --alog             # process log"
     echo " --aq               # process queue"
@@ -1194,6 +1195,9 @@ parameter() {
 	    TODO=$1
 	    INPUT=none
 	    min_size=$2
+	    ;;
+	"-pat")
+	    pattern=$2
 	    ;;
 	"--a_conf")
 	    #auto_sh_conf
@@ -6295,6 +6299,9 @@ auto_confr() {
 	[ -e $rr"/.timer" ] && continue
 	[ -e $rr/$vtc ] && continue
 	[ -e $rr/$vtc".rdy" ] && continue
+	title=$(dirname $rr)
+	title=$(basename $title)
+	[ "$pattern" != "" ] && [[ ! "$title" == *$pattern* ]] && continue
 	#si=$(stat $rr/index -c "%s")
 	si=$(file_size $rr/index)
 	fl=$(grep ^F $rr/info)
