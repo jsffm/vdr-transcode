@@ -5820,6 +5820,23 @@ copy_aac() {
     #exit
 }
 
+copy_image() {
+    set -x
+    #echo $ffmpeg_i
+    #echo $name
+    o=$name.$1
+    if [ "$ss" != "" ]
+    then
+	ss2=${ss//./_}
+	ss2=${ss2//:/_}
+	o=$name"_"$ss2.$1
+    fi
+    #OPT="$OPT -frame_pts 1"
+    $ffmpeg -hide_banner $OPT_G $ffmpeg_i $OPT -update 1 -f image2 -frames:v 1 $o
+    echo $o
+    exit
+}
+
 copy() {
     #set -x
     if [ -e $runvt ]
@@ -5884,9 +5901,9 @@ copy() {
 	"m2t"|"mka")
 	    copy_audio $OUTPUT
 	    ;;
-	#"jpg")
-	#    copy_file $OUTPUT
-	#    ;;
+	"jpg"|"png")
+	    copy_image $OUTPUT
+	    ;;
 	"chk")
 	    copy_null
 	    ;;
