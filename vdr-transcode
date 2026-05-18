@@ -6357,6 +6357,7 @@ auto_confr() {
 		IFS=\  read p1 _ <<< "$p"
 		[ "$p1" == "--confr" ] && continue
 		[ "$p1" == "-confr" ] && continue
+		[ "$p1" == "-pat" ] && continue
 		echo $p >> $rr/$vtc
 	    done
 	    unset IFS
