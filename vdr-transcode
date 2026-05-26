@@ -5425,6 +5425,12 @@ copy_vdr() {
     case $ifmt in
 	"vdr")
 	    [ -e info ] && cp -p info $dest
+	    if [ -e summary.vdr -a ! -e info.vdr ]
+	    then
+		[ -e $VDRDIR/summary2info ] && s2i=$VDRDIR/summary2info
+		[ "$s2i" == "" ] && s2i=$(which summary2info)
+		[ "$s2i" != "" ] && $s2i ../$(basename $PWD)
+	    fi
 	    if [ -e info.vdr ]
 	    then
 		#cp -p info.vdr $dest/info
