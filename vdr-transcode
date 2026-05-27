@@ -189,6 +189,7 @@ help_Input() {
     echo " -va <seconds> # add video at end, only ts"
     echo " -ia <file>|<http> # second audio source, multiple calls supported"
     echo " -ic <file>        # copy chapters from an other file"
+    echo " --px              # prepare .vdr with projectx"
 }
 
 help_Output() {
@@ -516,6 +517,9 @@ parameter() {
 	"-chn")
 	    IFS=':' read chn start1 <<< $2
 	    INPUT=chn
+	    ;;
+	"--px")
+	    px=1
 	    ;;
 	"-attach")
 	    attach_file=$2
@@ -2248,6 +2252,8 @@ input_vdra() {
     do
 	ffmpeg_i=$ffmpeg_i$d$r
 	d="|"
+	pxi=$pxi$dpx$r
+	dpx=" "
     done
     # 2011-09-26.19.28.40.01.rec
     # 2004-11-21.00:37.50.99.rec
@@ -5390,6 +5396,12 @@ copy_vdr() {
     fi
     header
     #[ "$auto" != "1" ] && echo $d $PWD >> $logs
+    if [ "$px" != "" -a "$pxi" != "" ]
+    then
+	px_name="001[pes][remux].ts"
+	projectx_cli -name 001.ts -log -out $dest -tots $pxi
+	ffmpeg_i="-i $px_name"
+    fi
     analyze $ffmpeg_i
     if [ "$video_add" != "" ]
     then
