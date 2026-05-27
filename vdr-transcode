@@ -5267,6 +5267,7 @@ transcode() {
 	nw=$(echo $fps1|wc -w)
 	fpso=$(echo $fps1|cut -d \  -f $nw)
     fi
+    [ -e $px_name ] && rm $px_name
 }
 
 log_conf() {
