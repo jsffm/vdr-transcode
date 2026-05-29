@@ -205,6 +205,7 @@ help_Output() {
     echo " --p          # streams preview"
     echo "              # answer n=cancel, a=add vt.conf incl. paramters"
     echo " -copy|-cp <o> # copy for every track"
+    echo " --copy|--cp  # copy for every track"
     echo " --rni        # at work on remote fs no genindex"
     echo " --chk        # check input only"
 }
@@ -549,6 +550,9 @@ parameter() {
 	    ;;
 	"-copy"|"-cp")
 	    OUTPUT=$2
+	    par_copy
+	    ;;
+	"--copy"|"--cp")
 	    par_copy
 	    ;;
 	"--chk")
