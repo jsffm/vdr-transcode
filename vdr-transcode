@@ -5757,6 +5757,12 @@ copy_null() {
     log_c=logfile-chk
     OPT="$OPT -y -f mpegts"
     header
+    if [ "$px" != "" -a "$pxi" != "" ]
+    then
+	px_name="001[pes][remux].ts"
+	projectx_cli -name 001.ts -log -out $dest -tots $pxi
+	ffmpeg_i="-i $px_name"
+    fi
     analyze $ffmpeg_i
     transcode "$out"
     #$ffmpeg -hide_banner -ignore_unknown -i $ffmpeg_i -map 0 -c copy -y -f mpegts /dev/null 2>&1 | tee -a $log_c
