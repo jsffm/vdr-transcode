@@ -5456,6 +5456,7 @@ copy_vdr() {
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
 	    fi
+	    [ -e marks.vdr ] && cp -p marks.vdr $dest/marks
 	    ;;
 	"dvd")
 	    #set -x
