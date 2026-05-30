@@ -5455,6 +5455,15 @@ copy_vdr() {
 		#echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
+		if [ -e /home/jsffm/hp/filme/sender ]
+		then
+		    read _ cid _ <<< $(grep ^C info.vdr)
+		    if [ "$cid" != "" ]
+		    then
+    			read _ sender <<< $(grep $cid /home/jsffm/hp/filme/sender)
+			sed -i "/^C / s/$/ $sender/" $dest/info
+		    fi
+		fi
 	    fi
 	    [ -e marks.vdr ] && cp -p marks.vdr $dest/marks
 	    ;;
