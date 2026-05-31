@@ -5451,8 +5451,13 @@ copy_vdr() {
 	    fi
 	    if [ -e info.vdr ]
 	    then
-		#cp -p info.vdr $dest/info
-		iconv -f ISO-8859-1 -t UTF-8 < info.vdr > $dest/info
+		file_chk=$(file info.vdr)
+		if [[ "$file_chk" == *UTF-8* ]]
+		then
+		    cp -p info.vdr $dest/info
+		else
+		    iconv -f ISO-8859-1 -t UTF-8 < info.vdr > $dest/info
+		fi
 		#echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
