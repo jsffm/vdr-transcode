@@ -5408,6 +5408,7 @@ copy_vdr() {
 	ffmpeg_i="-i $px_name"
     fi
     analyze $ffmpeg_i
+    [ "$px" != "" ] && cp -pv "001.ts_log.txt" $dest/
     if [ "$video_add" != "" ]
     then
 	#set -x
