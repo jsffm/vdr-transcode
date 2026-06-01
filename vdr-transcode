@@ -5272,6 +5272,7 @@ transcode() {
 	fpso=$(echo $fps1|cut -d \  -f $nw)
     fi
     [ -e "$px_name" ] && rm $px_name
+    [ -d ES ] && rm -r ES
 }
 
 log_conf() {
@@ -5404,11 +5405,31 @@ copy_vdr() {
     if [ "$px" != "" -a "$pxi" != "" ]
     then
 	px_name="001[pes][remux].ts"
-	projectx_cli -name 001.ts -log -out $dest -tots $pxi
-	ffmpeg_i="-i $px_name"
+	#projectx_cli -name 001.ts -log -out $dest -tots $pxi
+	#ffmpeg_i="-i $px_name"
+	mkdir ES
+	# -sel doesn´t work yet
+	projectx_cli -name 001.ts -log -out ES -demux $pxi
+	if [ -e ES/001.mp2 ]
+	then
+	    w="ES/*.mp2"
+	    for r in $w
+	    do
+		INPUTA="$INPUTA -i $r"
+	    done
+	fi
+	if [ -e ES/001.ac3 ]
+	then
+	    w="ES/*.ac3"
+	    for r in $w
+	    do
+		INPUTA="$INPUTA -i $r"
+	    done
+	fi
+	ffmpeg_i="-i ES/001.m2v"
     fi
     analyze $ffmpeg_i
-    [ "$px" != "" ] && cp -pv "001.ts_log.txt" $dest/
+    [ "$px" != "" ] && cp -pv "ES/001.ts_log.txt" $dest/
     if [ "$video_add" != "" ]
     then
 	#set -x
