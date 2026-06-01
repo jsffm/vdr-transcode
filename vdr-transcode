@@ -2294,6 +2294,7 @@ input_vdra() {
     name=$dp/$name
     chk_skip
     ifmt="vdr"
+    OPT_G="$OPT_G -fflags +igndts+genpts"
     #exit
 }
 
