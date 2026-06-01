@@ -5442,12 +5442,26 @@ copy_vdr() {
 	#then
     case $ifmt in
 	"vdr")
+	    senderp=/home/jsffm/hp/filme/sender
 	    [ -e info ] && cp -p info $dest
 	    if [ -e summary.vdr -a ! -e info.vdr ]
 	    then
 		[ -e $VDRDIR/summary2info ] && s2i=$VDRDIR/summary2info
 		[ "$s2i" == "" ] && s2i=$(which summary2info)
 		[ "$s2i" != "" ] && $s2i ../$(basename $PWD)
+	    fi
+	    if [ -e sharemarks.conf -a ! -e info.vdr ]
+	    then
+		# channel S19.2E-1-1101-28108
+		read _ chid <<< $(grep channel sharemarks.conf)
+		if [ -e $senderp ]
+		then
+		    read _ sender_sm <<< $(grep $chid $senderp)
+		fi
+		echo "C $chid $sender_sm" >> $dest/info
+		D=$(basename $(dirname $PWD))
+		[ "${D:0:1}" == "%" ] && D=${D:1}
+		echo "D $D" >> $dest/info
 	    fi
 	    if [ -e info.vdr ]
 	    then
@@ -5461,12 +5475,12 @@ copy_vdr() {
 		#echo "F 25" >> $dest/info
 		echo "L 99" >> $dest/info
 		echo "P 50" >> $dest/info
-		if [ -e /home/jsffm/hp/filme/sender ]
+		if [ -e $senderp ]
 		then
 		    read _ cid _ <<< $(grep ^C info.vdr)
 		    if [ "$cid" != "" ]
 		    then
-    			read _ sender <<< $(grep $cid /home/jsffm/hp/filme/sender)
+    			read _ sender <<< $(grep $cid $senderp)
 			sed -i "/^C / s/$/ $sender/" $dest/info
 		    fi
 		fi
