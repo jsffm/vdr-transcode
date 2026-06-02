@@ -189,7 +189,8 @@ help_Input() {
     echo " -va <seconds> # add video at end, only ts"
     echo " -ia <file>|<http> # second audio source, multiple calls supported"
     echo " -ic <file>        # copy chapters from an other file"
-    echo " --px              # prepare .vdr with projectx"
+    echo " --px              # prepare .vdr with projectx -demux"
+    echo " --px_ts           # prepare .vdr with projectx -tots"
 }
 
 help_Output() {
@@ -521,6 +522,9 @@ parameter() {
 	    ;;
 	"--px")
 	    px=1
+	    ;;
+	"--px_ts")
+	    px_ts=1
 	    ;;
 	"-attach")
 	    attach_file=$2
@@ -5403,34 +5407,29 @@ copy_vdr() {
     fi
     header
     #[ "$auto" != "1" ] && echo $d $PWD >> $logs
-    if [ "$px" != "" -a "$pxi" != "" ]
+    if [ "$px_ts" != "" -a "$pxi" != "" ]
     then
 	px_name="001[pes][remux].ts"
-	#projectx_cli -name 001.ts -log -out $dest -tots $pxi
-	#ffmpeg_i="-i $px_name"
+	projectx_cli -name 001.ts -log -out $dest -tots $pxi
+	ffmpeg_i="-i $px_name"
+    fi
+    if [ "$px" != "" -a "$pxi" != "" ]
+    then
 	mkdir ES
 	# -sel doesn´t work yet
-	projectx_cli -name 001.ts -log -out ES -demux $pxi
-	if [ -e ES/001.mp2 ]
-	then
-	    w="ES/*.mp2"
-	    for r in $w
-	    do
-		INPUTA="$INPUTA -i $r"
-	    done
-	fi
-	if [ -e ES/001.ac3 ]
-	then
-	    w="ES/*.ac3"
-	    for r in $w
-	    do
-		INPUTA="$INPUTA -i $r"
-	    done
-	fi
+	projectx_cli -log -out ES -demux $pxi
+	w=
+	[ -e ES/001.mp2 ] && w="ES/*.mp2"
+	[ -e ES/001.ac3 ] && w="$w ES/*.ac3"
+	for r in $w
+	do
+	    INPUTA="$INPUTA -i $r"
+	done
 	ffmpeg_i="-i ES/001.m2v"
     fi
     analyze $ffmpeg_i
-    [ "$px" != "" ] && cp -pv "ES/001.ts_log.txt" $dest/
+    [ "$px" != "" ] && cp -pv "ES/001_log.txt" $dest/
+    [ -e 001.ts_log.txt ] && cp -pv 001.ts_log.txt $dest/
     if [ "$video_add" != "" ]
     then
 	#set -x
@@ -5499,8 +5498,8 @@ copy_vdr() {
 		echo "P 50" >> $dest/info
 		if [ -e $senderp ]
 		then
-		    read _ cid _ <<< $(grep ^C info.vdr)
-		    if [ "$cid" != "" ]
+		    read _ cid s <<< $(grep ^C info.vdr)
+		    if [ "$cid" != "" -a "$s" == "" ]
 		    then
     			read _ sender <<< $(grep $cid $senderp)
 			sed -i "/^C / s/$/ $sender/" $dest/info
