@@ -5418,6 +5418,7 @@ copy_vdr() {
 	mkdir ES
 	# -sel doesn´t work yet
 	projectx_cli -log -out ES -demux $pxi
+	ls -Ul --time-style long-iso ES >> $log_c
 	w=
 	[ -e ES/001.mp2 ] && w="ES/*.mp2"
 	[ -e ES/001.ac3 ] && w="$w ES/*.ac3"
