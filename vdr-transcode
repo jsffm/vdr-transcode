@@ -219,6 +219,7 @@ help_Video() {
     echo " -maxr <fps>      # max bitrate"
     echo " -crop <w:h>"
     echo " --LB             # -vf crop=iw:ih/4*3 -aspect 16:9"
+    echo " --crop43         # -vf crop=ih*4/3:ih -aspect 4:3"
     echo " -zoom <factor>   # crop=iw/<factor>:ih/<factor>"
     echo " -scale <w:h>|hd720|hd1080|qhd|pal"
     echo " -aspect <aspect> # 16:9|4:3"
@@ -873,6 +874,10 @@ parameter() {
 	    crop="crop=iw:ih/4*3"
 	    aspect="-aspect 16:9"
 	    #parameter "--nohw"
+	    ;;
+	"--crop43")
+	    crop="crop=ih*4/3:ih"
+	    aspect="-aspect 4:3"
 	    ;;
 	"-zoom")
 	    #hwdownload
