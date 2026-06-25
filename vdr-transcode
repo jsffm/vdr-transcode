@@ -475,6 +475,7 @@ par_copy() {
     dts=copy
     pcm=copy
     dold=1
+    OPT_G="$OPT_G -fflags +igndts+genpts"
 }
 
 parameter() {
@@ -5589,7 +5590,7 @@ copy_vdr() {
         #echo $PID
         grep "\[$PID\]" /var/log/messages | grep "H."
         #set +x
-	if [ "$chk_error" == "1" -a "$ifmt" == "vdr" ]
+	if [ "$chk_error" == "1" -a "$ifmt" == "vdr" -a "$nerror" != "" ]
 	then
 	    cp -p $dest/info $dest/info.s2
 	    read _ error_i <<< $(grep ^O $dest/info)
