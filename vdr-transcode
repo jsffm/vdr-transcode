@@ -156,6 +156,11 @@ chan_set_i=0
 declare -a title_set
 declare -a title_set_id
 title_set_i=0
+declare -a depend_w
+declare -a depend_p
+declare -a depend_chid
+declare -a depend_title
+depend_i=0
 declare -a volumea
 declare -a dispa
 declare -a dsura
@@ -1114,6 +1119,26 @@ parameter() {
 	    title_set[$title_set_i]="${2#*=}"
 	    title_set_i=$(($title_set_i+1))
 	    #exit
+	    ;;
+	"-depend")
+	    # depend <what>=<a>[,<what>=<n>]:<param>=<a>[,<param>=<a>]
+	    depend_w[$depend_i]=${2%:*}
+	    depend_p[$depend_i]="${2#*:}"
+	    IFS=","
+	    for whatr in ${depend_w[$depend_i]}
+	    do
+		what=${whatr%=*}
+		case $what in
+		    "chid")
+			depend_chid[$depend_i]=${whatr#*=}
+			;;
+		    "title")
+			depend_title[$depend_i]=${whatr#*=}
+			;;
+		esac
+	    done
+	    unset IFS
+	    depend_i=$(($depend_i+1))
 	    ;;
 	"--info")
 	    info=1
@@ -2309,6 +2334,20 @@ input_vdra() {
     #exit
 }
 
+depend_set_parameter() {
+    IFS=","
+    depend_msg=depend
+    for p in ${depend_p[$1]}
+    do
+	p1=${p%=*}
+	p2=${p#*=}
+	parameter $p1 $p2
+	depend_msg="$depend_msg $p1 $p2"
+    done
+    unset IFS
+    select_from_to
+}
+
 input_vdr() {
     #set -x
     if [ ! -e 00001.ts ]
@@ -2435,6 +2474,7 @@ input_vdr() {
     done
     [ "$OUTPUT" == "chk" ] && dest=.
     #set -x
+    [ -e info ] && read _ chan_id _ <<< $(grep ^C info)
     if [ "$select_str" == "" -a $vers == 0 -a ! -e logfile -a -e info ]
     then
 	select_str0=0
@@ -2464,6 +2504,25 @@ input_vdr() {
 	for (( i=0; i<$title_set_i; i++ ))
 	do
 	    [[ "$title" == *${title_set_id[$i]}* ]] && parameter ${title_set[$i]} && chan_set_msg="title_set=${title_set[$i]}"
+	done
+    fi
+    if [ $vers == 0 -a "$chan_id" != "" ]
+    then
+	for (( i=0; i<$depend_i; i++ ))
+	do
+	    dec_c=
+	    dec_t=
+	    [ "${depend_chid[$i]}" != "" ] && dec_c=0
+	    [ "${depend_title[$i]}" != "" ] && dec_t=0
+	    [ "$dec_c" == "" -a "$dec_t" == "" ] && continue
+	    [ "$chan_id" == "${depend_chid[$i]}" ] && dec_c=1
+	    T=$(grep ^T info)
+	    title=${T:2}
+	    title=${title//' '/_}
+	    [ "$dec_t" != "" ] && [[ "$title" == *${depend_title[$i]}* ]] && dec_t=1
+	    [ "$dec_c" == "1" -a "$dec_t" == "" ] && depend_set_parameter $i
+	    [ "$dec_c" == "1" -a "$dec_t" == "1" ] && depend_set_parameter $i
+	    [ "$dec_c" == "" -a "$dec_t" == "1" ] && depend_set_parameter $i
 	done
     fi
     #exit
@@ -5356,6 +5415,7 @@ header() {
     cat $old >> "$log_c"
     [ "$chan_sel_msg" != "" ] && echo $chan_sel_msg >> "$log_c"
     [ "$chan_set_msg" != "" ] && echo $chan_set_msg >> "$log_c"
+    [ "$depend_msg" != "" ] && echo $depend_msg >> "$log_c"
 }
 
 info_create() {
