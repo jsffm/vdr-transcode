@@ -571,6 +571,7 @@ parameter() {
 	    par_copy
 	    apply_codec=
 	    hwaccel=
+	    h264_br_g=
 	    ;;
 	"-r")
 	    OPT="$OPT -r $2"
