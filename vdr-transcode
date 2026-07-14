@@ -571,7 +571,7 @@ parameter() {
 	    par_copy
 	    apply_codec=
 	    hwaccel=
-	    h264_br_g=
+	    #h264_br_g=
 	    ;;
 	"-r")
 	    OPT="$OPT -r $2"
@@ -4607,7 +4607,7 @@ analyze() {
 		[ "$vcodec" != "" -a "$vcodec" != "h264" ] && h264=$vcodec
 		#[ "$OUTPUT" == "webm" ] && set_vp9
 		[ "$OUTPUT" == "mpg" ] && h264=mpeg2
-		if [ "$h264_br_g" != "" ]
+		if [ "$h264_br_g" != "" -a "$h264_HD" != "" ]
 		then
 		    [ "$h264" == "copy" -a $bitr1 -ge $h264_br_g ] && h264=$h264_HD
 		    h264_HD=
