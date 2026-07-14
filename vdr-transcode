@@ -214,6 +214,7 @@ help_Output() {
     echo " --copy|--cp  # copy for every track"
     echo " --rni        # at work on remote fs no genindex"
     echo " --chk        # check input only"
+    echo " --show_br    # show bitrate of untranscoded recordings"
 }
 
 help_Video() {
@@ -1284,6 +1285,10 @@ parameter() {
 	    auto=1
 	    dialog=0
 	    #quiet=1
+	    ;;
+	"--show_br")
+	    TODO=$1
+	    INPUT=none
 	    ;;
 	"--out_stat")
 	    out_stat="stat"
@@ -6610,6 +6615,39 @@ auto_sh_conf() {
     exit
 }
 
+show_br() {
+    for rr in `find . -mount -type d -name "*0.rec"`
+    do
+	#echo $rr
+	title=$(dirname $rr)
+	title=$(basename $title)
+	si=$(file_size $rr/index)
+	fl=$(grep ^F $rr/info)
+	read _ f _ <<< $fl
+	[ "$f" == "" ] && f=25
+	# F 50.02779322
+	if [[ "$f" == *.* ]]
+	then
+	    s=$(echo "$si*25/$f/200"|bc)
+	else
+	    s=$(($si*25/$f/200))
+	fi
+	#date -u -d @$s
+	w="$rr/*.ts"
+	size=0
+	for r in $w
+	do
+	    [ ! -e "$r" ] && continue
+	    #s1=$(ls -l --block-size=1k $r|cut -d \  -f 5)
+	    #s1=$(stat "$r" -c "%s")
+	    s1=$(file_size "$r")
+	    size=$(($size+$s1/1024))
+	done
+	br=$(($size*8/$s))
+	echo $br $rr
+    done
+}
+
 rt_server() {
     #set -x
     if [ -e $runrts ]
@@ -6763,6 +6801,10 @@ case $TODO in
 	;;
     "--chk_error")
 	chk_error
+	exit
+	;;
+    "--show_br")
+	show_br
 	exit
 	;;
     *)
