@@ -215,6 +215,7 @@ help_Output() {
     echo " --rni        # at work on remote fs no genindex"
     echo " --chk        # check input only"
     echo " --show_br    # show bitrate of untranscoded recordings"
+    echo " -show_br <min_br> # show bitrate of untranscoded recordings"
 }
 
 help_Video() {
@@ -1287,6 +1288,11 @@ parameter() {
 	    #quiet=1
 	    ;;
 	"--show_br")
+	    TODO=$1
+	    INPUT=none
+	    ;;
+	"-show_br")
+	    min_br=$2
 	    TODO=$1
 	    INPUT=none
 	    ;;
@@ -6644,6 +6650,7 @@ show_br() {
 	    size=$(($size+$s1/1024))
 	done
 	br=$(($size*8/$s))
+	[ "$min_br" != "" ] && [ $br -lt $min_br ] && continue
 	echo $br $rr
     done
 }
@@ -6803,7 +6810,7 @@ case $TODO in
 	chk_error
 	exit
 	;;
-    "--show_br")
+    "--show_br"|"-show_br")
 	show_br
 	exit
 	;;
