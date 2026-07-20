@@ -214,8 +214,8 @@ help_Output() {
     echo " --copy|--cp  # copy for every track"
     echo " --rni        # at work on remote fs no genindex"
     echo " --chk        # check input only"
-    echo " --show_br    # show bitrate of untranscoded recordings"
-    echo " -show_br <min_br> # show bitrate of untranscoded recordings"
+    echo " --show_br [-s]         # show bitrate of untranscoded recordings"
+    echo " -show_br <min_br> [-s] # show bitrate of untranscoded recordings"
 }
 
 help_Video() {
@@ -1295,6 +1295,9 @@ parameter() {
 	    min_br=$2
 	    TODO=$1
 	    INPUT=none
+	    ;;
+	"-s")
+	    show_size=1
 	    ;;
 	"--out_stat")
 	    out_stat="stat"
@@ -6622,6 +6625,8 @@ auto_sh_conf() {
 }
 
 show_br() {
+    local sh_size
+
     for rr in `find . -mount -type d -name "*0.rec"`
     do
 	#echo $rr
@@ -6649,9 +6654,10 @@ show_br() {
 	    s1=$(file_size "$r")
 	    size=$(($size+$s1/1024))
 	done
+	[ "$show_size" != "" ] && sh_size=$size
 	br=$(($size*8/$s))
 	[ "$min_br" != "" ] && [ $br -lt $min_br ] && continue
-	echo $br $rr
+	echo $br $sh_size $rr
     done
 }
 
