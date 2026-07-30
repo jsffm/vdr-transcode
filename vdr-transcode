@@ -3896,6 +3896,11 @@ set_aac() {
 	    echo $text >> $log_c
 	fi
     fi
+    if [ "$1" == "fdk" ]
+    then
+	aaclibs=$aaclib
+	aaclib=libfdk_aac
+    fi
     if [ "$1" == "he" ]
     then
 	[ "$aaclib" != "libfdk_aac" ] && echo "works only with libfdk_aac" && exit 8
@@ -3946,6 +3951,7 @@ set_aac() {
     fi
     [ "$OUTPUT" == "mp4" ] && OPT="$OPT -metadata:s:$stro handler_name=$aaclib"
     aencoder=$aaclib
+    [ "$1" == "fdk" ] && aaclib=$aaclibs
 }
 
 set_opus() {
@@ -4100,8 +4106,8 @@ set_audio() {
 	"eac3")
 	    set_eac3
 	    ;;
-	"aac")
-	    set_aac
+	"aac"|"fdk")
+	    set_aac $codec1
 	    ;;
 	"aac_he")
 	    set_aac he
