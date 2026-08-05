@@ -3250,6 +3250,75 @@ show_size() {
 }
 
 
+detect_dpl() {
+    local audio
+
+    #set -x
+    which mediainfo > /dev/null
+    [ $? -ne 0 ] && return
+    echo Mediainfo
+    while read line
+    do
+	read w1 w2 w3 <<< $line
+	#echo "[$w1][$w2][$w3]"
+	if [ "${line:0:5}" == "Audio" ] # Audio #1
+	then
+	    if [ "${line:6:1}" == "#" ]
+	    then
+		IFS=# read _ audion <<< $line
+		if [ $audion -gt 1 ]
+		then
+		    echo $audio $id $format $format_settings
+		    format=
+		    format_settings=
+		fi
+		audio=$audion
+	    else
+		audio=1
+	    fi
+	fi
+	[ "$audio" == "" ] && continue
+	#echo "$line"
+	if [ "${line:0:3}" == "ID " ] # ID : 257 (0x101)
+	then
+	    #echo $line
+	    IFS='()' read _ id _ <<< $line
+	    continue
+	    #echo $id
+	    #exit
+	fi
+	if [ "${line:0:7}" == "Format " ]
+	then
+	    if [ "${line:0:15}" == "Format settings" ] # Dolby Surround
+	    then
+		read _ _ _ format_settings <<< $line
+	    else
+		# E-AC-3 AC-3
+		read w1 w2 w3 <<< $line
+		#echo "[$w1][$w2][$w3]"
+		[ "$w1" == "Format" -a "$w2" == ":" ] && format=$w3
+		
+	    fi
+	    continue
+	fi
+	if [ "${line:0:7}" == "dsurmod" ]
+	then
+	    read _ _ format_settings <<< $line
+	fi
+	if [ "${line:0:4}" == "Text" ]
+	then
+	    break
+	fi
+#	if [ "${line:0:4}" == "Menu" ]
+	if [ "$w1" == "Menu" -a "$w2" == "" ]
+	then
+	    #echo $line
+	    break
+	fi
+    done <<< $(mediainfo 00001.ts)
+    echo $audio $id $format $format_settings
+}
+
 inf() {
     #set -x
     #echo "["$ffmpeg_i"]"
@@ -3280,6 +3349,8 @@ inf() {
     else
 	$x $ffmpeg $OPT_G $ffmpeg_i 2>&1 | grep -E "Duration|Stream|Chapter"
     fi
+    detect_dpl
+    [ -e info.txt ] && cat info.txt
     #rm -f $t
     #rm -f $old
     #exit
@@ -4079,7 +4150,7 @@ set_audio() {
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac" ] && codec1=aac
 	#    [ $bra -gt 192 -a "$ac3_stereo" == "aac_he" ] && codec1=aac_he
 	#    #[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="-c:$stro $aaclib -b:$s
-	    [ $bra -gt $ac3_stereo_level ] && codec1=$ac3_stereo
+	    [ $bra -gt $ac3_stereo_level -a "$dsurmod" != "2" ] && codec1=$ac3_stereo
 	    #[ $bra -eq $ac3_stereo_level -a "$ac3_1" == "stereo" ] && codec1=$ac3_stereo
 	    #[ "$str" -gt 1 ] && [ $bra -eq $ac3_stereo_level -a "$atyp_1" == "stereo" -a "$ac3_stereo" != "ac3" ] && codec1=$ac3_stereo # checkme
 	fi
@@ -4190,6 +4261,16 @@ set_hevc_level() {
 	[ $vw -gt 2000 ] && hevc_level=5.1
 	[ $vw -gt 2160 ] && hevc_level=6.0
     fi
+}
+
+chk_dsurmod() {
+    which mediainfo > /dev/null
+    [ $? -ne 0 ] && return
+
+    [ "$tridn" == "" ] && return
+    mi=$(mediainfo --Inform="Audio;%ID% %dsurmod%\n" 00001.ts grep $tridn)
+    read _ dsurmod <<< $mi
+    [ "$dsurmod" == "2" ] && echo "$trid Dolby Surround encoded" >> $log_c
 }
 
 analyze() {
@@ -4433,6 +4514,9 @@ analyze() {
 	    str=${str1%%[*}
 	    trid=${stream#*[}
 	    trid=${trid%%]*}
+	    #IFS="[]" read _ trid _ <<< $str1
+	    #echo $trid
+	    tridn=$(($trid))
 	    #[ "${langa[$(($trid))]}" != "" ] && metal="$metal -metadata:s:$stro language=${langa[$(($trid))]}"
 	    #exit
 	else
@@ -4738,7 +4822,7 @@ analyze() {
 		stro1=$(($stro1+1))
 		;;
 	    "ac3"|"truehd")
-		#set -x
+		chk_dsurmod
 		[ "$str" == 1 ] && ac3_1=$atyp
 		map="$map -map $str0:$str"
 		audio_t="-c:$stro copy"
@@ -4748,10 +4832,10 @@ analyze() {
 		[ "$ac3v" != "" -a $bra -eq 192 ] && audio_t="$audio_t -filter:$stro volume=$ac3v"
 		audio="$audio $audio_t"
 		stro1=$(($stro1+1))
-		#exit
 		;;
 	    "eac3")
 		map="$map -map 0:$str"
+		chk_dsurmod
 		[ "$OUTPUT" == "mpg" ] && eac3=mp2
 		[ "$OUTPUT" == "webm" ] && eac3=opus
 		[ "$dpl" == "99" -a "$eac3" == "copy" ] && eac3=eac3
