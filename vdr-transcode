@@ -6572,6 +6572,9 @@ auto_confr() {
 	title=$(dirname $rr)
 	title=$(basename $title)
 	[ "$pattern" != "" ] && [[ ! "$title" == *$pattern* ]] && continue
+	read _ chnid _ <<< $(grep ^C $rr/info)
+	read _ fps _ <<< $(grep ^F $rr/info)
+	[ "${chnid:0:1}" == "T" -a "$fps" == "50" ] && continue # DVB-T2 already HEVC - checkme DVB-T
 	#si=$(stat $rr/index -c "%s")
 	si=$(file_size $rr/index)
 	fl=$(grep ^F $rr/info)
