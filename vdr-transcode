@@ -392,7 +392,7 @@ help_Configuration_A() {
     echo " -chan_set <chan_id>=<param>       # deprecated"
     echo " -title_set <title>=<param>        # deprecated"
     echo " -depend <what>=<a>[,<what>=<n>]:<param>=<a>[,<param>=<a>]"
-    echo "         what=<chid|title>"
+    echo "         what=<chnid|title>"
 }
 
 help() {
@@ -1134,11 +1134,15 @@ parameter() {
 	    do
 		what=${whatr%=*}
 		case $what in
-		    "chid")
+		    "chnid"|"chid")
 			depend_chid[$depend_i]=${whatr#*=}
 			;;
 		    "title")
 			depend_title[$depend_i]=${whatr#*=}
+			;;
+		    *)
+			echo "-depend $what= wrong"
+			exit 8
 			;;
 		esac
 	    done
