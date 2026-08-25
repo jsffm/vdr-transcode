@@ -392,7 +392,7 @@ help_Configuration_A() {
     echo " -chan_set <chan_id>=<param>       # deprecated"
     echo " -title_set <title>=<param>        # deprecated"
     echo " -depend <what>=<a>[,<what>=<n>]:<param>=<a>[,<param>=<a>]"
-    echo "         what=<chnid|title>"
+    echo "         what=<chnid|title>  param: , -> ~"
 }
 
 help() {
@@ -2362,7 +2362,8 @@ depend_set_parameter() {
     do
 	p1=${p%=*}
 	p2=${p#*=}
-	parameter $p1 $p2
+	p2=${p2//'~'/','}
+	parameter $p1 "$p2"
 	depend_msg="$depend_msg $p1 $p2"
     done
     unset IFS
